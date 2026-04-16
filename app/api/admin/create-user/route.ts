@@ -8,7 +8,6 @@ const redis = new Redis({
 })
 
 export async function POST(req: NextRequest) {
-  // Protect with admin token
   const authHeader = req.headers.get('authorization')
   const adminToken = process.env.ADMIN_TOKEN
   if (!adminToken || authHeader !== `Bearer ${adminToken}`) {
@@ -30,5 +29,6 @@ export async function POST(req: NextRequest) {
   }
 
   await redis.set(`horas:user:${user.email}`, JSON.stringify(user))
+  await redis.sadd('horas:users', user.email)
   return NextResponse.json({ ok: true, email: user.email, name: user.name, role: user.role })
 }

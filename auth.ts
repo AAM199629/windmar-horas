@@ -35,7 +35,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (!user) return null
         const valid = await compare(credentials.password as string, user.passwordHash)
         if (!valid) return null
-        return { id: user.id, email: user.email, name: user.name }
+        return { id: user.id, email: user.email, name: user.name, role: user.role } as any
       },
     }),
   ],
@@ -44,4 +44,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   session: { strategy: 'jwt' },
   secret: process.env.AUTH_SECRET,
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) (token as any).role = (user as any).role
+      return token
+    },
+    async session({ session, token }) {
+      if (session.user) (session.user as any).role = (token as any).role
+      return session
+    },
+  },
 })

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 
 const links = [
   { href: '/',                      label: 'Inicio' },
@@ -14,6 +15,12 @@ const links = [
 
 export default function Navbar() {
   const path = usePathname()
+  const { data: session } = useSession()
+  const isAdmin = (session?.user as any)?.role === 'admin'
+
+  const allLinks = isAdmin
+    ? [...links, { href: '/accounts', label: 'Cuentas' }]
+    : links
 
   return (
     <header style={{ background: '#0D1654' }} className="shadow-lg">
@@ -35,7 +42,7 @@ export default function Navbar() {
           HORAS
         </span>
         <nav className="flex gap-1 overflow-x-auto ml-2">
-          {links.map(({ href, label }) => (
+          {allLinks.map(({ href, label }) => (
             <Link
               key={href}
               href={href}
