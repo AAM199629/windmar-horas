@@ -22,8 +22,8 @@ export default function Navbar() {
           <Image
             src="/windmar-logo.png"
             alt="Windmar"
-            width={120}
-            height={36}
+            width={90}
+            height={28}
             className="object-contain"
             priority
           />

@@ -11,7 +11,9 @@ export default function LoginPage() {
         <div className="flex justify-center mb-8">
           <Image src="/windmar-logo.png" alt="Windmar" width={160} height={48} className="object-contain" priority />
         </div>
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          <div style={{ background: '#E88B0C' }} className="h-1.5 w-full" />
+          <div className="p-8">
           <h1
             style={{ fontFamily: "'Barlow Condensed', sans-serif", color: '#0D1654' }}
             className="text-3xl font-bold text-center mb-1 tracking-wide"
@@ -20,6 +22,7 @@ export default function LoginPage() {
           </h1>
           <p className="text-slate-400 text-sm text-center mb-6">Ingresa con tu cuenta</p>
           <LoginForm />
+          </div>
         </div>
       </div>
     </div>
