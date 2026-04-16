@@ -5,10 +5,11 @@ export default auth((req) => {
   const { nextUrl, auth: session } = req
   const isLoggedIn = !!session
 
-  const isAuthPage = nextUrl.pathname.startsWith('/login')
-  const isApiAuth  = nextUrl.pathname.startsWith('/api/auth')
+  const isAuthPage  = nextUrl.pathname.startsWith('/login')
+  const isApiAuth   = nextUrl.pathname.startsWith('/api/auth')
+  const isApiAdmin  = nextUrl.pathname.startsWith('/api/admin')
 
-  if (isAuthPage || isApiAuth) return NextResponse.next()
+  if (isAuthPage || isApiAuth || isApiAdmin) return NextResponse.next()
   if (!isLoggedIn) return NextResponse.redirect(new URL('/login', nextUrl))
   return NextResponse.next()
 })
