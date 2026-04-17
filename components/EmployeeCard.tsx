@@ -52,7 +52,11 @@ function ShiftCell({ shift }: { shift: DayShiftSummary }) {
   )
 }
 
-export default function EmployeeCard({ emp }: { emp: EmployeeSummary }) {
+export default function EmployeeCard({ emp, badge, ciudad }: {
+  emp: EmployeeSummary
+  badge?: string
+  ciudad?: string
+}) {
   const [open, setOpen] = useState(false)
 
   const diffHours = emp.horasConACO - emp.horasSinACO
@@ -78,9 +82,21 @@ export default function EmployeeCard({ emp }: { emp: EmployeeSummary }) {
         <span className={`text-[#1565C0] transition-transform duration-200 text-xs ${open ? 'rotate-90' : ''}`}>▶</span>
 
         <div className="flex-1 min-w-0">
-          <p style={{ fontFamily: "'Barlow Condensed', sans-serif" }} className="font-bold text-[#0D1654] text-lg leading-tight truncate">
-            {emp.name}
-          </p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <p style={{ fontFamily: "'Barlow Condensed', sans-serif" }} className="font-bold text-[#0D1654] text-lg leading-tight truncate">
+              {emp.name}
+            </p>
+            {badge && (
+              <span style={{ background: '#0D1654' }} className="text-white text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
+                {badge}
+              </span>
+            )}
+            {ciudad && (
+              <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full shrink-0">
+                📍 {ciudad}
+              </span>
+            )}
+          </div>
           <p className="text-xs text-slate-400 truncate">{emp.email}</p>
         </div>
 

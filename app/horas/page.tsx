@@ -1,6 +1,8 @@
 import { getLatestReport, listWeekKeys, getWeeklyReport } from '@/lib/kv'
-import EmployeeCard from '@/components/EmployeeCard'
+import { getVendedores, buildVendedorMap } from '@/lib/smartsheet'
 import WeekSelector from '@/components/WeekSelector'
+import HorasClient from '@/components/HorasClient'
+import type { EmployeeSummary } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,8 +12,11 @@ export default async function HorasPage({
   searchParams: Promise<{ week?: string }>
 }) {
   const { week } = await searchParams
-  const weeks = await listWeekKeys()
-  const report = week ? await getWeeklyReport(week) : await getLatestReport()
+  const [weeks, report, vendedores] = await Promise.all([
+    listWeekKeys(),
+    week ? getWeeklyReport(week) : getLatestReport(),
+    getVendedores(),
+  ])
 
   if (!report) {
     return (
@@ -23,10 +28,14 @@ export default async function HorasPage({
   }
 
   const { employees, weekStart, weekEnd, weekKey } = report
+  const vmap = buildVendedorMap(vendedores)
 
-  const totalSinACO = employees.reduce((a, e) => a + e.horasSinACO, 0)
-  const totalConACO = employees.reduce((a, e) => a + e.horasConACO, 0)
-  const totalTurnos = employees.reduce((a, e) => a + e.totalTurnos, 0)
+  const enriched = employees.map(emp => ({
+    ...emp,
+    ciudad:             vmap.get(emp.email.toLowerCase())?.ciudad             ?? null,
+    salesRole:          vmap.get(emp.email.toLowerCase())?.salesRole          ?? null,
+    supervisorRegional: vmap.get(emp.email.toLowerCase())?.supervisorRegional ?? null,
+  }))
 
   return (
     <div>
@@ -39,30 +48,7 @@ export default async function HorasPage({
         </div>
         <WeekSelector weeks={weeks} current={weekKey} />
       </div>
-
-      {/* Summary strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        <Stat label="Empleados" value={employees.length} />
-        <Stat label="Turnos totales" value={totalTurnos} />
-        <Stat label="Horas sin ACO" value={totalSinACO.toFixed(1) + 'h'} green />
-        <Stat label="Horas con ACO" value={totalConACO.toFixed(1) + 'h'} />
-      </div>
-
-      {/* Employee cards */}
-      <div className="space-y-2">
-        {employees.map(emp => (
-          <EmployeeCard key={emp.email} emp={emp} />
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function Stat({ label, value, green }: { label: string; value: string | number; green?: boolean }) {
-  return (
-    <div className="bg-white rounded-xl border border-slate-200 px-4 py-3 shadow-sm">
-      <p className="text-xs text-slate-400 font-medium">{label}</p>
-      <p className={`text-2xl font-bold mt-0.5 ${green ? 'text-[#00A651]' : 'text-slate-800'}`}>{value}</p>
+      <HorasClient employees={enriched} />
     </div>
   )
 }
