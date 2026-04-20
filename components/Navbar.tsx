@@ -16,11 +16,15 @@ const links = [
 export default function Navbar() {
   const path = usePathname()
   const { data: session } = useSession()
-  const isAdmin = (session?.user as any)?.role === 'admin'
+  const role = (session?.user as any)?.role as string | undefined
+  const isAdmin = role === 'admin'
+  const canSeeAsalariados = role === 'admin' || role === 'supervisor'
 
-  const allLinks = isAdmin
-    ? [...links, { href: '/accounts', label: 'Cuentas' }]
-    : links
+  const allLinks = [
+    ...links,
+    ...(canSeeAsalariados ? [{ href: '/asalariados', label: 'Asalariados' }] : []),
+    ...(isAdmin           ? [{ href: '/accounts',   label: 'Cuentas' }]    : []),
+  ]
 
   return (
     <header style={{ background: '#0D1654' }} className="shadow-lg">

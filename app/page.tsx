@@ -1,6 +1,8 @@
 import { getLatestReport, listWeekKeys } from '@/lib/kv'
+import { getVentasUploadedAt } from '@/lib/asalariados-kv'
 import Link from 'next/link'
 import UploadForm from '@/components/UploadForm'
+import VentasUploadForm from '@/components/VentasUploadForm'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,7 +14,10 @@ const CHANNELS = [
 ]
 
 export default async function HomePage() {
-  const weeks = await listWeekKeys().catch(() => [] as string[])
+  const [weeks, ventasUploadedAt] = await Promise.all([
+    listWeekKeys().catch(() => [] as string[]),
+    getVentasUploadedAt(),
+  ])
   const latest = weeks[0]
 
   return (
@@ -29,16 +34,27 @@ export default async function HomePage() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-8">
-        {/* Upload */}
-        <div>
-          <h2 className="text-lg font-semibold text-slate-800 mb-3">Subir reporte CSV</h2>
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-            <UploadForm />
+        {/* Upload section */}
+        <div className="space-y-5">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-800 mb-3">Subir reporte de turnos (Shifter)</h2>
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+              <UploadForm />
+            </div>
+            <p className="text-xs text-slate-400 mt-2">
+              Shifter exporta el CSV desde <strong>Akcelita → Reports → Weekly Shift Report</strong>.
+            </p>
           </div>
-          <p className="text-xs text-slate-400 mt-2">
-            Shifter exporta el CSV desde <strong>Akcelita → Reports → Weekly Shift Report</strong>.
-            Cada semana que subas queda guardada y puedes seleccionarla desde cualquier vista.
-          </p>
+
+          <div>
+            <h2 className="text-lg font-semibold text-slate-800 mb-3">Subir reporte de ventas</h2>
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+              <VentasUploadForm uploadedAt={ventasUploadedAt} />
+            </div>
+            <p className="text-xs text-slate-400 mt-2">
+              Exporta desde Smartsheet → <strong>Ventas Follow Up 2025</strong> → File → Export → CSV.
+            </p>
+          </div>
         </div>
 
         {/* Quick links */}

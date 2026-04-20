@@ -6,13 +6,13 @@ interface User {
   id: string
   email: string
   name: string
-  role: 'admin' | 'viewer'
+  role: 'admin' | 'supervisor' | 'viewer'
 }
 
 export default function AccountsClient({ currentEmail }: { currentEmail: string }) {
   const [users, setUsers]       = useState<User[]>([])
   const [loading, setLoading]   = useState(true)
-  const [form, setForm]         = useState({ email: '', name: '', password: '', role: 'viewer' as 'admin' | 'viewer' })
+  const [form, setForm]         = useState({ email: '', name: '', password: '', role: 'viewer' as 'admin' | 'supervisor' | 'viewer' })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError]       = useState('')
   const [success, setSuccess]   = useState('')
@@ -45,7 +45,7 @@ export default function AccountsClient({ currentEmail }: { currentEmail: string 
       setError(data.error ?? 'Error al crear usuario')
     } else {
       setSuccess(`Usuario ${data.name} creado correctamente`)
-      setForm({ email: '', name: '', password: '', role: 'viewer' })
+      setForm({ email: '', name: '', password: '', role: 'viewer' as 'admin' | 'supervisor' | 'viewer' })
       loadUsers()
     }
     setSubmitting(false)
@@ -129,10 +129,11 @@ export default function AccountsClient({ currentEmail }: { currentEmail: string 
             <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Rol</label>
             <select
               value={form.role}
-              onChange={e => setForm(f => ({ ...f, role: e.target.value as 'admin' | 'viewer' }))}
+              onChange={e => setForm(f => ({ ...f, role: e.target.value as 'admin' | 'supervisor' | 'viewer' }))}
               className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E88B0C] bg-white"
             >
               <option value="viewer">Viewer — solo lectura</option>
+              <option value="supervisor">Supervisor — ve Asalariados</option>
               <option value="admin">Admin — acceso completo</option>
             </select>
           </div>
@@ -186,11 +187,11 @@ export default function AccountsClient({ currentEmail }: { currentEmail: string 
                   <p className="text-slate-400 text-xs truncate">{u.email}</p>
                 </div>
                 <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                  u.role === 'admin'
-                    ? 'bg-[#0D1654]/10 text-[#0D1654]'
-                    : 'bg-slate-100 text-slate-500'
+                  u.role === 'admin'      ? 'bg-[#0D1654]/10 text-[#0D1654]' :
+                  u.role === 'supervisor' ? 'bg-amber-100 text-amber-700' :
+                                           'bg-slate-100 text-slate-500'
                 }`}>
-                  {u.role === 'admin' ? 'Admin' : 'Viewer'}
+                  {u.role === 'admin' ? 'Admin' : u.role === 'supervisor' ? 'Supervisor' : 'Viewer'}
                 </span>
                 {u.email !== currentEmail && (
                   <button
