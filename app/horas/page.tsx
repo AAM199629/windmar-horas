@@ -1,10 +1,18 @@
 import { getLatestReport, listWeekKeys, getWeeklyReport } from '@/lib/kv'
 import { getVendedores, buildVendedorMap } from '@/lib/smartsheet'
+import { auth } from '@/auth'
 import WeekSelector from '@/components/WeekSelector'
 import HorasClient from '@/components/HorasClient'
+import NominaSection from '@/components/NominaSection'
 import type { EmployeeSummary } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
+
+const JOB_TITLE_MAP: Record<string, string> = {
+  'Empleado - Consultor': 'Consultor Energético',
+  'Empleado - Lider':     'Líder Energético',
+  'Empleado - Gerente':   'Gerente de Ventas - Asalariado',
+}
 
 export default async function HorasPage({
   searchParams,
@@ -12,10 +20,11 @@ export default async function HorasPage({
   searchParams: Promise<{ week?: string }>
 }) {
   const { week } = await searchParams
-  const [weeks, report, vendedores] = await Promise.all([
+  const [weeks, report, vendedores, session] = await Promise.all([
     listWeekKeys(),
     week ? getWeeklyReport(week) : getLatestReport(),
     getVendedores(),
+    auth(),
   ])
 
   if (!report) {
@@ -29,6 +38,7 @@ export default async function HorasPage({
 
   const { employees, weekStart, weekEnd, weekKey } = report
   const vmap = buildVendedorMap(vendedores)
+  const role = (session?.user as any)?.role
 
   const enriched = employees.map(emp => ({
     ...emp,
@@ -36,6 +46,17 @@ export default async function HorasPage({
     salesRole:          vmap.get(emp.email.toLowerCase())?.salesRole          ?? null,
     supervisorRegional: vmap.get(emp.email.toLowerCase())?.supervisorRegional ?? null,
   }))
+
+  const salariadosForNomina = enriched
+    .filter(e => e.salesRole && JOB_TITLE_MAP[e.salesRole])
+    .map(e => ({
+      name:         e.name,
+      email:        e.email,
+      jobTitle:     JOB_TITLE_MAP[e.salesRole!],
+      horasWorked:  e.horasSinACO,
+      metHoursAuto: e.horasSinACO >= 40,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name))
 
   return (
     <div>
@@ -49,6 +70,15 @@ export default async function HorasPage({
         <WeekSelector weeks={weeks} current={weekKey} />
       </div>
       <HorasClient employees={enriched} />
+
+      {role === 'admin' && salariadosForNomina.length > 0 && (
+        <NominaSection
+          weekKey={weekKey}
+          weekStart={weekStart}
+          weekEnd={weekEnd}
+          salaried={salariadosForNomina}
+        />
+      )}
     </div>
   )
 }
