@@ -26,6 +26,14 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  // Check env vars are present
+  const envCheck = {
+    ZOHO_CLIENT_ID:     !!process.env.ZOHO_CLIENT_ID,
+    ZOHO_CLIENT_SECRET: !!process.env.ZOHO_CLIENT_SECRET,
+    ZOHO_REFRESH_TOKEN: !!process.env.ZOHO_REFRESH_TOKEN,
+    ZOHO_DATA_CENTER:   process.env.ZOHO_DATA_CENTER ?? '(not set, using zohoapis.com)',
+  }
+
   try {
     const token = await getZohoAccessToken()
     const dc    = process.env.ZOHO_DATA_CENTER ?? 'zohoapis.com'
@@ -52,8 +60,8 @@ export async function GET() {
       data_type:  f.data_type,
     }))
 
-    return NextResponse.json({ modules, deals_fields: fields })
+    return NextResponse.json({ envCheck, modules, deals_fields: fields })
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    return NextResponse.json({ envCheck, error: err.message }, { status: 500 })
   }
 }
