@@ -2,8 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 
 async function getZohoAccessToken(): Promise<string> {
-  const dc = process.env.ZOHO_DATA_CENTER ?? 'zohoapis.com'
-  const res = await fetch(`https://accounts.${dc}/oauth/v2/token`, {
+  const res = await fetch(`https://accounts.zoho.com/oauth/v2/token`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
