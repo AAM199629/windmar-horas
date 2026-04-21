@@ -38,28 +38,27 @@ export async function GET() {
     const dc    = process.env.ZOHO_DATA_CENTER ?? 'zohoapis.com'
     const base  = `https://www.${dc}/crm/v7`
 
-    // List all modules
-    const modRes  = await fetch(`${base}/settings/modules`, {
+    // Try fetching 3 Deals records to verify access
+    const dealsRes  = await fetch(`${base}/Deals?per_page=3`, {
       headers: { Authorization: `Zoho-oauthtoken ${token}` },
     })
-    const modData = await modRes.json()
-    const modules = (modData.modules ?? []).map((m: any) => ({
-      api_name:    m.api_name,
-      plural_label: m.plural_label,
-    }))
+    const dealsRaw  = await dealsRes.json()
+    const dealSample = (dealsRaw.data ?? []).map((d: any) => Object.keys(d))
 
-    // Peek at Deals fields
-    const fieldsRes  = await fetch(`${base}/settings/fields?module=Deals`, {
+    // Also try a custom module search
+    const searchRes  = await fetch(`${base}/Deals/search?criteria=(Stage:equals:Closed Won)&per_page=3`, {
       headers: { Authorization: `Zoho-oauthtoken ${token}` },
     })
-    const fieldsData = await fieldsRes.json()
-    const fields = (fieldsData.fields ?? []).map((f: any) => ({
-      api_name:   f.api_name,
-      field_label: f.field_label,
-      data_type:  f.data_type,
-    }))
+    const searchRaw = await searchRes.json()
 
-    return NextResponse.json({ envCheck, modules, deals_fields: fields })
+    return NextResponse.json({
+      envCheck,
+      deals_status: dealsRes.status,
+      deals_raw:    dealsRaw,
+      deal_fields_sample: dealSample[0] ?? [],
+      search_status: searchRes.status,
+      search_raw:   searchRaw,
+    })
   } catch (err: any) {
     return NextResponse.json({ envCheck, error: err.message }, { status: 500 })
   }
