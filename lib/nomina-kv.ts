@@ -15,22 +15,12 @@ export interface NominaEntry {
   vacationHours: number
   paid: boolean
   comments: string
-}
-
-export interface NominaTerminado {
-  terminationDate: string
-  name: string
-  jobTitle: string
-  metHours: boolean
-  sickHours: number
-  vacationHours: number
-  comments: string
+  terminationDate: string           // non-empty = shown in Terminados section
 }
 
 export interface NominaRecord {
   weekKey: string
   entries: NominaEntry[]
-  terminados: NominaTerminado[]
   updatedAt: string
 }
 

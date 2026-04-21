@@ -45,7 +45,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ wee
   const record = await getNomina(week)
   if (!record) return NextResponse.json({ error: 'No nomina data for this week' }, { status: 404 })
 
-  const { weekStart, weekEnd, entries, terminados } = record as any
+  const { weekStart, weekEnd, entries } = record as any
+  const active     = (entries ?? []).filter((e: any) => !e.terminationDate)
+  const terminados = (entries ?? []).filter((e: any) => !!e.terminationDate)
 
   const s1 = formatDateTitle(weekStart ?? week)
   const s2 = formatDateTitle(weekEnd ?? week)
@@ -93,7 +95,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ wee
 
   // ── Employee rows by job title group ───────────────────────────────────────
   for (const jobTitle of JOB_ORDER) {
-    const group = (entries ?? []).filter((e: any) => e.jobTitle === jobTitle)
+    const group = active.filter((e: any) => e.jobTitle === jobTitle)
     for (const emp of group) {
       const met = emp.metHoursOverride !== null ? emp.metHoursOverride : emp.metHoursAuto ?? true
       const empRow = ws.addRow([
@@ -116,7 +118,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ wee
   }
 
   // ── Anotaciones section ────────────────────────────────────────────────────
-  const withComments = (entries ?? []).filter((e: any) => e.comments?.trim())
+  const withComments = [...active, ...terminados].filter((e: any) => e.comments?.trim())
   if (withComments.length > 0) {
     ws.addRow([])
 
@@ -168,15 +170,16 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ wee
     })
 
     for (const t of terminados) {
+      const tMet = t.metHoursOverride !== null ? t.metHoursOverride : t.metHoursAuto ?? true
       const r = ws.addRow([
         t.terminationDate || '',
         t.jobTitle,
         t.name,
-        t.metHours ? 'X' : '',
+        tMet ? 'X' : '',
         t.sickHours || '',
         t.vacationHours || '',
-        !t.metHours ? 'X' : '',
-        '',
+        !tMet ? 'X' : '',
+        t.paid ? 'X' : '',
       ])
       r.height = 18
       for (let i = 1; i <= 8; i++) {
