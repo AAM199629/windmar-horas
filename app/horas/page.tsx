@@ -71,13 +71,21 @@ export default async function HorasPage({
       </div>
       <HorasClient employees={enriched} />
 
-      {role === 'admin' && salariadosForNomina.length > 0 && (
+      {role === 'admin' && (
+        <>
+          {salariadosForNomina.length === 0 && (
+            <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl text-sm text-yellow-800">
+              No se encontraron asalariados esta semana. Roles detectados:{' '}
+              {[...new Set(enriched.map(e => e.salesRole).filter(Boolean))].join(', ') || '(ninguno)'}
+            </div>
+          )}
         <NominaSection
           weekKey={weekKey}
           weekStart={weekStart}
           weekEnd={weekEnd}
           salaried={salariadosForNomina}
         />
+        </>
       )}
     </div>
   )
