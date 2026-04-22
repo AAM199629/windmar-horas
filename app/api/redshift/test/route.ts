@@ -9,10 +9,8 @@ export async function GET() {
   }
 
   const TARGET_TABLES = [
-    { schema: 'dw_zoho', table: 'dim_sales_team_member' },
-    { schema: 'dw_zoho', table: 'fact_sales_performance' },
-    { schema: 'dwh',     table: 'fact_deals' },
-    { schema: 'dwh',     table: 'dim_lead' },
+    { schema: 'dwh', table: 'dim_staff' },
+    { schema: 'dwh', table: 'dim_profiles' },
   ]
 
   try {
