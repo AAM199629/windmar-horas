@@ -1,5 +1,6 @@
 import { getLatestReport, listWeekKeys, getWeeklyReport } from '@/lib/kv'
 import { getVendedores, buildVendedorMap } from '@/lib/smartsheet'
+import { getAsalariadoData } from '@/lib/redshift'
 import { auth } from '@/auth'
 import WeekSelector from '@/components/WeekSelector'
 import HorasClient from '@/components/HorasClient'
@@ -20,11 +21,12 @@ export default async function HorasPage({
   searchParams: Promise<{ week?: string }>
 }) {
   const { week } = await searchParams
-  const [weeks, report, vendedores, session] = await Promise.all([
+  const [weeks, report, vendedores, session, asalariadoMap] = await Promise.all([
     listWeekKeys(),
     week ? getWeeklyReport(week) : getLatestReport(),
     getVendedores(),
     auth(),
+    getAsalariadoData().catch(() => new Map()),
   ])
 
   if (!report) {
@@ -49,13 +51,18 @@ export default async function HorasPage({
 
   const salariadosForNomina = enriched
     .filter(e => e.salesRole && JOB_TITLE_MAP[e.salesRole])
-    .map(e => ({
-      name:         e.name,
-      email:        e.email,
-      jobTitle:     JOB_TITLE_MAP[e.salesRole!],
-      horasWorked:  e.horasSinACO,
-      metHoursAuto: e.horasSinACO >= 40,
-    }))
+    .map(e => {
+      const rd = asalariadoMap.get(e.email.toLowerCase())
+      return {
+        name:            e.name,
+        email:           e.email,
+        jobTitle:        JOB_TITLE_MAP[e.salesRole!],
+        horasWorked:     e.horasSinACO,
+        metHoursAuto:    e.horasSinACO >= 40,
+        hireDate:        rd?.hireDate        ?? null,
+        terminationDate: rd?.terminationDate ?? null,
+      }
+    })
     .sort((a, b) => a.name.localeCompare(b.name))
 
   return (

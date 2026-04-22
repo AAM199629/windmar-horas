@@ -8,6 +8,8 @@ export interface SalariadoForNomina {
   jobTitle: string
   horasWorked: number
   metHoursAuto: boolean
+  hireDate: string | null
+  terminationDate: string | null
 }
 
 interface EntryState {
@@ -49,13 +51,13 @@ export default function NominaSection({ weekKey, weekStart, weekEnd, salaried }:
         jobTitle:         s.jobTitle,
         horasWorked:      s.horasWorked,
         metHoursAuto:     s.metHoursAuto,
-        hireDate:         sv?.hireDate          ?? '',
-        metHoursOverride: sv?.metHoursOverride  ?? null,
-        sickHours:        sv?.sickHours         ?? 0,
-        vacationHours:    sv?.vacationHours      ?? 0,
-        paid:             sv?.paid              ?? s.metHoursAuto,
-        comments:         sv?.comments          ?? '',
-        terminationDate:  sv?.terminationDate   ?? '',
+        hireDate:         sv?.hireDate         ?? s.hireDate        ?? '',
+        metHoursOverride: sv?.metHoursOverride ?? null,
+        sickHours:        sv?.sickHours        ?? 0,
+        vacationHours:    sv?.vacationHours    ?? 0,
+        paid:             sv?.paid             ?? s.metHoursAuto,
+        comments:         sv?.comments         ?? '',
+        terminationDate:  sv?.terminationDate  ?? s.terminationDate ?? '',
       }
     }
     return init
