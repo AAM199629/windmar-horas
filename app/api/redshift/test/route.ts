@@ -8,15 +8,33 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const TARGET_TABLES = [
+    { schema: 'dw_zoho', table: 'dim_sales_team_member' },
+    { schema: 'dw_zoho', table: 'fact_sales_performance' },
+    { schema: 'dwh',     table: 'fact_deals' },
+    { schema: 'dwh',     table: 'dim_lead' },
+  ]
+
   try {
     const pool = getRedshiftPool()
-    const { rows } = await pool.query(`
-      SELECT table_schema, table_name
-      FROM information_schema.tables
-      WHERE table_schema NOT IN ('pg_catalog', 'information_schema')
-      ORDER BY table_schema, table_name
-    `)
-    return NextResponse.json({ tables: rows })
+    const result: Record<string, any> = {}
+
+    for (const { schema, table } of TARGET_TABLES) {
+      const { rows: cols } = await pool.query(`
+        SELECT column_name, data_type
+        FROM information_schema.columns
+        WHERE table_schema = $1 AND table_name = $2
+        ORDER BY ordinal_position
+      `, [schema, table])
+
+      const { rows: sample } = await pool.query(
+        `SELECT * FROM "${schema}"."${table}" LIMIT 2`
+      )
+
+      result[`${schema}.${table}`] = { columns: cols, sample }
+    }
+
+    return NextResponse.json(result)
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
