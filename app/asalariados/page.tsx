@@ -2,8 +2,9 @@ import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { getVentasRows, getVentasUploadedAt, getAllComunicados } from '@/lib/asalariados-kv'
 import { getVendedores } from '@/lib/smartsheet'
+import { getActiveAsalariados } from '@/lib/redshift'
 import {
-  isEmpleadoRole, isActiveSupervisor,
+  isActiveSupervisor,
   calcMonthMetrics, getRecentMonths,
   calcConsecutiveMisses, pendingComunicado,
 } from '@/lib/ventas'
@@ -30,67 +31,50 @@ export default async function AsalariadosPage() {
   const role = (session?.user as any)?.role
   if (!session || (role !== 'admin' && role !== 'supervisor')) redirect('/')
 
-  const [ventasRows, uploadedAt, comunicados, vendedores] = await Promise.all([
+  const [ventasRows, uploadedAt, comunicados, vendedores, activeAsalariados] = await Promise.all([
     getVentasRows(),
     getVentasUploadedAt(),
     getAllComunicados(),
     getVendedores(),
+    getActiveAsalariados().catch(() => [] as Awaited<ReturnType<typeof getActiveAsalariados>>),
   ])
 
   const comunicadoMap = new Map<string, ComunicadoRecord>(
     comunicados.map(c => [c.nombre.toLowerCase(), c])
   )
 
-  // Build vendedor lookup by name (lowercase) — primary match key
-  const vendedorByName = new Map(
-    vendedores
-      .filter(v => v.name)
-      .map(v => [v.name.toLowerCase(), v])
+  // Smartsheet lookup for supervisorRegional (Redshift doesn't have this yet)
+  const vendedorByEmail = new Map(
+    vendedores.filter(v => v.email).map(v => [v.email!.toLowerCase(), v])
   )
 
   const recentMonths = getRecentMonths(6)
 
-  // Collect all unique empleado names from the ventas CSV
-  const nombreSet = new Set<string>()
-  for (const r of ventasRows) {
-    if (isEmpleadoRole(r.salesRole)) nombreSet.add(r.salesTeamName)
-  }
-  // Also include empleados from vendedores who might have 0 sales
-  for (const v of vendedores) {
-    if (isEmpleadoRole(v.salesRole ?? '')) nombreSet.add(v.name)
-  }
-
   const asalariados: AsalariadoData[] = []
 
-  for (const nombre of nombreSet) {
-    // Match to vendedor for metadata
-    const vend = vendedorByName.get(nombre.toLowerCase())
-    const salesRole  = vend?.salesRole ?? ventasRows.find(r => r.salesTeamName.toLowerCase() === nombre.toLowerCase())?.salesRole ?? ''
-
-    if (!isEmpleadoRole(salesRole)) continue
-
+  for (const emp of activeAsalariados) {
+    // Get supervisorRegional from Smartsheet by email
+    const vend = vendedorByEmail.get(emp.email)
     const supervisor = vend?.supervisorRegional ?? null
-    // Only include employees with an active supervisor (or those in the ventas CSV with a known role)
-    // If supervisor is set but not in the active list → treat as no region (still show, just no grouping)
     const effectiveSupervisor = isActiveSupervisor(supervisor) ? supervisor : null
 
     const months = recentMonths.map(({ year, month }) =>
-      calcMonthMetrics(ventasRows, nombre, year, month)
+      calcMonthMetrics(ventasRows, emp.fullName, year, month)
     )
 
-    const consecutive   = calcConsecutiveMisses(months)
-    const { status }    = pendingComunicado(consecutive)
-    const approved      = comunicadoMap.get(nombre.toLowerCase()) ?? null
+    const consecutive = calcConsecutiveMisses(months)
+    const { status }  = pendingComunicado(consecutive)
+    const approved    = comunicadoMap.get(emp.fullName.toLowerCase()) ?? null
 
     asalariados.push({
-      nombre,
-      email:             vend?.email ?? null,
-      salesRole,
+      nombre:             emp.fullName,
+      email:              emp.email,
+      salesRole:          emp.salesRole,
       supervisorRegional: effectiveSupervisor,
-      ciudad:            vend?.ciudad ?? null,
+      ciudad:             emp.ciudad ?? vend?.ciudad ?? null,
       months,
       consecutive,
-      pendingStatus:     status,
+      pendingStatus:      status,
       approved,
     })
   }

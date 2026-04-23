@@ -46,3 +46,38 @@ export async function getAsalariadoData(): Promise<Map<string, AsalariadoRedshif
   }
   return map
 }
+
+export interface ActiveAsalariado {
+  email: string
+  fullName: string
+  salesRole: string
+  ciudad: string | null
+}
+
+export async function getActiveAsalariados(): Promise<ActiveAsalariado[]> {
+  const pool = getRedshiftPool()
+  const { rows } = await pool.query(`
+    SELECT
+      LOWER(email)  AS email,
+      full_name,
+      sales_role,
+      ciudad
+    FROM dw_zoho.dim_sales_team_member
+    WHERE sales_role = ANY($1)
+      AND status = 'Activo'
+      AND empleado_consultor_start_date IS NOT NULL
+      AND (
+        consultor_asalariado_end_date IS NULL
+        OR empleado_consultor_start_date > consultor_asalariado_end_date
+      )
+      AND email IS NOT NULL
+    ORDER BY full_name
+  `, [SALARIED_ROLES])
+
+  return rows.map(r => ({
+    email:     r.email,
+    fullName:  r.full_name,
+    salesRole: r.sales_role,
+    ciudad:    r.ciudad ?? null,
+  }))
+}
