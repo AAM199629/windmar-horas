@@ -83,7 +83,7 @@ export async function getVentasFromRedshift(): Promise<VentaRow[]> {
     JOIN dwh.dim_staff ds
       ON ds.id_staff = fd.id_staff AND ds.is_current = true
     LEFT JOIN dw_zoho.dim_sales_team_member stm
-      ON LOWER(stm.email) = LOWER(ds.sale_rep_email) AND stm.is_current = true
+      ON LOWER(stm.email) = LOWER(ds.sale_rep_email)
     JOIN dwh.dim_profiles dp
       ON dp.id_profile = fd.id_profile
     JOIN dwh.dim_status_reason dsr
