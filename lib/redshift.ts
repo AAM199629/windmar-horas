@@ -1,4 +1,5 @@
 import { Pool } from 'pg'
+import type { VentaRow } from './ventas'
 
 let pool: Pool | null = null
 
@@ -52,6 +53,55 @@ export interface ActiveAsalariado {
   fullName: string
   salesRole: string
   ciudad: string | null
+}
+
+export async function getVentasFromRedshift(): Promise<VentaRow[]> {
+  const pool = getRedshiftPool()
+
+  const lookbackDate = new Date()
+  lookbackDate.setMonth(lookbackDate.getMonth() - 12)
+  const lookback = lookbackDate.toISOString().slice(0, 10)
+
+  const { rows } = await pool.query(`
+    SELECT DISTINCT
+      COALESCE(stm.full_name, ds.sale_rep_email)              AS sales_team_name,
+      TO_CHAR(fd.closing_date, 'YYYY-MM-DD')                  AS closing_date,
+      CASE WHEN dfl.cdbg_number IS NOT NULL THEN 'CDBG' ELSE '' END AS finance_company,
+      COALESCE(TO_CHAR(dt.installation_completion_date, 'YYYY-MM-DD'), '') AS installation_completion_date,
+      dp.pipeline
+    FROM dwh.fact_deals fd
+    JOIN dwh.dim_staff ds
+      ON ds.id_staff = fd.id_staff AND ds.is_current = true
+    LEFT JOIN dw_zoho.dim_sales_team_member stm
+      ON LOWER(stm.email) = LOWER(ds.sale_rep_email) AND stm.is_current = true
+    JOIN dwh.dim_profiles dp
+      ON dp.id_profile = fd.id_profile
+    JOIN dwh.dim_status_reason dsr
+      ON dsr.id_status_reason = fd.id_status_reason AND dsr.is_current = true
+    JOIN dwh.dim_finance_legal dfl
+      ON dfl.id_finance_legal = fd.id_finance_legal AND dfl.is_current = true
+    LEFT JOIN dwh.dim_timeline dt
+      ON dt.zoho_deal_id = fd.zoho_deal_id AND dt.is_current = true
+    WHERE ds.sale_rep_email IS NOT NULL
+      AND dsr.cancellation_reason IS NULL
+      AND dsr.on_hold_status IS NULL
+      AND fd.closing_date >= $1
+  `, [lookback])
+
+  return rows.map(r => ({
+    salesTeamName:              r.sales_team_name ?? '',
+    salesRole:                  '',
+    closingDate:                r.closing_date ?? '',
+    cancellationDate:           '',
+    onHoldStatus:               '',
+    financeCompany:             r.finance_company ?? '',
+    installationCompletionDate: r.installation_completion_date ?? '',
+    pipeline:                   r.pipeline ?? '',
+    productSold:                r.pipeline ?? '',
+    salesRepAssistTrainee:      '',
+    recruitedBy:                '',
+    traineeSales:               '',
+  }))
 }
 
 export async function getActiveAsalariados(): Promise<ActiveAsalariado[]> {

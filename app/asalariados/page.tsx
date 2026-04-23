@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
-import { getVentasRows, getVentasUploadedAt, getAllComunicados } from '@/lib/asalariados-kv'
+import { getAllComunicados } from '@/lib/asalariados-kv'
 import { getVendedores } from '@/lib/smartsheet'
-import { getActiveAsalariados } from '@/lib/redshift'
+import { getActiveAsalariados, getVentasFromRedshift } from '@/lib/redshift'
 import {
   isActiveSupervisor,
   calcMonthMetrics, getRecentMonths,
@@ -31,9 +31,8 @@ export default async function AsalariadosPage() {
   const role = (session?.user as any)?.role
   if (!session || (role !== 'admin' && role !== 'supervisor')) redirect('/')
 
-  const [ventasRows, uploadedAt, comunicados, vendedores, activeAsalariados] = await Promise.all([
-    getVentasRows(),
-    getVentasUploadedAt(),
+  const [ventasRows, comunicados, vendedores, activeAsalariados] = await Promise.all([
+    getVentasFromRedshift().catch(() => []),
     getAllComunicados(),
     getVendedores(),
     getActiveAsalariados().catch(() => [] as Awaited<ReturnType<typeof getActiveAsalariados>>),
@@ -90,11 +89,9 @@ export default async function AsalariadosPage() {
           <p className="text-slate-500 text-sm mt-0.5">
             Seguimiento de metas y comunicados — Empleados directos
           </p>
-          {uploadedAt && (
-            <p className="text-xs text-slate-400 mt-0.5">
-              Datos de ventas: {new Date(uploadedAt).toLocaleDateString('es-PR', { dateStyle: 'medium' })}
-            </p>
-          )}
+          <p className="text-xs text-slate-400 mt-0.5">
+            Datos de ventas en vivo · Redshift
+          </p>
         </div>
       </div>
       <AsalariadosClient
