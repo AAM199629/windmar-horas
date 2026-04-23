@@ -5,7 +5,7 @@ export async function GET() {
   const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/zoho/callback`
 
   const url = `https://accounts.zoho.com/oauth/v2/auth?` +
-    `scope=ZohoCRM.modules.READ&` +
+    `scope=ZohoCRM.modules.ALL,ZohoCRM.settings.modules.READ&` +
     `client_id=${clientId}&` +
     `response_type=code&` +
     `access_type=offline&` +
