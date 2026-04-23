@@ -53,6 +53,7 @@ export interface ActiveAsalariado {
   fullName: string
   salesRole: string
   ciudad: string | null
+  hireDate: string | null
 }
 
 export async function getVentasFromRedshift(): Promise<VentaRow[]> {
@@ -121,7 +122,8 @@ export async function getActiveAsalariados(): Promise<ActiveAsalariado[]> {
       LOWER(email)  AS email,
       full_name,
       sales_role,
-      ciudad
+      ciudad,
+      TO_CHAR(empleado_consultor_start_date, 'YYYY-MM-DD') AS hire_date
     FROM dw_zoho.dim_sales_team_member
     WHERE sales_role = ANY($1)
       AND status = 'Activo'
@@ -139,5 +141,6 @@ export async function getActiveAsalariados(): Promise<ActiveAsalariado[]> {
     fullName:  r.full_name,
     salesRole: r.sales_role,
     ciudad:    r.ciudad ?? null,
+    hireDate:  r.hire_date ?? null,
   }))
 }

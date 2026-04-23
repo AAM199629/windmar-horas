@@ -16,6 +16,17 @@ const COMUNICADO_LABEL: Record<string, { label: string; color: string }> = {
 function fmt(n: number) { return n % 1 === 0 ? String(n) : n.toFixed(1) }
 
 function MonthBar({ m }: { m: MonthMetrics }) {
+  if (m.isGrace) {
+    return (
+      <div className="flex flex-col items-center gap-1 w-10" title="Mes de gracia">
+        <span className="text-[10px] text-slate-300">G</span>
+        <div className="w-full h-14 bg-slate-100 rounded-sm overflow-hidden flex flex-col justify-end">
+          <div style={{ height: '12%', background: '#cbd5e1' }} className="w-full rounded-sm" />
+        </div>
+        <span className="text-[9px] text-slate-400">{MONTH_NAMES[m.month - 1]}</span>
+      </div>
+    )
+  }
   const pct = Math.min((m.total / m.meta) * 100, 100)
   const color = m.met ? '#00A651' : m.total > 0 ? '#E88B0C' : '#ef4444'
   return (
@@ -173,6 +184,14 @@ function AsalariadoCard({
         {/* Month mini-bars (hidden on small screens) */}
         <div className="hidden lg:flex items-end gap-1 h-10">
           {emp.months.map((m, i) => {
+            if (m.isGrace) {
+              return (
+                <div key={i} title={`${MONTH_NAMES[m.month - 1]} ${m.year}: Mes de gracia`}
+                  className="w-4 h-full bg-slate-100 rounded-sm overflow-hidden flex flex-col justify-end">
+                  <div style={{ height: '12%', background: '#cbd5e1' }} className="w-full" />
+                </div>
+              )
+            }
             const pct = Math.min((m.total / m.meta) * 100, 100)
             const color = m.met ? '#00A651' : m.total > 0 ? '#E88B0C' : '#ef4444'
             return (
@@ -221,21 +240,34 @@ function AsalariadoCard({
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {emp.months.map((m, i) => (
-                  <tr key={i} className={m.met ? '' : 'bg-red-50/50'}>
+                  <tr key={i} className={m.isGrace ? 'bg-slate-50/60' : m.met ? '' : 'bg-red-50/50'}>
                     <td className="py-1.5 font-medium text-slate-700">{MONTH_NAMES[m.month - 1]} {m.year}</td>
-                    <td className="py-1.5 text-right">{m.solar}</td>
-                    <td className="py-1.5 text-right">{m.cdbg}</td>
-                    <td className="py-1.5 text-right">{m.water > 0 ? `${m.water} (${fmt(m.water * 0.5)})` : '—'}</td>
-                    <td className="py-1.5 text-right">{m.anker > 0 ? `${m.anker} (${fmt(m.anker * 0.5)})` : '—'}</td>
-                    <td className="py-1.5 text-right">{m.asistidas > 0 ? `${m.asistidas} (${fmt(m.asistidas * 0.5)})` : '—'}</td>
-                    <td className="py-1.5 text-right font-bold">{fmt(m.total)}</td>
-                    <td className="py-1.5 text-right text-slate-400">{m.meta}</td>
-                    <td className="py-1.5 text-right">{m.met ? '✓' : <span className="text-red-500">✗</span>}</td>
+                    {m.isGrace ? (
+                      <td colSpan={8} className="py-1.5 text-slate-400 text-xs italic">Mes de gracia — no cuenta para comunicados</td>
+                    ) : (
+                      <>
+                        <td className="py-1.5 text-right">{m.solar}</td>
+                        <td className="py-1.5 text-right">{m.cdbg}</td>
+                        <td className="py-1.5 text-right">{m.water > 0 ? `${m.water} (${fmt(m.water * 0.5)})` : '—'}</td>
+                        <td className="py-1.5 text-right">{m.anker > 0 ? `${m.anker} (${fmt(m.anker * 0.5)})` : '—'}</td>
+                        <td className="py-1.5 text-right">{m.asistidas > 0 ? `${m.asistidas} (${fmt(m.asistidas * 0.5)})` : '—'}</td>
+                        <td className="py-1.5 text-right font-bold">{fmt(m.total)}</td>
+                        <td className="py-1.5 text-right text-slate-400">{m.meta}</td>
+                        <td className="py-1.5 text-right">{m.met ? '✓' : <span className="text-red-500">✗</span>}</td>
+                      </>
+                    )}
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+
+          {/* Hire date */}
+          {emp.hireDate && (
+            <p className="text-xs text-slate-400 mt-3">
+              Inicio como asalariado: <span className="font-semibold text-slate-600">{emp.hireDate}</span>
+            </p>
+          )}
 
           {/* Comunicado history */}
           {emp.approved && (emp.approved.memo1 || emp.approved.memo2 || emp.approved.memo3) && (

@@ -20,6 +20,7 @@ export interface AsalariadoData {
   salesRole: string
   supervisorRegional: string | null
   ciudad: string | null
+  hireDate: string | null
   months: MonthMetrics[]
   consecutive: number
   pendingStatus: 'none' | 'comunicado1' | 'comunicado2' | 'terminacion'
@@ -58,7 +59,7 @@ export default async function AsalariadosPage() {
     const effectiveSupervisor = isActiveSupervisor(supervisor) ? supervisor : null
 
     const months = recentMonths.map(({ year, month }) =>
-      calcMonthMetrics(ventasRows, emp.fullName, year, month)
+      calcMonthMetrics(ventasRows, emp.fullName, year, month, emp.hireDate)
     )
 
     const consecutive = calcConsecutiveMisses(months)
@@ -71,6 +72,7 @@ export default async function AsalariadosPage() {
       salesRole:          emp.salesRole,
       supervisorRegional: effectiveSupervisor,
       ciudad:             emp.ciudad ?? vend?.ciudad ?? null,
+      hireDate:           emp.hireDate,
       months,
       consecutive,
       pendingStatus:      status,

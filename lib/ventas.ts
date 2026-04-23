@@ -49,6 +49,7 @@ export interface MonthMetrics {
   total: number      // computed weighted total
   meta: number       // 5 (Apr–Sep) | 3 (Oct–Mar)
   met: boolean
+  isGrace: boolean   // hire month + any month before hire → not counted toward comunicados
 }
 
 export interface ComunicadoPending {
@@ -181,47 +182,62 @@ export function calcMonthMetrics(
   nombre: string,
   year: number,
   month: number,
+  hireDate?: string | null,
 ): MonthMetrics {
-  const nameLower = nombre.toLowerCase()
+  const meta = getMetaForMonth(month)
+
+  // Grace: hire month itself and any month before it are exempt (not counted as misses)
+  if (hireDate) {
+    const hire = parseDate(hireDate)
+    if (hire) {
+      const hy = hire.getFullYear()
+      const hm = hire.getMonth() + 1
+      if (year < hy || (year === hy && month <= hm)) {
+        return { year, month, solar: 0, cdbg: 0, water: 0, anker: 0, asistidas: 0, total: 0, meta, met: true, isGrace: true }
+      }
+    }
+  }
+
+  const nameLower  = nombre.toLowerCase()
+  const hireParsed = hireDate ? parseDate(hireDate) : null
   let solar = 0, cdbg = 0, water = 0, anker = 0, asistidas = 0
 
   for (const row of rows) {
     if (!isActive(row)) continue
 
-    const isOwn      = row.salesTeamName.toLowerCase() === nameLower
-    const isAssist   = row.salesRepAssistTrainee.toLowerCase() === nameLower
+    const isOwn       = row.salesTeamName.toLowerCase() === nameLower
+    const isAssist    = row.salesRepAssistTrainee.toLowerCase() === nameLower
     const isRecruiter = row.recruitedBy.toLowerCase() === nameLower
 
     if (!isOwn && !isAssist && !isRecruiter) continue
 
     if (isCDBG(row)) {
-      // CDBG: counted when installation completes
       if (isOwn) {
         const d = parseDate(row.installationCompletionDate)
-        if (d && d.getFullYear() === year && d.getMonth() + 1 === month) cdbg++
+        if (d && d.getFullYear() === year && d.getMonth() + 1 === month) {
+          if (!hireParsed || d >= hireParsed) cdbg++
+        }
       }
       continue
     }
 
     const d = parseDate(row.closingDate)
     if (!d || d.getFullYear() !== year || d.getMonth() + 1 !== month) continue
+    if (hireParsed && d < hireParsed) continue  // skip ventas before hire date
 
     if (isOwn) {
-      if (isWater(row))       water++
-      else if (isAnker(row))  anker++
+      if (isWater(row))             water++
+      else if (isAnker(row))        anker++
       else if (isSolarRoofing(row)) solar++
     } else {
-      // Employee assisted a trainee sale (as recruiter or sales assistant)
-      // Only count if this is clearly a trainee-assisted sale
       const hasTraineeSales = !!row.traineeSales
       if (isAssist && hasTraineeSales) asistidas++
-      if (isRecruiter && !row.salesRepAssistTrainee) asistidas++ // recruiter gets credit if no explicit assistant
+      if (isRecruiter && !row.salesRepAssistTrainee) asistidas++
     }
   }
 
   const total = solar + cdbg + water * 0.5 + anker * 0.5 + asistidas * 0.5
-  const meta  = getMetaForMonth(month)
-  return { year, month, solar, cdbg, water, anker, asistidas, total, meta, met: total >= meta }
+  return { year, month, solar, cdbg, water, anker, asistidas, total, meta, met: total >= meta, isGrace: false }
 }
 
 // Build the last N months relative to today
@@ -240,6 +256,7 @@ export function getRecentMonths(n = 6): Array<{ year: number; month: number }> {
 export function calcConsecutiveMisses(months: MonthMetrics[]): number {
   let count = 0
   for (let i = months.length - 1; i >= 0; i--) {
+    if (months[i].isGrace) break  // reached grace/pre-hire period — stop counting
     if (!months[i].met) count++
     else break
   }
