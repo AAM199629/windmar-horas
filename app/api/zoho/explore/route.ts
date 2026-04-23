@@ -34,52 +34,64 @@ export async function GET(req: Request) {
     const base  = `https://www.${dc}/crm/v7`
 
     if (moduleName) {
-      // Get fields for the specified module
+      // Get fields via settings endpoint
       const fieldsRes  = await fetch(`${base}/settings/fields?module=${moduleName}`, {
         headers: { Authorization: `Zoho-oauthtoken ${token}` },
       })
       const fieldsData = await fieldsRes.json()
 
       // Also fetch first record to see sample data
-      const recRes  = await fetch(`${base}/${moduleName}?per_page=3`, {
+      const recRes  = await fetch(`${base}/${moduleName}?per_page=2`, {
         headers: { Authorization: `Zoho-oauthtoken ${token}` },
       })
       const recData = await recRes.json()
 
+      // Extract field names + api_names from the response
+      const fieldList = (fieldsData.fields ?? []).map((f: any) => ({
+        label:    f.field_label,
+        api_name: f.api_name,
+        type:     f.data_type,
+      }))
+
       return NextResponse.json({
-        module:       moduleName,
-        fields_status: fieldsRes.status,
-        fields:       fieldsData,
+        module:         moduleName,
+        fields_status:  fieldsRes.status,
+        field_list:     fieldList,
+        fields_raw:     fieldsData,
         records_status: recRes.status,
         sample_records: recData,
       })
     }
 
-    // No module specified — list all modules to find Sales Team
+    // No module specified — probe likely Sales Team module names directly
+    const candidates = [
+      'Sales_Team_Members',
+      'Sales_Team',
+      'Team_Members',
+      'SalesTeam',
+      'Vendedores',
+      'Equipo_de_Ventas',
+    ]
+
+    const results: Record<string, any> = {}
+    await Promise.all(candidates.map(async (name) => {
+      const r = await fetch(`${base}/${name}?per_page=1`, {
+        headers: { Authorization: `Zoho-oauthtoken ${token}` },
+      })
+      const d = await r.json()
+      results[name] = { status: r.status, code: d.code ?? null, data_count: (d.data ?? []).length }
+    }))
+
+    // Also try the settings/modules endpoint (may fail if scope is limited)
     const modulesRes  = await fetch(`${base}/settings/modules`, {
       headers: { Authorization: `Zoho-oauthtoken ${token}` },
     })
-    const modulesData = await modulesRes.json()
-
-    const modules = (modulesData.modules ?? []).map((m: any) => ({
-      api_name:    m.api_name,
-      module_name: m.module_name,
-      plural_label: m.plural_label,
-    }))
-
-    // Filter to likely candidates
-    const salesRelated = modules.filter((m: any) =>
-      m.api_name?.toLowerCase().includes('sales') ||
-      m.plural_label?.toLowerCase().includes('sales') ||
-      m.module_name?.toLowerCase().includes('sales') ||
-      m.api_name?.toLowerCase().includes('team') ||
-      m.plural_label?.toLowerCase().includes('team')
-    )
+    const modulesRaw = await modulesRes.json()
 
     return NextResponse.json({
-      total_modules: modules.length,
-      sales_related_modules: salesRelated,
-      all_modules: modules,
+      probe_results:   results,
+      settings_modules_status: modulesRes.status,
+      settings_modules_raw:    modulesRaw,
     })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
