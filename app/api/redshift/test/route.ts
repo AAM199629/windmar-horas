@@ -11,6 +11,10 @@ export async function GET() {
   const TARGET_TABLES = [
     { schema: 'dwh', table: 'dim_staff' },
     { schema: 'dwh', table: 'dim_profiles' },
+    { schema: 'dwh', table: 'dim_status_reason' },
+    { schema: 'dwh', table: 'dim_finance_legal' },
+    { schema: 'dwh', table: 'dim_operations_details' },
+    { schema: 'dwh', table: 'dim_product_sale' },
   ]
 
   try {
