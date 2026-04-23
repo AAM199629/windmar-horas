@@ -63,35 +63,35 @@ export async function GET(req: Request) {
       })
     }
 
-    // No module specified — probe likely Sales Team module names directly
-    const candidates = [
-      'Sales_Team_Members',
-      'Sales_Team',
-      'Team_Members',
-      'SalesTeam',
-      'Vendedores',
-      'Equipo_de_Ventas',
-    ]
-
-    const results: Record<string, any> = {}
-    await Promise.all(candidates.map(async (name) => {
-      const r = await fetch(`${base}/${name}?per_page=1`, {
+    // Probe CustomModule33 (Sales Team module identified from Zoho URL)
+    const [recRes, fieldsRes] = await Promise.all([
+      fetch(`${base}/CustomModule33?per_page=2`, {
         headers: { Authorization: `Zoho-oauthtoken ${token}` },
-      })
-      const d = await r.json()
-      results[name] = { status: r.status, code: d.code ?? null, data_count: (d.data ?? []).length }
+      }),
+      fetch(`${base}/settings/fields?module=CustomModule33`, {
+        headers: { Authorization: `Zoho-oauthtoken ${token}` },
+      }),
+    ])
+
+    const recData    = await recRes.json()
+    const fieldsData = await fieldsRes.json()
+
+    const fieldList = (fieldsData.fields ?? []).map((f: any) => ({
+      label:    f.field_label,
+      api_name: f.api_name,
+      type:     f.data_type,
     }))
 
-    // Also try the settings/modules endpoint (may fail if scope is limited)
-    const modulesRes  = await fetch(`${base}/settings/modules`, {
-      headers: { Authorization: `Zoho-oauthtoken ${token}` },
-    })
-    const modulesRaw = await modulesRes.json()
+    // Also list all keys present in the first sample record
+    const sampleKeys = (recData.data ?? []).map((r: any) => Object.keys(r))
 
     return NextResponse.json({
-      probe_results:   results,
-      settings_modules_status: modulesRes.status,
-      settings_modules_raw:    modulesRaw,
+      module:          'CustomModule33',
+      records_status:  recRes.status,
+      fields_status:   fieldsRes.status,
+      field_list:      fieldList,
+      sample_keys:     sampleKeys,
+      sample_records:  recData.data ?? [],
     })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
