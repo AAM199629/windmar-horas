@@ -64,7 +64,17 @@ export async function getVentasFromRedshift(): Promise<VentaRow[]> {
 
   const { rows } = await pool.query(`
     SELECT DISTINCT
-      COALESCE(stm.full_name, ds.sale_rep_email)              AS sales_team_name,
+      -- Own deal: trainee_sales is null → consultant is the deal owner
+      -- Assisted deal: trainee_sales is set → sale_rep_email is the assist consultant
+      CASE
+        WHEN ds.trainee_sales IS NULL THEN COALESCE(stm.full_name, ds.sale_rep_email)
+        ELSE ''
+      END AS sales_team_name,
+      CASE
+        WHEN ds.trainee_sales IS NOT NULL THEN COALESCE(stm.full_name, ds.sale_rep_email)
+        ELSE ''
+      END AS sales_rep_assist_trainee,
+      ds.trainee_sales,
       TO_CHAR(fd.closing_date, 'YYYY-MM-DD')                  AS closing_date,
       CASE WHEN dfl.cdbg_number IS NOT NULL THEN 'CDBG' ELSE '' END AS finance_company,
       COALESCE(TO_CHAR(dt.installation_completion_date, 'YYYY-MM-DD'), '') AS installation_completion_date,
@@ -98,9 +108,9 @@ export async function getVentasFromRedshift(): Promise<VentaRow[]> {
     installationCompletionDate: r.installation_completion_date ?? '',
     pipeline:                   r.pipeline ?? '',
     productSold:                r.pipeline ?? '',
-    salesRepAssistTrainee:      '',
+    salesRepAssistTrainee:      r.sales_rep_assist_trainee ?? '',
     recruitedBy:                '',
-    traineeSales:               '',
+    traineeSales:               r.trainee_sales ?? '',
   }))
 }
 
