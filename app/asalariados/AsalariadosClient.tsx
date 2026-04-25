@@ -262,6 +262,24 @@ function AsalariadoCard({
             </table>
           </div>
 
+          {/* Leads / Citas / Orientaciones */}
+          {(emp.leads != null || emp.citas != null || emp.orientaciones != null) && (
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              <div className="bg-blue-50 rounded-lg px-3 py-2 text-center">
+                <p className="text-[10px] font-semibold text-blue-500 uppercase tracking-wide">Leads</p>
+                <p className="text-lg font-bold text-blue-700">{emp.leads ?? '—'}</p>
+              </div>
+              <div className="bg-indigo-50 rounded-lg px-3 py-2 text-center">
+                <p className="text-[10px] font-semibold text-indigo-500 uppercase tracking-wide">Citas</p>
+                <p className="text-lg font-bold text-indigo-700">{emp.citas ?? '—'}</p>
+              </div>
+              <div className="bg-violet-50 rounded-lg px-3 py-2 text-center">
+                <p className="text-[10px] font-semibold text-violet-500 uppercase tracking-wide">Orientaciones</p>
+                <p className="text-lg font-bold text-violet-700">{emp.orientaciones ?? '—'}</p>
+              </div>
+            </div>
+          )}
+
           {/* Hire date */}
           {emp.hireDate && (
             <p className="text-xs text-slate-400 mt-3">
@@ -421,9 +439,18 @@ export default function AsalariadosClient({
         </select>
         {(search || roleFilter || statusFilter) && (
           <button onClick={() => { setSearch(''); setRoleFilter(''); setStatusFilter('') }}
-            className="text-xs text-slate-400 hover:text-red-500 transition ml-auto">
+            className="text-xs text-slate-400 hover:text-red-500 transition">
             ✕ Limpiar
           </button>
+        )}
+        {isAdmin && (
+          <a
+            href="/api/asalariados/export"
+            className="ml-auto flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white rounded-lg transition hover:opacity-90"
+            style={{ background: '#00A651' }}
+          >
+            ↓ Exportar Excel
+          </a>
         )}
       </div>
 

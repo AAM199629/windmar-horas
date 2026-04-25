@@ -71,3 +71,79 @@ export function buildVendedorMap(vendedores: Vendedor[]): Map<string, Vendedor> 
   }
   return map
 }
+
+// ── Individual Follow Up sheet ────────────────────────────────────────────────
+
+const FU_SHEET_ID   = '8150231922567044'
+const FU_COL_NOMBRE = '7647964410734468'
+const FU_COL_EMAIL  = '5475470548461444'
+const FU_COL_LEADS  = '2018464876521348'
+const FU_COL_CITAS  = '222712743389060'
+const FU_COL_ORIENT = '2765184940435332'
+
+const FU_CACHE_KEY = 'horas:followup'
+const FU_CACHE_TTL = 60 * 60 * 6
+
+export interface FollowUpEntry {
+  nombre: string
+  email: string | null
+  leads: number | null
+  citas: number | null
+  orientaciones: number | null
+}
+
+function toNum(v: any): number | null {
+  if (v === null || v === undefined || v === '') return null
+  const n = Number(v)
+  return isNaN(n) ? null : n
+}
+
+function parseFollowUpRows(data: any): FollowUpEntry[] {
+  return (data.rows ?? []).map((row: any) => {
+    const cells: Record<string, any> = {}
+    for (const cell of row.cells ?? []) {
+      cells[String(cell.columnId)] = cell.displayValue ?? cell.value ?? null
+    }
+    return {
+      nombre:        String(cells[FU_COL_NOMBRE] ?? ''),
+      email:         cells[FU_COL_EMAIL] ? String(cells[FU_COL_EMAIL]).toLowerCase() : null,
+      leads:         toNum(cells[FU_COL_LEADS]),
+      citas:         toNum(cells[FU_COL_CITAS]),
+      orientaciones: toNum(cells[FU_COL_ORIENT]),
+    }
+  }).filter((e: FollowUpEntry) => e.nombre.trim())
+}
+
+export async function getIndividualFollowUpData(): Promise<Map<string, FollowUpEntry>> {
+  const cached = await redis.get<any>(FU_CACHE_KEY)
+  if (cached) {
+    const entries: FollowUpEntry[] = typeof cached === 'string' ? JSON.parse(cached) : cached
+    return buildFollowUpMap(entries)
+  }
+
+  const token = process.env.SMARTSHEET_API_TOKEN
+  if (!token) return new Map()
+
+  const url = `https://api.smartsheet.com/2.0/sheets/${FU_SHEET_ID}` +
+    `?columnIds=${FU_COL_NOMBRE},${FU_COL_EMAIL},${FU_COL_LEADS},${FU_COL_CITAS},${FU_COL_ORIENT}`
+
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    cache: 'no-store',
+  })
+  if (!res.ok) return new Map()
+
+  const data = await res.json()
+  const entries = parseFollowUpRows(data)
+  await redis.setex(FU_CACHE_KEY, FU_CACHE_TTL, JSON.stringify(entries))
+  return buildFollowUpMap(entries)
+}
+
+function buildFollowUpMap(entries: FollowUpEntry[]): Map<string, FollowUpEntry> {
+  const map = new Map<string, FollowUpEntry>()
+  for (const e of entries) {
+    if (e.email) map.set(e.email, e)
+    map.set(e.nombre.toLowerCase(), e)
+  }
+  return map
+}

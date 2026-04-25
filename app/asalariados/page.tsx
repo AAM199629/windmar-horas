@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { getAllComunicados } from '@/lib/asalariados-kv'
-import { getVendedores } from '@/lib/smartsheet'
+import { getVendedores, getIndividualFollowUpData } from '@/lib/smartsheet'
 import { getActiveAsalariados, getVentasFromRedshift } from '@/lib/redshift'
 import {
   isActiveSupervisor,
@@ -25,6 +25,9 @@ export interface AsalariadoData {
   consecutive: number
   pendingStatus: 'none' | 'comunicado1' | 'comunicado2' | 'terminacion'
   approved: ComunicadoRecord | null
+  leads: number | null
+  citas: number | null
+  orientaciones: number | null
 }
 
 export default async function AsalariadosPage() {
@@ -32,11 +35,12 @@ export default async function AsalariadosPage() {
   const role = (session?.user as any)?.role
   if (!session || (role !== 'admin' && role !== 'supervisor')) redirect('/')
 
-  const [ventasRows, comunicados, vendedores, activeAsalariados] = await Promise.all([
+  const [ventasRows, comunicados, vendedores, activeAsalariados, followUpMap] = await Promise.all([
     getVentasFromRedshift().catch(() => []),
     getAllComunicados(),
     getVendedores(),
     getActiveAsalariados().catch(() => [] as Awaited<ReturnType<typeof getActiveAsalariados>>),
+    getIndividualFollowUpData().catch(() => new Map()),
   ])
 
   const comunicadoMap = new Map<string, ComunicadoRecord>(
@@ -66,6 +70,8 @@ export default async function AsalariadosPage() {
     const { status }  = pendingComunicado(consecutive)
     const approved    = comunicadoMap.get(emp.fullName.toLowerCase()) ?? null
 
+    const fu = followUpMap.get(emp.email) ?? followUpMap.get(emp.fullName.toLowerCase()) ?? null
+
     asalariados.push({
       nombre:             emp.fullName,
       email:              emp.email,
@@ -77,6 +83,9 @@ export default async function AsalariadosPage() {
       consecutive,
       pendingStatus:      status,
       approved,
+      leads:              fu?.leads ?? null,
+      citas:              fu?.citas ?? null,
+      orientaciones:      fu?.orientaciones ?? null,
     })
   }
 
