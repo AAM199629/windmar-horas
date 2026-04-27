@@ -15,6 +15,15 @@ const MONTHS_ES = [
   'JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE',
 ]
 
+// "Juan Garcia Lopez" → "Garcia Lopez, Juan"
+function lastFirst(name: string): string {
+  const parts = name.trim().split(/\s+/)
+  if (parts.length <= 1) return name
+  const apellidos = parts.slice(-2).join(' ')
+  const nombres   = parts.slice(0, -2).join(' ')
+  return nombres ? `${apellidos}, ${nombres}` : apellidos
+}
+
 function formatDateTitle(iso: string) {
   const [, m, d] = iso.split('-')
   return { day: parseInt(d, 10), month: MONTHS_ES[parseInt(m, 10) - 1], year: iso.split('-')[0] }
@@ -101,7 +110,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ wee
       const empRow = ws.addRow([
         emp.hireDate || '',
         emp.jobTitle,
-        emp.name,
+        lastFirst(emp.name),
         met ? 'X' : '',
         emp.sickHours || '',
         emp.vacationHours || '',
@@ -131,7 +140,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ wee
     ac.alignment = { horizontal: 'center', vertical: 'middle' }
 
     for (const emp of withComments) {
-      const r = ws.addRow(['', emp.jobTitle, emp.name, emp.comments, '', '', '', emp.paid ? '' : 'Cancelado'])
+      const r = ws.addRow(['', emp.jobTitle, lastFirst(emp.name), emp.comments, '', '', '', emp.paid ? '' : 'Cancelado'])
       ws.mergeCells(`D${r.number}:G${r.number}`)
       r.height = 40
       r.getCell(4).alignment = { wrapText: true, vertical: 'middle' }
@@ -174,7 +183,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ wee
       const r = ws.addRow([
         t.terminationDate || '',
         t.jobTitle,
-        t.name,
+        lastFirst(t.name),
         tMet ? 'X' : '',
         t.sickHours || '',
         t.vacationHours || '',
