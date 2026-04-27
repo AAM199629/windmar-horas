@@ -54,6 +54,10 @@ export interface ActiveAsalariado {
   salesRole: string
   ciudad: string | null
   hireDate: string | null
+  memo1Date: string | null
+  memo2Date: string | null
+  memoLevel: number | null
+  terminacionDate: string | null
 }
 
 export async function getVentasFromRedshift(): Promise<VentaRow[]> {
@@ -123,7 +127,11 @@ export async function getActiveAsalariados(): Promise<ActiveAsalariado[]> {
       full_name,
       sales_role,
       ciudad,
-      TO_CHAR(empleado_consultor_start_date, 'YYYY-MM-DD') AS hire_date
+      TO_CHAR(empleado_consultor_start_date, 'YYYY-MM-DD') AS hire_date,
+      TO_CHAR(fecha_de_memo_1, 'YYYY-MM-DD')              AS memo_1_date,
+      TO_CHAR(fecha_de_memo_2, 'YYYY-MM-DD')              AS memo_2_date,
+      memo,
+      TO_CHAR(fecha_terminacion_asalariado, 'YYYY-MM-DD') AS terminacion_date
     FROM dw_zoho.dim_sales_team_member
     WHERE sales_role = ANY($1)
       AND status = 'Activo'
@@ -136,11 +144,18 @@ export async function getActiveAsalariados(): Promise<ActiveAsalariado[]> {
     ORDER BY full_name
   `, [SALARIED_ROLES])
 
-  return rows.map(r => ({
-    email:     r.email,
-    fullName:  r.full_name,
-    salesRole: r.sales_role,
-    ciudad:    r.ciudad ?? null,
-    hireDate:  r.hire_date ?? null,
-  }))
+  return rows.map(r => {
+    const lvl = r.memo ? parseInt(r.memo, 10) : NaN
+    return {
+      email:          r.email,
+      fullName:       r.full_name,
+      salesRole:      r.sales_role,
+      ciudad:         r.ciudad ?? null,
+      hireDate:       r.hire_date ?? null,
+      memo1Date:      r.memo_1_date ?? null,
+      memo2Date:      r.memo_2_date ?? null,
+      memoLevel:      isNaN(lvl) ? null : lvl,
+      terminacionDate: r.terminacion_date ?? null,
+    }
+  })
 }

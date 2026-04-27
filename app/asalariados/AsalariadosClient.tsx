@@ -65,13 +65,15 @@ function ApprovalModal({
   onClose: () => void
   onApprove: (nombre: string, status: string, memos: { memo1?: string; memo2?: string; memo3?: string }) => void
 }) {
-  const effectiveStatus = emp.approved?.status !== 'none' && emp.approved ? emp.approved.status : emp.pendingStatus
+  const effectiveStatus =
+    emp.redshiftStatus !== 'none' ? emp.redshiftStatus :
+    (emp.approved?.status && emp.approved.status !== 'none' ? emp.approved.status : emp.pendingStatus)
   const [status, setStatus] = useState<'none' | 'comunicado1' | 'comunicado2' | 'terminacion'>(
     effectiveStatus as 'none' | 'comunicado1' | 'comunicado2' | 'terminacion'
   )
-  const [memo1, setMemo1] = useState(emp.approved?.memo1 ?? '')
-  const [memo2, setMemo2] = useState(emp.approved?.memo2 ?? '')
-  const [memo3, setMemo3] = useState(emp.approved?.memo3 ?? '')
+  const [memo1, setMemo1] = useState(emp.approved?.memo1 ?? emp.memo1Date ?? '')
+  const [memo2, setMemo2] = useState(emp.approved?.memo2 ?? emp.memo2Date ?? '')
+  const [memo3, setMemo3] = useState(emp.approved?.memo3 ?? emp.terminacionDate ?? '')
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
@@ -148,10 +150,10 @@ function AsalariadoCard({
 }) {
   const [open, setOpen] = useState(false)
 
-  const displayStatus = emp.approved?.status && emp.approved.status !== 'none'
-    ? emp.approved.status
-    : emp.pendingStatus
-  const isPending = !emp.approved && emp.pendingStatus !== 'none'
+  const displayStatus =
+    emp.redshiftStatus !== 'none' ? emp.redshiftStatus :
+    (emp.approved?.status && emp.approved.status !== 'none' ? emp.approved.status : emp.pendingStatus)
+  const isPending = emp.pendingStatus !== 'none' && emp.redshiftStatus === 'none' && !emp.approved
 
   const lastMonth = emp.months[emp.months.length - 1]
 
@@ -287,22 +289,23 @@ function AsalariadoCard({
             </p>
           )}
 
-          {/* Comunicado history */}
-          {emp.approved && (emp.approved.memo1 || emp.approved.memo2 || emp.approved.memo3) && (
+          {/* Comunicado history — Redshift (Zoho) dates take priority over KV */}
+          {(emp.memo1Date || emp.memo2Date || emp.terminacionDate ||
+            (emp.approved && (emp.approved.memo1 || emp.approved.memo2 || emp.approved.memo3))) && (
             <div className="mt-3 flex flex-wrap gap-3">
-              {emp.approved.memo1 && (
+              {(emp.memo1Date || emp.approved?.memo1) && (
                 <span className="text-xs bg-amber-50 text-amber-700 px-2 py-1 rounded-lg border border-amber-200">
-                  Comunicado 1: {emp.approved.memo1}
+                  Comunicado 1: {emp.memo1Date || emp.approved?.memo1}
                 </span>
               )}
-              {emp.approved.memo2 && (
+              {(emp.memo2Date || emp.approved?.memo2) && (
                 <span className="text-xs bg-orange-50 text-orange-700 px-2 py-1 rounded-lg border border-orange-200">
-                  Comunicado 2: {emp.approved.memo2}
+                  Comunicado 2: {emp.memo2Date || emp.approved?.memo2}
                 </span>
               )}
-              {emp.approved.memo3 && (
+              {(emp.terminacionDate || emp.approved?.memo3) && (
                 <span className="text-xs bg-red-50 text-red-700 px-2 py-1 rounded-lg border border-red-200">
-                  Terminación: {emp.approved.memo3}
+                  Terminación: {emp.terminacionDate || emp.approved?.memo3}
                 </span>
               )}
             </div>
@@ -347,7 +350,9 @@ export default function AsalariadosClient({
   const filtered = useMemo(() => asalariados.filter(e => {
     if (roleFilter && e.salesRole !== roleFilter) return false
     if (statusFilter) {
-      const eff = localOverrides[e.nombre] ?? e.approved?.status ?? e.pendingStatus
+      const eff = localOverrides[e.nombre] ??
+        (e.redshiftStatus !== 'none' ? e.redshiftStatus :
+        (e.approved?.status && e.approved.status !== 'none' ? e.approved.status : e.pendingStatus))
       if (eff !== statusFilter) return false
     }
     if (search) {
@@ -374,7 +379,9 @@ export default function AsalariadosClient({
     return keys
   }, [grouped])
 
-  const totalPending = asalariados.filter(e => !e.approved && e.pendingStatus !== 'none').length
+  const totalPending = asalariados.filter(e =>
+    e.pendingStatus !== 'none' && e.redshiftStatus === 'none' && !e.approved
+  ).length
 
   async function handleApprove(
     nombre: string,
@@ -411,8 +418,11 @@ export default function AsalariadosClient({
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
         <Stat label="Empleados" value={filtered.length} />
         <Stat label="Cumplen meta" value={filtered.filter(e => e.months[e.months.length - 1].met).length} green />
-        <Stat label="Comunicados pendientes" value={filtered.filter(e => !e.approved && e.pendingStatus !== 'none').length} warn />
-        <Stat label="Con comunicado activo" value={filtered.filter(e => e.approved && e.approved.status !== 'none').length} />
+        <Stat label="Comunicados pendientes" value={filtered.filter(e => e.pendingStatus !== 'none' && e.redshiftStatus === 'none' && !e.approved).length} warn />
+        <Stat label="Con comunicado activo" value={filtered.filter(e => {
+          const eff = e.redshiftStatus !== 'none' ? e.redshiftStatus : (e.approved?.status ?? 'none')
+          return eff !== 'none'
+        }).length} />
       </div>
 
       {/* Filters */}
@@ -480,7 +490,11 @@ export default function AsalariadosClient({
                   {group.length} empleado{group.length !== 1 ? 's' : ''}
                 </span>
                 <span className="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full ml-1">
-                  {group.filter(e => e.pendingStatus !== 'none' || (e.approved && e.approved.status !== 'none')).length} con comunicado
+                  {group.filter(e => {
+                    const eff = e.redshiftStatus !== 'none' ? e.redshiftStatus :
+                      (e.approved?.status && e.approved.status !== 'none' ? e.approved.status : e.pendingStatus)
+                    return eff !== 'none'
+                  }).length} con comunicado
                 </span>
               </div>
               <div className="space-y-2">

@@ -24,10 +24,21 @@ export interface AsalariadoData {
   months: MonthMetrics[]
   consecutive: number
   pendingStatus: 'none' | 'comunicado1' | 'comunicado2' | 'terminacion'
+  redshiftStatus: 'none' | 'comunicado1' | 'comunicado2' | 'terminacion'
+  memo1Date: string | null
+  memo2Date: string | null
+  terminacionDate: string | null
   approved: ComunicadoRecord | null
   leads: number | null
   citas: number | null
   orientaciones: number | null
+}
+
+function memoLevelToStatus(level: number | null): AsalariadoData['redshiftStatus'] {
+  if (!level || level <= 0) return 'none'
+  if (level >= 3) return 'terminacion'
+  if (level >= 2) return 'comunicado2'
+  return 'comunicado1'
 }
 
 export default async function AsalariadosPage() {
@@ -82,6 +93,10 @@ export default async function AsalariadosPage() {
       months,
       consecutive,
       pendingStatus:      status,
+      redshiftStatus:     memoLevelToStatus(emp.memoLevel),
+      memo1Date:          emp.memo1Date,
+      memo2Date:          emp.memo2Date,
+      terminacionDate:    emp.terminacionDate,
       approved,
       leads:              fu?.leads ?? null,
       citas:              fu?.citas ?? null,

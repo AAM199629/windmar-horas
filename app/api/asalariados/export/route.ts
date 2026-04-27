@@ -19,6 +19,13 @@ const MONTHS_ES = [
   'JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE',
 ]
 
+function memoLevelToStatus(level: number | null): string {
+  if (!level || level <= 0) return 'none'
+  if (level >= 3) return 'terminacion'
+  if (level >= 2) return 'comunicado2'
+  return 'comunicado1'
+}
+
 const NAVY   = 'FF0D1654'
 const GREEN  = 'FF00A651'
 const YELLOW = 'FFFFFF00'
@@ -80,7 +87,10 @@ export async function GET() {
     const consecutive = calcConsecutiveMisses(months)
     const { status } = pendingComunicado(consecutive)
     const approved = comunicadoMap.get(emp.fullName.toLowerCase()) ?? null
-    const displayStatus = approved?.status && approved.status !== 'none' ? approved.status : status
+    const redshiftStatus = memoLevelToStatus(emp.memoLevel)
+    const displayStatus =
+      redshiftStatus !== 'none' ? redshiftStatus :
+      (approved?.status && approved.status !== 'none' ? approved.status : status)
 
     const fu = followUpMap.get(emp.email) ?? followUpMap.get(emp.fullName.toLowerCase()) ?? null
 
@@ -117,9 +127,9 @@ export async function GET() {
       mesesSinMeta: consecutive,
       promedio,
       status:       displayStatus,
-      memo1:        approved?.memo1 ?? '',
-      memo2:        approved?.memo2 ?? '',
-      memo3:        approved?.memo3 ?? '',
+      memo1:        emp.memo1Date || approved?.memo1 || '',
+      memo2:        emp.memo2Date || approved?.memo2 || '',
+      memo3:        emp.terminacionDate || approved?.memo3 || '',
     }
   }).sort((a, b) => a.region.localeCompare(b.region) || a.nombre.localeCompare(b.nombre))
 
