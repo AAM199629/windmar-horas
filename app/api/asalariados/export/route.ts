@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { getAllComunicados } from '@/lib/asalariados-kv'
-import { getVendedores, getIndividualFollowUpData } from '@/lib/smartsheet'
-import { getActiveAsalariados, getVentasFromRedshift } from '@/lib/redshift'
+import { getVendedores } from '@/lib/smartsheet'
+import { getActiveAsalariados, getVentasFromRedshift, getFollowUpFromRedshift } from '@/lib/redshift'
 import {
   isActiveSupervisor,
   calcMonthMetrics,
@@ -68,7 +68,7 @@ export async function GET() {
     getAllComunicados(),
     getVendedores(),
     getActiveAsalariados().catch(() => []),
-    getIndividualFollowUpData().catch(() => new Map()),
+    getFollowUpFromRedshift().catch(() => new Map()),
   ])
 
   const comunicadoMap = new Map(comunicados.map(c => [c.nombre.toLowerCase(), c]))
@@ -114,7 +114,7 @@ export async function GET() {
       salesRole:    emp.salesRole,
       leads:        fu?.leads ?? null,
       citas:        fu?.citas ?? null,
-      orientaciones: fu?.orientaciones ?? null,
+      orientaciones: fu?.citasRealizadas ?? null,
       asistidas:    totalAsistidas,
       cdbg:         totalCdbg,
       cdbgInstall:  totalCdbg,
@@ -179,7 +179,7 @@ export async function GET() {
   // Headers
   const hdrs = [
     'NOMBRE', 'REGIONAL', 'SALES ROLE',
-    'LEADS', 'CITAS', 'ORIENTACIONES',
+    'LEADS', 'CITAS CREADAS', 'CITAS REALIZADAS',
     'ASISTIDAS', 'CDBG', 'CDBG INSTALL',
     'ANKER', 'WATER',
     'VENTAS GRACIA', 'VENTAS ACTIVAS', 'VENTAS NETAS', 'TOTAL DE VENTAS',

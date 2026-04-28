@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { getAllComunicados } from '@/lib/asalariados-kv'
-import { getVendedores, getIndividualFollowUpData } from '@/lib/smartsheet'
-import { getActiveAsalariados, getVentasFromRedshift } from '@/lib/redshift'
+import { getVendedores } from '@/lib/smartsheet'
+import { getActiveAsalariados, getVentasFromRedshift, getFollowUpFromRedshift } from '@/lib/redshift'
 import {
   isActiveSupervisor,
   calcMonthMetrics, getRecentMonths,
@@ -51,7 +51,7 @@ export default async function AsalariadosPage() {
     getAllComunicados(),
     getVendedores(),
     getActiveAsalariados().catch(() => [] as Awaited<ReturnType<typeof getActiveAsalariados>>),
-    getIndividualFollowUpData().catch(() => new Map()),
+    getFollowUpFromRedshift().catch(() => new Map()),
   ])
 
   const comunicadoMap = new Map<string, ComunicadoRecord>(
@@ -100,7 +100,7 @@ export default async function AsalariadosPage() {
       approved,
       leads:              fu?.leads ?? null,
       citas:              fu?.citas ?? null,
-      orientaciones:      fu?.orientaciones ?? null,
+      orientaciones:      fu?.citasRealizadas ?? null,
     })
   }
 

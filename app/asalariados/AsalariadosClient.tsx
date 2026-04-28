@@ -272,11 +272,11 @@ function AsalariadoCard({
                 <p className="text-lg font-bold text-blue-700">{emp.leads ?? '—'}</p>
               </div>
               <div className="bg-indigo-50 rounded-lg px-3 py-2 text-center">
-                <p className="text-[10px] font-semibold text-indigo-500 uppercase tracking-wide">Citas</p>
+                <p className="text-[10px] font-semibold text-indigo-500 uppercase tracking-wide">Citas Creadas</p>
                 <p className="text-lg font-bold text-indigo-700">{emp.citas ?? '—'}</p>
               </div>
               <div className="bg-violet-50 rounded-lg px-3 py-2 text-center">
-                <p className="text-[10px] font-semibold text-violet-500 uppercase tracking-wide">Orientaciones</p>
+                <p className="text-[10px] font-semibold text-violet-500 uppercase tracking-wide">Citas Realizadas</p>
                 <p className="text-lg font-bold text-violet-700">{emp.orientaciones ?? '—'}</p>
               </div>
             </div>

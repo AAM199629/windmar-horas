@@ -159,3 +159,43 @@ export async function getActiveAsalariados(): Promise<ActiveAsalariado[]> {
     }
   })
 }
+
+export interface FollowUpRedshiftEntry {
+  email: string
+  fullName: string
+  leads: number | null
+  citas: number | null
+  citasRealizadas: number | null
+}
+
+export async function getFollowUpFromRedshift(): Promise<Map<string, FollowUpRedshiftEntry>> {
+  const pool = getRedshiftPool()
+  const { rows } = await pool.query(`
+    SELECT
+      LOWER(stm.email) AS email,
+      stm.full_name,
+      sp.num_leads_creados  AS leads,
+      sp.num_citas          AS citas,
+      sp.num_citas_ejecutadas AS citas_realizadas
+    FROM dw_zoho.fact_sales_performance sp
+    JOIN dw_zoho.dim_sales_team_member stm ON stm.member_id = sp.member_id
+    WHERE EXTRACT(YEAR  FROM sp.modified_time) = EXTRACT(YEAR  FROM CURRENT_DATE)
+      AND EXTRACT(MONTH FROM sp.modified_time) = EXTRACT(MONTH FROM CURRENT_DATE)
+      AND sp.num_leads_creados IS NOT NULL
+      AND stm.email IS NOT NULL
+  `)
+
+  const map = new Map<string, FollowUpRedshiftEntry>()
+  for (const row of rows) {
+    const entry: FollowUpRedshiftEntry = {
+      email:           row.email,
+      fullName:        row.full_name,
+      leads:           row.leads           != null ? Number(row.leads)            : null,
+      citas:           row.citas           != null ? Number(row.citas)            : null,
+      citasRealizadas: row.citas_realizadas != null ? Number(row.citas_realizadas) : null,
+    }
+    map.set(row.email, entry)
+    map.set(row.full_name.toLowerCase(), entry)
+  }
+  return map
+}
