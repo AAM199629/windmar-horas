@@ -1,8 +1,10 @@
 import { getLatestReport, listWeekKeys } from '@/lib/kv'
 import { getVentasUploadedAt } from '@/lib/asalariados-kv'
+import { auth } from '@/auth'
 import Link from 'next/link'
 import UploadForm from '@/components/UploadForm'
 import VentasUploadForm from '@/components/VentasUploadForm'
+import WeeksManager from '@/components/WeeksManager'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,11 +16,13 @@ const CHANNELS = [
 ]
 
 export default async function HomePage() {
-  const [weeks, ventasUploadedAt] = await Promise.all([
+  const [weeks, ventasUploadedAt, session] = await Promise.all([
     listWeekKeys().catch(() => [] as string[]),
     getVentasUploadedAt(),
+    auth(),
   ])
   const latest = weeks[0]
+  const isAdmin = (session?.user as any)?.role === 'admin'
 
   return (
     <div className="space-y-8">
@@ -79,22 +83,7 @@ export default async function HomePage() {
       </div>
 
       {/* Week history */}
-      {weeks.length > 0 && (
-        <div>
-          <h2 className="text-lg font-semibold text-slate-800 mb-3">Semanas guardadas</h2>
-          <div className="flex flex-wrap gap-2">
-            {weeks.map(w => (
-              <Link
-                key={w}
-                href={`/horas?week=${w}`}
-                className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 hover:border-[#00A651] hover:text-[#00A651] transition-colors"
-              >
-                {w}
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
+      <WeeksManager weeks={weeks} isAdmin={isAdmin} />
     </div>
   )
 }

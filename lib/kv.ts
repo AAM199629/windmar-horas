@@ -31,3 +31,8 @@ export async function getLatestReport(): Promise<WeeklyReport | null> {
   if (!keys.length) return null
   return getWeeklyReport(keys[0])
 }
+
+export async function deleteWeeklyReport(weekKey: string): Promise<void> {
+  await redis.del(KEY_PREFIX + weekKey)
+  await redis.srem(INDEX_KEY, weekKey)
+}
