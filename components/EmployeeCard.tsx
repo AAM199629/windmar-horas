@@ -72,8 +72,10 @@ export default function EmployeeCard({ emp, badge, ciudad }: {
   // Find which days have any shifts to show (0–6)
   const activeDays = DAYS.map((_, i) => i).filter(i => (byDay[i]?.length ?? 0) > 0)
 
+  const cardId = `emp-${emp.email.replace(/[^a-zA-Z0-9]/g, '-')}`
+
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+    <div id={cardId} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
       {/* Header */}
       <button
         onClick={() => setOpen(o => !o)}

@@ -2,6 +2,19 @@
 
 import { useState, useEffect, useCallback } from 'react'
 
+function scrollToEmployee(email: string) {
+  const id = `emp-${email.replace(/[^a-zA-Z0-9]/g, '-')}`
+  const el = document.getElementById(id)
+  if (!el) return
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  // Expand the card if it's currently collapsed
+  const isExpanded = !!el.querySelector('.border-t.border-slate-100')
+  if (!isExpanded) {
+    const toggleBtn = el.querySelector<HTMLButtonElement>('button')
+    toggleBtn?.click()
+  }
+}
+
 function tiempoEnPrograma(hireDate: string | null, refDate: string): string {
   if (!hireDate) return '—'
   const hire = new Date(hireDate)
@@ -149,7 +162,16 @@ export default function NominaSection({ weekKey, weekStart, weekEnd, salaried }:
     const isTerminado = !!emp.terminationDate
     return (
       <tr key={emp.email} className={`hover:bg-slate-50 ${isTerminado ? 'bg-orange-50/40' : ''}`}>
-        <td className="px-3 py-2 font-medium text-slate-800">{emp.name}</td>
+        <td className="px-3 py-2">
+          <button
+            type="button"
+            onClick={() => scrollToEmployee(emp.email)}
+            className="font-medium text-slate-800 hover:text-[#00A651] hover:underline text-left transition-colors"
+            title="Ver detalle de turnos"
+          >
+            {emp.name}
+          </button>
+        </td>
         <td className="px-3 py-2 text-slate-500 text-xs">{emp.jobTitle}</td>
         <td className="px-3 py-2 text-center">
           <span className={`text-xs font-semibold ${emp.horasWorked >= 24.5 ? 'text-green-600' : 'text-orange-600'}`}>
