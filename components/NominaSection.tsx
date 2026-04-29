@@ -2,6 +2,21 @@
 
 import { useState, useEffect, useCallback } from 'react'
 
+function tiempoEnPrograma(hireDate: string | null, refDate: string): string {
+  if (!hireDate) return '—'
+  const hire = new Date(hireDate)
+  const ref  = new Date(refDate)
+  let years  = ref.getFullYear() - hire.getFullYear()
+  let months = ref.getMonth()    - hire.getMonth()
+  if (months < 0) { years--; months += 12 }
+  if (years > 0) {
+    return months > 0
+      ? `${years} año${years > 1 ? 's' : ''} ${months} mes${months > 1 ? 'es' : ''}`
+      : `${years} año${years > 1 ? 's' : ''}`
+  }
+  return months > 0 ? `${months} mes${months > 1 ? 'es' : ''}` : '< 1 mes'
+}
+
 export interface SalariadoForNomina {
   name: string
   email: string
@@ -121,12 +136,10 @@ export default function NominaSection({ weekKey, weekStart, weekEnd, salaried }:
       <th className="px-3 py-2.5 text-left font-semibold">Nombre</th>
       <th className="px-3 py-2.5 text-left font-semibold">Puesto</th>
       <th className="px-3 py-2.5 text-center font-semibold">Horas</th>
-      <th className="px-3 py-2.5 text-center font-semibold">Hire Date</th>
+      <th className="px-3 py-2.5 text-center font-semibold">En Programa</th>
       <th className="px-3 py-2.5 text-center font-semibold">Cumplió</th>
       <th className="px-3 py-2.5 text-center font-semibold">Sick Hrs</th>
       <th className="px-3 py-2.5 text-center font-semibold">Vacation Hrs</th>
-      <th className="px-3 py-2.5 text-center font-semibold">Paid</th>
-      <th className="px-3 py-2.5 text-center font-semibold">Termination Date</th>
       <th className="px-3 py-2.5 text-left font-semibold">Comentarios</th>
     </tr>
   )
@@ -139,15 +152,14 @@ export default function NominaSection({ weekKey, weekStart, weekEnd, salaried }:
         <td className="px-3 py-2 font-medium text-slate-800">{emp.name}</td>
         <td className="px-3 py-2 text-slate-500 text-xs">{emp.jobTitle}</td>
         <td className="px-3 py-2 text-center">
-          <span className={`text-xs font-semibold ${emp.horasWorked >= 40 ? 'text-green-600' : 'text-orange-600'}`}>
+          <span className={`text-xs font-semibold ${emp.horasWorked >= 24.5 ? 'text-green-600' : 'text-orange-600'}`}>
             {emp.horasWorked.toFixed(1)}h
           </span>
         </td>
         <td className="px-3 py-2 text-center">
-          <input type="date" value={emp.hireDate}
-            onChange={e => update(emp.email, 'hireDate', e.target.value)}
-            className="text-xs border border-slate-200 rounded px-1.5 py-1 w-32 focus:outline-none focus:border-[#00A651]"
-          />
+          <span className="text-xs text-slate-600 whitespace-nowrap">
+            {tiempoEnPrograma(emp.hireDate || null, weekStart)}
+          </span>
         </td>
         <td className="px-3 py-2 text-center">
           <button
@@ -172,19 +184,6 @@ export default function NominaSection({ weekKey, weekStart, weekEnd, salaried }:
             onChange={e => update(emp.email, 'vacationHours', Number(e.target.value))}
             className="w-14 text-xs text-center border border-slate-200 rounded px-1 py-1 focus:outline-none focus:border-[#00A651]"
             placeholder="0"
-          />
-        </td>
-        <td className="px-3 py-2 text-center">
-          <input type="checkbox" checked={emp.paid}
-            onChange={e => update(emp.email, 'paid', e.target.checked)}
-            className="w-4 h-4 accent-[#00A651]"
-          />
-        </td>
-        <td className="px-3 py-2 text-center">
-          <input type="date" value={emp.terminationDate}
-            onChange={e => update(emp.email, 'terminationDate', e.target.value)}
-            className="text-xs border border-slate-200 rounded px-1.5 py-1 w-32 focus:outline-none focus:border-orange-400"
-            title="Llenar solo si fue terminado esta semana"
           />
         </td>
         <td className="px-3 py-2">
@@ -229,7 +228,7 @@ export default function NominaSection({ weekKey, weekStart, weekEnd, salaried }:
             {activeGroups.map(({ jobTitle, employees }) => (
               <>
                 <tr key={`grp-${jobTitle}`} className="bg-[#003320]/5">
-                  <td colSpan={10} className="px-3 py-1.5 text-xs font-bold text-[#003320] uppercase tracking-wide">
+                  <td colSpan={8} className="px-3 py-1.5 text-xs font-bold text-[#003320] uppercase tracking-wide">
                     {jobTitle} ({employees.length})
                   </td>
                 </tr>
@@ -253,7 +252,7 @@ export default function NominaSection({ weekKey, weekStart, weekEnd, salaried }:
                 {termGroups.map(({ jobTitle, employees }) => (
                   <>
                     <tr key={`tgrp-${jobTitle}`} className="bg-orange-50">
-                      <td colSpan={10} className="px-3 py-1.5 text-xs font-bold text-orange-700 uppercase tracking-wide">
+                      <td colSpan={8} className="px-3 py-1.5 text-xs font-bold text-orange-700 uppercase tracking-wide">
                         {jobTitle} ({employees.length})
                       </td>
                     </tr>

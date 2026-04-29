@@ -57,8 +57,8 @@ export default async function HorasPage({
         name:            e.name,
         email:           e.email,
         jobTitle:        JOB_TITLE_MAP[e.salesRole!],
-        horasWorked:     e.horasSinACO,
-        metHoursAuto:    e.horasSinACO >= 40,
+        horasWorked:     e.horasConACO,
+        metHoursAuto:    e.horasConACO >= 24.5,
         hireDate:        rd?.hireDate        ?? null,
         terminationDate: rd?.terminationDate ?? null,
       }
