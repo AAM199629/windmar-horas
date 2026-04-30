@@ -131,17 +131,11 @@ export default function NominaSection({ weekKey, weekStart, weekEnd, salaried }:
     window.open(`/api/nomina/${weekKey}/export`, '_blank')
   }
 
-  const active     = Object.values(entries).filter(e => !e.terminationDate)
-  const terminados = Object.values(entries).filter(e => !!e.terminationDate)
+  const allEntries = Object.values(entries)
 
   const activeGroups = JOB_ORDER.map(jt => ({
     jobTitle: jt,
-    employees: active.filter(e => e.jobTitle === jt),
-  })).filter(g => g.employees.length > 0)
-
-  const termGroups = JOB_ORDER.map(jt => ({
-    jobTitle: jt,
-    employees: terminados.filter(e => e.jobTitle === jt),
+    employees: allEntries.filter(e => e.jobTitle === jt),
   })).filter(g => g.employees.length > 0)
 
   const colHeaders = (
@@ -159,9 +153,8 @@ export default function NominaSection({ weekKey, weekStart, weekEnd, salaried }:
 
   function renderRow(emp: EntryState) {
     const met = metHours(emp)
-    const isTerminado = !!emp.terminationDate
     return (
-      <tr key={emp.email} className={`hover:bg-slate-50 ${isTerminado ? 'bg-orange-50/40' : ''}`}>
+      <tr key={emp.email} className="hover:bg-slate-50">
         <td className="px-3 py-2">
           <button
             type="button"
@@ -226,7 +219,6 @@ export default function NominaSection({ weekKey, weekStart, weekEnd, salaried }:
           <h2 className="text-xl font-bold text-slate-900">Confirmación de Nómina</h2>
           <p className="text-sm text-slate-500 mt-0.5">
             Semana {weekKey} · {salaried.length} asalariados
-            {terminados.length > 0 && <span className="text-orange-600 ml-2">· {terminados.length} terminado{terminados.length > 1 ? 's' : ''}</span>}
           </p>
         </div>
         <div className="flex gap-2">
@@ -261,32 +253,6 @@ export default function NominaSection({ weekKey, weekStart, weekEnd, salaried }:
         </table>
       </div>
 
-      {/* Terminados */}
-      {terminados.length > 0 && (
-        <div className="mt-6">
-          <h3 className="text-base font-semibold text-orange-700 mb-3">
-            Fuera del Programa — Terminados ({terminados.length})
-          </h3>
-          <div className="overflow-x-auto rounded-xl border border-orange-200 shadow-sm">
-            <table className="min-w-full text-sm">
-              <thead>{colHeaders}</thead>
-              <tbody className="divide-y divide-orange-100">
-                {termGroups.map(({ jobTitle, employees }) => (
-                  <>
-                    <tr key={`tgrp-${jobTitle}`} className="bg-orange-50">
-                      <td colSpan={8} className="px-3 py-1.5 text-xs font-bold text-orange-700 uppercase tracking-wide">
-                        {jobTitle} ({employees.length})
-                      </td>
-                    </tr>
-                    {employees.map(renderRow)}
-                  </>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <p className="text-xs text-slate-400 mt-2">Para quitar de terminados, borra la fecha de terminación.</p>
-        </div>
-      )}
     </div>
   )
 }

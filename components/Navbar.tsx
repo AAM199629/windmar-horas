@@ -4,6 +4,26 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
+import { useEffect, useState } from 'react'
+
+function useDataStatus() {
+  const [label, setLabel] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetch('/api/data-status')
+      .then(r => r.ok ? r.json() : null)
+      .then((d: any) => {
+        if (!d?.lastUpdated) return
+        const diff = Math.floor((Date.now() - new Date(d.lastUpdated).getTime()) / 60000)
+        if (diff < 60)        setLabel(`hace ${diff}m`)
+        else if (diff < 1440) setLabel(`hace ${Math.floor(diff / 60)}h`)
+        else                  setLabel(`hace ${Math.floor(diff / 1440)}d`)
+      })
+      .catch(() => null)
+  }, [])
+
+  return label
+}
 
 const links = [
   { href: '/',                      label: 'Inicio' },
@@ -19,6 +39,7 @@ export default function Navbar() {
   const role = (session?.user as any)?.role as string | undefined
   const isAdmin = role === 'admin'
   const canSeeAsalariados = role === 'admin' || role === 'supervisor'
+  const dataAge = useDataStatus()
 
   const allLinks = [
     ...links,
@@ -61,6 +82,15 @@ export default function Navbar() {
             </Link>
           ))}
         </nav>
+
+        {dataAge && (
+          <div className="ml-auto shrink-0 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#00A651]" />
+            <span className="text-xs text-slate-400 whitespace-nowrap">
+              Datos Zoho: <span className="text-slate-300">{dataAge}</span>
+            </span>
+          </div>
+        )}
       </div>
     </header>
   )

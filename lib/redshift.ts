@@ -168,6 +168,15 @@ export interface FollowUpRedshiftEntry {
   citasRealizadas: number | null
 }
 
+export async function getLastSalesDataUpdate(): Promise<string | null> {
+  const pool = getRedshiftPool()
+  const { rows } = await pool.query(`
+    SELECT MAX(modified_time) AS last_updated
+    FROM dw_zoho.fact_sales_performance
+  `)
+  return rows[0]?.last_updated ? new Date(rows[0].last_updated).toISOString() : null
+}
+
 export async function getFollowUpFromRedshift(): Promise<Map<string, FollowUpRedshiftEntry>> {
   const pool = getRedshiftPool()
   const { rows } = await pool.query(`
