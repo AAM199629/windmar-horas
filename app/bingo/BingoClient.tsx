@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import type { BingoLBRow } from '@/lib/bingo-api'
+import type { BingoLBRow } from '@/lib/bingo-leaderboard'
 
 // Matches UNIFIED_BOARD.cells in windmar-bingo/lib/challenges.ts
 // Challenge index i maps to board[i < 12 ? i : i + 1] (board[12] is FREE center)

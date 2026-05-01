@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
-import { getBingoLeaderboard } from '@/lib/bingo-api'
+import { computeBingoLeaderboard } from '@/lib/bingo-leaderboard'
 import BingoClient from './BingoClient'
 
 export const dynamic = 'force-dynamic'
@@ -22,7 +22,7 @@ export default async function BingoPage({
   const { month: qMonth } = await searchParams
   const month = qMonth ?? currentMonth()
 
-  const leaderboard = await getBingoLeaderboard(month).catch(() => [])
+  const leaderboard = await computeBingoLeaderboard(month).catch(() => [])
 
   return (
     <div>
