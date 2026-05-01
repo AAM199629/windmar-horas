@@ -39,8 +39,8 @@ export default async function PromotoresPage() {
     getLatestReport().catch(() => null),
   ])
 
-  const emails = promotores.map(p => p.email)
-  const zohoStats = await getPromoterLeadStats(emails).catch(() => new Map())
+  const promoterList = promotores.map(p => ({ email: p.email, name: p.fullName }))
+  const zohoStats = await getPromoterLeadStats(promoterList).catch(() => new Map())
 
   const vendedorByEmail = new Map(
     vendedores.filter(v => v.email).map(v => [v.email!.toLowerCase(), v])

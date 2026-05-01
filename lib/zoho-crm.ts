@@ -29,7 +29,7 @@ async function fetchAllLeadsForMonth(token: string, monthStart: string): Promise
 
   while (true) {
     const res = await fetch(
-      `${base}/Leads?fields=Owner,Converted,Created_Time&per_page=200&page=${page}`,
+      `${base}/Leads?fields=Owner,Converted,Created_Time,Sales_Rep,Sales_Rep_Email&per_page=200&page=${page}`,
       { headers: { Authorization: `Zoho-oauthtoken ${token}` } }
     )
     if (!res.ok) break
@@ -40,7 +40,6 @@ async function fetchAllLeadsForMonth(token: string, monthStart: string): Promise
       if (r.Created_Time && r.Created_Time >= monthStart) all.push(r)
     }
 
-    // If the oldest record in this page is already before monthStart, we're done paginating
     if (!records.length || (records[records.length - 1].Created_Time ?? '') < monthStart) break
     if (!json.info?.more_records) break
     page++
@@ -50,17 +49,25 @@ async function fetchAllLeadsForMonth(token: string, monthStart: string): Promise
 }
 
 export async function getPromoterLeadStats(
-  promoterEmails: string[]
+  promoters: Array<{ email: string; name: string }>
 ): Promise<Map<string, PromoterLeadStats>> {
   const map = new Map<string, PromoterLeadStats>()
-  if (!promoterEmails.length) return map
+  if (!promoters.length) return map
 
-  const emailSet = new Set(promoterEmails.map(e => e.toLowerCase()))
+  // Build lookup by email AND by normalized name → canonical email key
+  const emailMap = new Map<string, string>() // normalized owner email → promotor email
+  const nameMap  = new Map<string, string>() // normalized owner name  → promotor email
+
+  for (const p of promoters) {
+    const key = p.email.toLowerCase()
+    map.set(key, { leadsThisMonth: 0, leadsThisWeek: 0, ventasFromLeads: 0 })
+    emailMap.set(key, key)
+    nameMap.set(p.name.toLowerCase(), key)
+  }
 
   const now = new Date()
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
     .toISOString().slice(0, 10)
-
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
     .toISOString().slice(0, 10)
 
@@ -69,18 +76,23 @@ export async function getPromoterLeadStats(
     const token = await getZohoAccessToken()
     leads = await fetchAllLeadsForMonth(token, monthStart)
   } catch {
-    return map
-  }
-
-  for (const email of promoterEmails) {
-    map.set(email.toLowerCase(), { leadsThisMonth: 0, leadsThisWeek: 0, ventasFromLeads: 0 })
+    return new Map() // empty = UI shows "—" instead of 0 when Zoho is unavailable
   }
 
   for (const lead of leads) {
-    const ownerEmail = (lead.Owner?.email ?? '').toLowerCase()
-    if (!emailSet.has(ownerEmail)) continue
+    // Match by Sales_Rep_Email first (promotor is the Sales Rep, not the Owner)
+    const salesRepEmail = (lead.Sales_Rep_Email ?? '').toLowerCase()
+    const salesRepName  = (lead.Sales_Rep?.name ?? lead.Sales_Rep ?? '').toLowerCase()
+    const ownerEmail    = (lead.Owner?.email ?? '').toLowerCase()
+    const ownerName     = (lead.Owner?.name  ?? '').toLowerCase()
 
-    const stat = map.get(ownerEmail)!
+    const key = emailMap.get(salesRepEmail)
+             ?? nameMap.get(salesRepName)
+             ?? emailMap.get(ownerEmail)
+             ?? nameMap.get(ownerName)
+    if (!key) continue
+
+    const stat = map.get(key)!
     stat.leadsThisMonth++
 
     const created = (lead.Created_Time ?? '').slice(0, 10)

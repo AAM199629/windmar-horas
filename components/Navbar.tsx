@@ -46,6 +46,7 @@ export default function Navbar() {
     ...(canSeeAsalariados ? [
       { href: '/asalariados', label: 'Asalariados' },
       { href: '/promotores',  label: 'Promotores'  },
+      { href: '/bingo',       label: 'Bingo'        },
     ] : []),
     ...(isAdmin           ? [{ href: '/accounts',   label: 'Cuentas' }]    : []),
   ]

@@ -76,16 +76,19 @@ export async function GET() {
     const now = new Date()
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
 
-    const res = await fetch(`${base}/Leads?fields=Owner,Converted,Created_Time&per_page=5`, {
+    const res = await fetch(`${base}/Leads?fields=Owner,Converted,Created_Time,Sales_Rep,Sales_Rep_Email&per_page=5`, {
       headers: { Authorization: `Zoho-oauthtoken ${token}` },
     })
     const json = await res.json()
     result.zohoLeadsStatus = res.status
     result.zohoLeadsRaw = json   // full raw response to catch errors
     result.zohoLeadsSample = (json.data ?? []).map((r: any) => ({
-      owner: r.Owner?.email,
-      converted: r.Converted,
-      created: r.Created_Time,
+      ownerEmail:    r.Owner?.email,
+      ownerName:     r.Owner?.name,
+      salesRepEmail: r.Sales_Rep_Email,
+      salesRep:      r.Sales_Rep,
+      converted:     r.Converted,
+      created:       r.Created_Time,
     }))
     result.zohoLeadsInfo = json.info
     result.monthStart = monthStart
