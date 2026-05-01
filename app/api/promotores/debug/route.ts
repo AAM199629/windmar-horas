@@ -81,6 +81,7 @@ export async function GET() {
     })
     const json = await res.json()
     result.zohoLeadsStatus = res.status
+    result.zohoLeadsRaw = json   // full raw response to catch errors
     result.zohoLeadsSample = (json.data ?? []).map((r: any) => ({
       owner: r.Owner?.email,
       converted: r.Converted,
