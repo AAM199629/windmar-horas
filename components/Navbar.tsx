@@ -43,7 +43,10 @@ export default function Navbar() {
 
   const allLinks = [
     ...links,
-    ...(canSeeAsalariados ? [{ href: '/asalariados', label: 'Asalariados' }] : []),
+    ...(canSeeAsalariados ? [
+      { href: '/asalariados', label: 'Asalariados' },
+      { href: '/promotores',  label: 'Promotores'  },
+    ] : []),
     ...(isAdmin           ? [{ href: '/accounts',   label: 'Cuentas' }]    : []),
   ]
 

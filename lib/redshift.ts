@@ -168,6 +168,39 @@ export interface FollowUpRedshiftEntry {
   citasRealizadas: number | null
 }
 
+export interface ActivePromotor {
+  email: string
+  fullName: string
+  salesRole: string
+  ciudad: string | null
+  hireDate: string | null
+}
+
+export async function getActivePromotores(): Promise<ActivePromotor[]> {
+  const pool = getRedshiftPool()
+  const { rows } = await pool.query(`
+    SELECT
+      LOWER(email)  AS email,
+      full_name,
+      sales_role,
+      ciudad,
+      TO_CHAR(empleado_consultor_start_date, 'YYYY-MM-DD') AS hire_date
+    FROM dw_zoho.dim_sales_team_member
+    WHERE sales_role ILIKE '%Promotor%'
+      AND status = 'Activo'
+      AND email IS NOT NULL
+    ORDER BY full_name
+  `)
+
+  return rows.map(r => ({
+    email:     r.email,
+    fullName:  r.full_name,
+    salesRole: r.sales_role,
+    ciudad:    r.ciudad ?? null,
+    hireDate:  r.hire_date ?? null,
+  }))
+}
+
 export async function getLastSalesDataUpdate(): Promise<string | null> {
   const pool = getRedshiftPool()
   const { rows } = await pool.query(`
