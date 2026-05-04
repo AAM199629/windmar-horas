@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import type { BingoLBRow } from '@/lib/bingo-leaderboard'
 
 // Matches UNIFIED_BOARD.cells in windmar-bingo/lib/challenges.ts
@@ -84,8 +85,25 @@ export default function BingoClient({
   const totalEarned = leaderboard.reduce((s, r) => s + r.earned, 0)
   const withLines   = leaderboard.filter(r => r.lines > 0).length
 
+  const [tooltip, setTooltip] = useState<{ text: string; x: number; y: number } | null>(null)
+
+  function showTooltip(e: React.MouseEvent<HTMLTableCellElement>, text: string) {
+    const rect = e.currentTarget.getBoundingClientRect()
+    setTooltip({ text, x: rect.left + rect.width / 2, y: rect.top })
+  }
+
   return (
     <div className="space-y-6">
+      {/* Fixed-position tooltip — not clipped by overflow-x-auto */}
+      {tooltip && (
+        <div
+          className="fixed z-[9999] px-2.5 py-1.5 bg-slate-800 text-white text-xs rounded-lg whitespace-nowrap pointer-events-none shadow-lg"
+          style={{ left: tooltip.x, top: tooltip.y - 8, transform: 'translate(-50%, -100%)' }}
+        >
+          {tooltip.text}
+        </div>
+      )}
+
       {/* Month selector + KPIs */}
       <div className="flex flex-wrap items-start gap-4">
         <select
@@ -122,8 +140,9 @@ export default function BingoClient({
                 {CELLS.map((c, i) => (
                   <th
                     key={i}
-                    title={c.text}
                     className="px-0.5 py-2.5 text-center w-8 text-base font-normal cursor-default"
+                    onMouseEnter={e => showTooltip(e, c.text)}
+                    onMouseLeave={() => setTooltip(null)}
                   >
                     {c.icon}
                   </th>
