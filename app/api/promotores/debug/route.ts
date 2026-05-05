@@ -66,7 +66,28 @@ export async function GET() {
     result.followUpError = e.message
   }
 
-  // 4. Zoho Leads test
+  // 4. Check if promotores appear in fact_sales_performance
+  try {
+    const promotores = await getActivePromotores()
+    const emails = promotores.map(p => p.email)
+    const pool2 = getRedshiftPool()
+    const { rows: spRows } = await pool2.query(`
+      SELECT LOWER(stm.email) AS email, stm.full_name,
+             sp.num_leads_creados AS leads, sp.num_citas AS citas,
+             sp.modified_time
+      FROM dw_zoho.fact_sales_performance sp
+      JOIN dw_zoho.dim_sales_team_member stm ON stm.member_id = sp.member_id
+      WHERE LOWER(stm.email) = ANY($1)
+      ORDER BY sp.modified_time DESC
+      LIMIT 20
+    `, [emails])
+    result.promotoresInSalesPerf = spRows
+    result.promotoresInSalesPerfCount = spRows.length
+  } catch (e: any) {
+    result.promotoresInSalesPerfError = e.message
+  }
+
+  // 5. Zoho Leads test
   try {
     const token = await getZohoAccessToken()
     result.zohoTokenOk = true
