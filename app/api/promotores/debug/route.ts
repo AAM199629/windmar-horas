@@ -87,7 +87,21 @@ export async function GET() {
     result.promotoresInSalesPerfError = e.message
   }
 
-  // 5. Zoho Leads test
+  // 5. List dw_zoho tables that might have lead data
+  try {
+    const pool3 = getRedshiftPool()
+    const { rows: tables } = await pool3.query(`
+      SELECT table_name
+      FROM information_schema.tables
+      WHERE table_schema = 'dw_zoho'
+      ORDER BY table_name
+    `)
+    result.dw_zohoTables = tables.map((r: any) => r.table_name)
+  } catch (e: any) {
+    result.dw_zohoTablesError = e.message
+  }
+
+  // 6. Zoho Leads test
   try {
     const token = await getZohoAccessToken()
     result.zohoTokenOk = true
