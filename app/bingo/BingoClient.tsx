@@ -137,9 +137,26 @@ export default function BingoClient({
               <tr className="bg-slate-50 border-b border-slate-200">
                 <th className="px-2 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase sticky left-0 bg-slate-50 z-10 w-10">#</th>
                 <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase sticky left-10 bg-slate-50 z-10 min-w-[180px]">Vendedor</th>
-                {CELLS.map((c, i) => (
+                {CELLS.slice(0, 12).map((c, i) => (
                   <th
                     key={i}
+                    className="px-0.5 py-2.5 text-center w-8 text-base font-normal cursor-default"
+                    onMouseEnter={e => showTooltip(e, c.text)}
+                    onMouseLeave={() => setTooltip(null)}
+                  >
+                    {c.icon}
+                  </th>
+                ))}
+                <th
+                  className="px-0.5 py-2.5 text-center w-8 text-base font-normal cursor-default"
+                  onMouseEnter={e => showTooltip(e, 'Centro libre (FREE)')}
+                  onMouseLeave={() => setTooltip(null)}
+                >
+                  ⭐
+                </th>
+                {CELLS.slice(12).map((c, i) => (
+                  <th
+                    key={i + 12}
                     className="px-0.5 py-2.5 text-center w-8 text-base font-normal cursor-default"
                     onMouseEnter={e => showTooltip(e, c.text)}
                     onMouseLeave={() => setTooltip(null)}
@@ -168,9 +185,20 @@ export default function BingoClient({
                     <p className="font-semibold text-[#0D1654] leading-tight truncate max-w-[220px]">{row.name}</p>
                     <p className="text-[10px] text-slate-400 truncate max-w-[220px]">{row.email}</p>
                   </td>
-                  {CELLS.map((_, i) => (
+                  {CELLS.slice(0, 12).map((_, i) => (
                     <td key={i} className="px-0.5 py-2.5 text-center w-8">
                       {cellDone(row.board, i)
+                        ? <span className="text-[#00A651] font-bold text-sm leading-none">✓</span>
+                        : <span className="text-slate-200 text-sm leading-none select-none">·</span>
+                      }
+                    </td>
+                  ))}
+                  <td className="px-0.5 py-2.5 text-center w-8">
+                    <span className="text-[#00A651] font-bold text-sm leading-none">✓</span>
+                  </td>
+                  {CELLS.slice(12).map((_, i) => (
+                    <td key={i + 12} className="px-0.5 py-2.5 text-center w-8">
+                      {cellDone(row.board, i + 12)
                         ? <span className="text-[#00A651] font-bold text-sm leading-none">✓</span>
                         : <span className="text-slate-200 text-sm leading-none select-none">·</span>
                       }
