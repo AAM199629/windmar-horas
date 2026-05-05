@@ -115,7 +115,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ wee
         emp.sickHours || '',
         emp.vacationHours || '',
         !met ? 'X' : '',
-        emp.paid ? 'X' : '',
+        '',
       ])
       empRow.height = 18
       for (let i = 1; i <= 8; i++) {
@@ -188,7 +188,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ wee
         t.sickHours || '',
         t.vacationHours || '',
         !tMet ? 'X' : '',
-        t.paid ? 'X' : '',
+        '',
       ])
       r.height = 18
       for (let i = 1; i <= 8; i++) {
