@@ -210,6 +210,83 @@ export async function getLastSalesDataUpdate(): Promise<string | null> {
   return rows[0]?.last_updated ? new Date(rows[0].last_updated).toISOString() : null
 }
 
+export interface MonthDealRow {
+  email: string
+  fullName: string
+  ventasCanvassing: number
+  totalVentas: number
+}
+
+export async function getMonthDeals(
+  monthStart: string,
+  monthEnd: string
+): Promise<MonthDealRow[]> {
+  const pool = getRedshiftPool()
+  const { rows } = await pool.query(`
+    SELECT
+      LOWER(ds.sale_rep_email) AS email,
+      COALESCE(stm.full_name, ds.sale_rep_email) AS full_name,
+      SUM(CASE WHEN LOWER(dms.lead_source) LIKE '%canvass%' THEN 1 ELSE 0 END)
+        AS ventas_canvassing,
+      COUNT(*) AS total_ventas
+    FROM dwh.fact_deals fd
+    JOIN dwh.dim_staff ds
+      ON ds.id_staff = fd.id_staff AND ds.is_current = true
+    JOIN dwh.dim_status_reason dsr
+      ON dsr.id_status_reason = fd.id_status_reason AND dsr.is_current = true
+    LEFT JOIN dwh.dim_marketing_source dms
+      ON dms.id_marketing_source = fd.id_marketing_source
+    LEFT JOIN dw_zoho.dim_sales_team_member stm
+      ON LOWER(stm.email) = LOWER(ds.sale_rep_email)
+    WHERE fd.closing_date >= $1 AND fd.closing_date <= $2
+      AND dsr.stage <> 'Cancelled'
+      AND ds.sale_rep_email IS NOT NULL AND ds.sale_rep_email <> ''
+    GROUP BY LOWER(ds.sale_rep_email), COALESCE(stm.full_name, ds.sale_rep_email)
+  `, [monthStart, monthEnd])
+
+  return rows.map((r: any) => ({
+    email:            r.email as string,
+    fullName:         r.full_name as string,
+    ventasCanvassing: Number(r.ventas_canvassing),
+    totalVentas:      Number(r.total_ventas),
+  }))
+}
+
+export interface CoordinadorRow {
+  coordinador: string
+  leads: number
+}
+
+export async function getMonthLeadsByCoordinator(
+  monthStart: string,
+  monthEnd: string
+): Promise<CoordinadorRow[]> {
+  const pool = getRedshiftPool()
+  const { rows } = await pool.query(`
+    SELECT
+      de.coordinador_de_canvaseo AS coordinador,
+      COUNT(*) AS leads
+    FROM dwh.fact_leads fl
+    JOIN dwh.dim_employee de
+      ON de.id_employee = fl.id_employee AND de.is_current = true
+    JOIN dwh.dim_lead_source dls
+      ON dls.id_lead_source = fl.id_lead_source
+    JOIN dwh.dim_audit_system_leads dasl
+      ON dasl.id_audit_system = fl.id_audit_system
+    WHERE LOWER(dls.lead_source) LIKE '%canvass%'
+      AND de.coordinador_de_canvaseo IS NOT NULL
+      AND DATE(dasl.created_time) >= $1
+      AND DATE(dasl.created_time) <= $2
+    GROUP BY de.coordinador_de_canvaseo
+    ORDER BY leads DESC
+  `, [monthStart, monthEnd])
+
+  return rows.map((r: any) => ({
+    coordinador: r.coordinador as string,
+    leads:       Number(r.leads),
+  }))
+}
+
 export async function getFollowUpFromRedshift(): Promise<Map<string, FollowUpRedshiftEntry>> {
   const pool = getRedshiftPool()
   const { rows } = await pool.query(`
