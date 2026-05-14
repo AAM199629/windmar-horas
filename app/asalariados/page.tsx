@@ -42,6 +42,28 @@ function memoLevelToStatus(level: number | null): AsalariadoData['redshiftStatus
   return 'comunicado1'
 }
 
+const STATUS_ORDER: Record<string, number> = {
+  none: 0, comunicado1: 1, comunicado2: 2, terminacion: 3,
+}
+
+function maxStatus(
+  a: AsalariadoData['pendingStatus'],
+  b: AsalariadoData['pendingStatus'],
+): AsalariadoData['pendingStatus'] {
+  return STATUS_ORDER[a] >= STATUS_ORDER[b] ? a : b
+}
+
+function memoImpliedStatus(
+  memo1Date: string | null,
+  memo2Date: string | null,
+): AsalariadoData['pendingStatus'] {
+  const now = new Date()
+  const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  if (memo2Date && memo2Date.slice(0, 7) < currentMonthStr) return 'terminacion'
+  if (memo1Date && memo1Date.slice(0, 7) < currentMonthStr) return 'comunicado2'
+  return 'none'
+}
+
 export default async function AsalariadosPage() {
   const session = await auth()
   const role = (session?.user as any)?.role
@@ -80,6 +102,7 @@ export default async function AsalariadosPage() {
 
     const consecutive = calcConsecutiveMisses(months)
     const { status }  = pendingComunicado(consecutive)
+    const implied     = memoImpliedStatus(emp.memo1Date, emp.memo2Date)
     const approved    = comunicadoMap.get(emp.fullName.toLowerCase()) ?? null
 
     const fu = followUpMap.get(emp.email) ?? followUpMap.get(emp.fullName.toLowerCase()) ?? null
@@ -93,7 +116,7 @@ export default async function AsalariadosPage() {
       hireDate:           emp.hireDate,
       months,
       consecutive,
-      pendingStatus:      status,
+      pendingStatus:      maxStatus(status, implied),
       redshiftStatus:     memoLevelToStatus(emp.memoLevel),
       memo1Date:          emp.memo1Date,
       memo2Date:          emp.memo2Date,
