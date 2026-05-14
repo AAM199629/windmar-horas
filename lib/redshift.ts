@@ -69,14 +69,12 @@ export async function getVentasFromRedshift(): Promise<VentaRow[]> {
 
   const { rows } = await pool.query(`
     SELECT DISTINCT
-      -- Own deal: trainee_sales is null → consultant is the deal owner
-      -- Assisted deal: trainee_sales is set → sale_rep_email is the assist consultant
+      -- The deal's rep (trainee or own) always goes in sales_team_name
+      COALESCE(stm.full_name, ds.sale_rep_email) AS sales_team_name,
+      -- For trainee deals (1st–4th Sale): mentor = the rep's sponsor in dim_sales_team_member
       CASE
-        WHEN ds.trainee_sales IS NULL THEN COALESCE(stm.full_name, ds.sale_rep_email)
-        ELSE ''
-      END AS sales_team_name,
-      CASE
-        WHEN ds.trainee_sales IS NOT NULL THEN COALESCE(stm.full_name, ds.sale_rep_email)
+        WHEN ds.trainee_sales IN ('1st Sale','2nd Sale','3rd Sale','4th Sale')
+        THEN COALESCE(stm_mentor.full_name, stm.sponsor_name)
         ELSE ''
       END AS sales_rep_assist_trainee,
       ds.trainee_sales,
@@ -89,6 +87,8 @@ export async function getVentasFromRedshift(): Promise<VentaRow[]> {
       ON ds.id_staff = fd.id_staff AND ds.is_current = true
     LEFT JOIN dw_zoho.dim_sales_team_member stm
       ON LOWER(stm.email) = LOWER(ds.sale_rep_email)
+    LEFT JOIN dw_zoho.dim_sales_team_member stm_mentor
+      ON stm.sponsor_id = stm_mentor.member_id
     JOIN dwh.dim_profiles dp
       ON dp.id_profile = fd.id_profile
     JOIN dwh.dim_status_reason dsr

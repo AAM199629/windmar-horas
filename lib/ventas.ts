@@ -186,13 +186,16 @@ export function calcMonthMetrics(
 ): MonthMetrics {
   const meta = getMetaForMonth(month)
 
-  // Grace: hire month itself and any month before it are exempt (not counted as misses)
+  // Grace: hire month, all months before, AND the first full month after hire (primer mes como asalariado)
   if (hireDate) {
     const hire = parseDate(hireDate)
     if (hire) {
       const hy = hire.getFullYear()
       const hm = hire.getMonth() + 1
-      if (year < hy || (year === hy && month <= hm)) {
+      // End of grace = first month after hire
+      const graceEndYear  = hm === 12 ? hy + 1 : hy
+      const graceEndMonth = hm === 12 ? 1      : hm + 1
+      if (year < graceEndYear || (year === graceEndYear && month <= graceEndMonth)) {
         return { year, month, solar: 0, cdbg: 0, water: 0, anker: 0, asistidas: 0, total: 0, meta, met: true, isGrace: true }
       }
     }
@@ -230,7 +233,8 @@ export function calcMonthMetrics(
       else if (isAnker(row))        anker++
       else if (isSolarRoofing(row)) solar++
     } else {
-      const hasTraineeSales = !!row.traineeSales
+      const TRAINEE_RANKS = new Set(['1st sale', '2nd sale', '3rd sale', '4th sale'])
+      const hasTraineeSales = TRAINEE_RANKS.has((row.traineeSales ?? '').toLowerCase())
       if (isAssist && hasTraineeSales) asistidas++
       if (isRecruiter && !row.salesRepAssistTrainee) asistidas++
     }
@@ -264,11 +268,10 @@ export function calcConsecutiveMisses(months: MonthMetrics[]): number {
 }
 
 export function pendingComunicado(consecutive: number): ComunicadoPending {
-  // First consecutive miss is a grace period — comunicados start on the 2nd consecutive miss
   const status =
-    consecutive >= 4 ? 'terminacion' :
-    consecutive === 3 ? 'comunicado2' :
-    consecutive === 2 ? 'comunicado1' : 'none'
+    consecutive >= 3 ? 'terminacion' :
+    consecutive === 2 ? 'comunicado2' :
+    consecutive === 1 ? 'comunicado1' : 'none'
   return { status, consecutive }
 }
 
