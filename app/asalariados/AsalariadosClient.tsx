@@ -174,6 +174,11 @@ function AsalariadoCard({
             <span style={{ background: '#0D1654' }} className="text-white text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
               {emp.salesRole}
             </span>
+            {emp.monthsAsAsalariado != null && (
+              <span className="text-[10px] font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-full shrink-0">
+                {emp.monthsAsAsalariado}m asalariado
+              </span>
+            )}
             {emp.ciudad && (
               <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full shrink-0">
                 📍 {emp.ciudad}

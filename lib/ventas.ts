@@ -264,9 +264,19 @@ export function calcConsecutiveMisses(months: MonthMetrics[]): number {
 }
 
 export function pendingComunicado(consecutive: number): ComunicadoPending {
+  // First consecutive miss is a grace period — comunicados start on the 2nd consecutive miss
   const status =
-    consecutive >= 3 ? 'terminacion' :
-    consecutive === 2 ? 'comunicado2' :
-    consecutive === 1 ? 'comunicado1' : 'none'
+    consecutive >= 4 ? 'terminacion' :
+    consecutive === 3 ? 'comunicado2' :
+    consecutive === 2 ? 'comunicado1' : 'none'
   return { status, consecutive }
+}
+
+export function monthsAsAsalariado(hireDate: string | null): number | null {
+  if (!hireDate) return null
+  const hire = parseDate(hireDate)
+  if (!hire) return null
+  const now = new Date()
+  const months = (now.getFullYear() - hire.getFullYear()) * 12 + (now.getMonth() - hire.getMonth())
+  return Math.max(0, months)
 }

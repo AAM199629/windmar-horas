@@ -6,7 +6,7 @@ import { getActiveAsalariados, getVentasFromRedshift, getFollowUpFromRedshift } 
 import {
   isActiveSupervisor,
   calcMonthMetrics, getRecentMonths,
-  calcConsecutiveMisses, pendingComunicado,
+  calcConsecutiveMisses, pendingComunicado, monthsAsAsalariado,
 } from '@/lib/ventas'
 import AsalariadosClient from './AsalariadosClient'
 import type { ComunicadoRecord } from '@/lib/asalariados-kv'
@@ -32,6 +32,7 @@ export interface AsalariadoData {
   leads: number | null
   citas: number | null
   orientaciones: number | null
+  monthsAsAsalariado: number | null
 }
 
 function memoLevelToStatus(level: number | null): AsalariadoData['redshiftStatus'] {
@@ -101,6 +102,7 @@ export default async function AsalariadosPage() {
       leads:              fu?.leads ?? null,
       citas:              fu?.citas ?? null,
       orientaciones:      fu?.citasRealizadas ?? null,
+      monthsAsAsalariado: monthsAsAsalariado(emp.hireDate),
     })
   }
 
