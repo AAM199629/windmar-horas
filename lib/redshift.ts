@@ -77,6 +77,8 @@ export async function getVentasFromRedshift(): Promise<VentaRow[]> {
         THEN COALESCE(stm_mentor.full_name, stm.sponsor_name)
         ELSE ''
       END AS sales_rep_assist_trainee,
+      -- Always populate the sponsor so the recruiter credit path works even when trainee_sales is empty
+      COALESCE(stm_mentor.full_name, stm.sponsor_name, '') AS recruited_by,
       ds.trainee_sales,
       TO_CHAR(fd.closing_date, 'YYYY-MM-DD')                  AS closing_date,
       CASE WHEN dfl.cdbg_number IS NOT NULL THEN 'CDBG' ELSE '' END AS finance_company,
@@ -114,7 +116,7 @@ export async function getVentasFromRedshift(): Promise<VentaRow[]> {
     pipeline:                   r.pipeline ?? '',
     productSold:                r.pipeline ?? '',
     salesRepAssistTrainee:      r.sales_rep_assist_trainee ?? '',
-    recruitedBy:                '',
+    recruitedBy:                r.recruited_by ?? '',
     traineeSales:               r.trainee_sales ?? '',
   }))
 }

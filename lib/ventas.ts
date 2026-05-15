@@ -59,6 +59,11 @@ export interface ComunicadoPending {
 
 // ── Date helpers ─────────────────────────────────────────────────────────────
 
+const MONTH_NAMES: Record<string, number> = {
+  jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6,
+  jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12,
+}
+
 export function parseDate(s: string): Date | null {
   if (!s || !s.trim()) return null
   const t = s.trim()
@@ -72,6 +77,12 @@ export function parseDate(s: string): Date | null {
   // YYYY-MM-DD
   const m2 = t.match(/^(\d{4})-(\d{2})-(\d{2})/)
   if (m2) return new Date(parseInt(m2[1]), parseInt(m2[2]) - 1, parseInt(m2[3]))
+  // "Mon D, YYYY" (Smartsheet export format, e.g. "Mar 1, 2026")
+  const m3 = t.match(/^([A-Za-z]{3})\s+(\d{1,2}),?\s+(\d{4})$/)
+  if (m3) {
+    const mo = MONTH_NAMES[m3[1].toLowerCase()]
+    if (mo) return new Date(parseInt(m3[3]), mo - 1, parseInt(m3[2]))
+  }
   return null
 }
 
@@ -111,7 +122,7 @@ export function parseVentasCSV(text: string): VentaRow[] {
     headers.findIndex(h => h.toLowerCase() === name.toLowerCase())
 
   const c = {
-    name:        idx('Sales Team Name (1)'),
+    name:        idx('Sales Team Name'),
     role:        idx('Sales Role'),
     closing:     idx('Closing Date'),
     cancelled:   idx('Cancellation Date'),
@@ -119,7 +130,7 @@ export function parseVentasCSV(text: string): VentaRow[] {
     finance:     idx('Finance Company'),
     install:     idx('Installation Completion Date'),
     pipeline:    idx('Pipeline'),
-    productSold: idx('Product Sold'),
+    productSold: idx('Products Sold'),
     assist:      idx('Sales Rep Assist Trainee'),
     recruiter:   idx('Recruited By'),
     trainee:     idx('Trainee Sales'),
