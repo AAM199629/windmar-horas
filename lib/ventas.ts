@@ -41,11 +41,12 @@ export interface VentaRow {
 export interface MonthMetrics {
   year: number
   month: number
-  solar: number      // active Solar/Roofing own sales  (×1)
-  cdbg: number       // CDBG installs by completion date (×1)
+  solar: number      // Residential / Commercial Solar own sales (×1)
+  roofing: number    // Roofing own sales                        (×1)
+  cdbg: number       // CDBG installs by completion date         (×1)
   water: number      // Water products  (×0.5 each)
   anker: number      // Anker / PPS     (×0.5 each)
-  asistidas: number  // assisted trainee sales          (×0.5 each)
+  asistidas: number  // assisted trainee sales                   (×0.5 each)
   total: number      // computed weighted total
   meta: number       // 5 (Apr–Sep) | 3 (Oct–Mar)
   met: boolean
@@ -180,10 +181,14 @@ function isAnker(row: VentaRow): boolean {
   return p.includes('pps') || p.includes('anker')
 }
 
-function isSolarRoofing(row: VentaRow): boolean {
+function isSolar(row: VentaRow): boolean {
   if (isWater(row) || isAnker(row)) return false
-  const p = row.pipeline.toLowerCase()
-  return p.includes('solar') || p.includes('roofing')
+  return row.pipeline.toLowerCase().includes('solar')
+}
+
+function isRoofing(row: VentaRow): boolean {
+  if (isWater(row) || isAnker(row)) return false
+  return row.pipeline.toLowerCase().includes('roofing')
 }
 
 // ── Core metric calculation ───────────────────────────────────────────────────
@@ -197,24 +202,24 @@ export function calcMonthMetrics(
 ): MonthMetrics {
   const meta = getMetaForMonth(month)
 
-  // Grace: hire month, all months before, AND the first full month after hire (primer mes como asalariado)
+  // Grace: hire month, all months before, AND the first full month after hire
+  let isGrace = false
   if (hireDate) {
     const hire = parseDate(hireDate)
     if (hire) {
       const hy = hire.getFullYear()
       const hm = hire.getMonth() + 1
-      // End of grace = first month after hire
       const graceEndYear  = hm === 12 ? hy + 1 : hy
       const graceEndMonth = hm === 12 ? 1      : hm + 1
       if (year < graceEndYear || (year === graceEndYear && month <= graceEndMonth)) {
-        return { year, month, solar: 0, cdbg: 0, water: 0, anker: 0, asistidas: 0, total: 0, meta, met: true, isGrace: true }
+        isGrace = true
       }
     }
   }
 
   const nameLower  = nombre.toLowerCase()
   const hireParsed = hireDate ? parseDate(hireDate) : null
-  let solar = 0, cdbg = 0, water = 0, anker = 0, asistidas = 0
+  let solar = 0, roofing = 0, cdbg = 0, water = 0, anker = 0, asistidas = 0
 
   for (const row of rows) {
     if (!isActive(row)) continue
@@ -237,12 +242,13 @@ export function calcMonthMetrics(
 
     const d = parseDate(row.closingDate)
     if (!d || d.getFullYear() !== year || d.getMonth() + 1 !== month) continue
-    if (hireParsed && d < hireParsed) continue  // skip ventas before hire date
+    if (hireParsed && d < hireParsed) continue
 
     if (isOwn) {
-      if (isWater(row))             water++
-      else if (isAnker(row))        anker++
-      else if (isSolarRoofing(row)) solar++
+      if (isWater(row))        water++
+      else if (isAnker(row))   anker++
+      else if (isSolar(row))   solar++
+      else if (isRoofing(row)) roofing++
     } else {
       const TRAINEE_RANKS = new Set(['1st sale', '2nd sale', '3rd sale', '4th sale'])
       const hasTraineeSales = TRAINEE_RANKS.has((row.traineeSales ?? '').toLowerCase())
@@ -251,8 +257,8 @@ export function calcMonthMetrics(
     }
   }
 
-  const total = solar + cdbg + water * 0.5 + anker * 0.5 + asistidas * 0.5
-  return { year, month, solar, cdbg, water, anker, asistidas, total, meta, met: total >= meta, isGrace: false }
+  const total = solar + roofing + cdbg + water * 0.5 + anker * 0.5 + asistidas * 0.5
+  return { year, month, solar, roofing, cdbg, water, anker, asistidas, total, meta, met: isGrace || total >= meta, isGrace }
 }
 
 // Build the last N months relative to today

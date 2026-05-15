@@ -235,8 +235,8 @@ function AsalariadoCard({
               <thead>
                 <tr className="text-slate-400 border-b border-slate-100">
                   <th className="pb-1 font-semibold">Mes</th>
-                  <th className="pb-1 font-semibold text-right">Solar/Roof</th>
-                  <th className="pb-1 font-semibold text-right">CDBG</th>
+                  <th className="pb-1 font-semibold text-right">Solar</th>
+                  <th className="pb-1 font-semibold text-right">Roof</th>
                   <th className="pb-1 font-semibold text-right">Water</th>
                   <th className="pb-1 font-semibold text-right">Anker</th>
                   <th className="pb-1 font-semibold text-right">Asist.</th>
@@ -246,25 +246,31 @@ function AsalariadoCard({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {emp.months.map((m, i) => (
-                  <tr key={i} className={m.isGrace ? 'bg-slate-50/60' : m.met ? '' : 'bg-red-50/50'}>
-                    <td className="py-1.5 font-medium text-slate-700">{MONTH_NAMES[m.month - 1]} {m.year}</td>
-                    {m.isGrace ? (
-                      <td colSpan={8} className="py-1.5 text-slate-400 text-xs italic">Mes de gracia — no cuenta para comunicados</td>
-                    ) : (
-                      <>
-                        <td className="py-1.5 text-right">{m.solar}</td>
-                        <td className="py-1.5 text-right">{m.cdbg}</td>
-                        <td className="py-1.5 text-right">{m.water > 0 ? `${m.water} (${fmt(m.water * 0.5)})` : '—'}</td>
-                        <td className="py-1.5 text-right">{m.anker > 0 ? `${m.anker} (${fmt(m.anker * 0.5)})` : '—'}</td>
-                        <td className="py-1.5 text-right">{m.asistidas > 0 ? `${m.asistidas} (${fmt(m.asistidas * 0.5)})` : '—'}</td>
-                        <td className="py-1.5 text-right font-bold">{fmt(m.total)}</td>
-                        <td className="py-1.5 text-right text-slate-400">{m.meta}</td>
-                        <td className="py-1.5 text-right">{m.met ? '✓' : <span className="text-red-500">✗</span>}</td>
-                      </>
-                    )}
-                  </tr>
-                ))}
+                {emp.months.map((m, i) => {
+                  const gc = m.isGrace ? 'text-green-600' : ''
+                  return (
+                    <tr key={i} className={m.isGrace ? 'bg-green-50/40' : m.met ? '' : 'bg-red-50/50'}>
+                      <td className="py-1.5 font-medium text-slate-700">
+                        {MONTH_NAMES[m.month - 1]} {m.year}
+                        {m.isGrace && (
+                          <span className="ml-1.5 text-[9px] font-semibold text-green-600 bg-green-100 px-1.5 py-0.5 rounded-full">gracia</span>
+                        )}
+                      </td>
+                      <td className={`py-1.5 text-right ${gc}`}>{m.solar || '—'}</td>
+                      <td className={`py-1.5 text-right ${gc}`}>{m.roofing || '—'}</td>
+                      <td className={`py-1.5 text-right ${gc}`}>{m.water > 0 ? `${m.water} (${fmt(m.water * 0.5)})` : '—'}</td>
+                      <td className={`py-1.5 text-right ${gc}`}>{m.anker > 0 ? `${m.anker} (${fmt(m.anker * 0.5)})` : '—'}</td>
+                      <td className={`py-1.5 text-right ${gc}`}>{m.asistidas > 0 ? `${m.asistidas} (${fmt(m.asistidas * 0.5)})` : '—'}</td>
+                      <td className={`py-1.5 text-right font-bold ${gc}`}>{m.total > 0 ? fmt(m.total) : '—'}</td>
+                      <td className="py-1.5 text-right text-slate-400">{m.meta}</td>
+                      <td className="py-1.5 text-right">
+                        {m.isGrace
+                          ? <span className="text-green-500 font-bold text-[10px]">G</span>
+                          : m.met ? '✓' : <span className="text-red-500">✗</span>}
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
