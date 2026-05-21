@@ -15,9 +15,20 @@ function pct(num: number, den: number) {
   return ((num / den) * 100).toFixed(0) + '%'
 }
 
-function MetricCard({ label, value, sub, color }: { label: string; value: string | number; sub?: string; color?: string }) {
+function MetricCard({
+  label, value, sub, color, onClick, active,
+}: {
+  label: string; value: string | number; sub?: string; color?: string
+  onClick?: () => void; active?: boolean
+}) {
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3">
+    <div
+      onClick={onClick}
+      className={`bg-white rounded-xl border shadow-sm px-4 py-3 transition-all
+        ${onClick ? 'cursor-pointer hover:shadow-md hover:border-[#00A651]/40 select-none' : ''}
+        ${active ? 'border-[#00A651] ring-1 ring-[#00A651]/30' : 'border-slate-200'}
+      `}
+    >
       <p className="text-xs text-slate-400 font-medium">{label}</p>
       <p className={`text-2xl font-bold mt-0.5 ${color ?? 'text-slate-800'}`}>{value}</p>
       {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
@@ -78,6 +89,8 @@ export default function ChannelView({
 }) {
   const [filters, setFilters] = useState<FilterState>({ status: 'all', ampm: 'all', search: '' })
   const [showTable, setShowTable] = useState(false)
+  const [dayFilter, setDayFilter] = useState<string | null>(null)
+  const [unassignedOnly, setUnassignedOnly] = useState(false)
 
   const { shifts } = metrics
   const assignedShifts = shifts.filter(s => s.email && s.email !== '---')
@@ -90,8 +103,38 @@ export default function ChannelView({
   }
   const sortedDays = Object.keys(byDay).sort()
 
+  function applyQuick(opts: { status?: string; ampm?: string; day?: string; unassigned?: boolean }) {
+    setFilters(f => ({
+      status: opts.status ?? 'all',
+      ampm: opts.ampm ?? 'all',
+      search: f.search,
+    }))
+    setDayFilter(opts.day ?? null)
+    setUnassignedOnly(opts.unassigned ?? false)
+    setShowTable(true)
+  }
+
+  function clearAll() {
+    setFilters({ status: 'all', ampm: 'all', search: '' })
+    setDayFilter(null)
+    setUnassignedOnly(false)
+  }
+
+  const hasQuickFilter = !!dayFilter || unassignedOnly || filters.status !== 'all' || filters.ampm !== 'all'
+
+  function quickFilterLabel() {
+    if (dayFilter) return `Día: ${dayFilter.slice(5)}`
+    if (unassignedOnly) return 'Sin asignar'
+    if (filters.status !== 'all') return filters.status
+    if (filters.ampm === 'am') return 'Solo AM'
+    if (filters.ampm === 'pm') return 'Solo PM'
+    return ''
+  }
+
   // Filtered table rows
   const filtered = shifts.filter(s => {
+    if (dayFilter && s.date !== dayFilter) return false
+    if (unassignedOnly && s.email && s.email !== '---') return false
     if (filters.status !== 'all' && s.shiftStatus !== filters.status) return false
     if (filters.ampm === 'am' && !(s.startTime < '12:00')) return false
     if (filters.ampm === 'pm' && !(s.startTime >= '12:00')) return false
@@ -108,14 +151,60 @@ export default function ChannelView({
     <div className="space-y-5">
       {/* KPI grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-        <MetricCard label="Turnos creados"   value={metrics.turnosCreados} />
-        <MetricCard label="Asignados"        value={metrics.turnosAsignados}  sub={pct(metrics.turnosAsignados, metrics.turnosCreados)} />
-        <MetricCard label="Ponchados"        value={metrics.turnosPonchados}  sub={ponchPct} color="text-[#00A651]" />
-        <MetricCard label="Missed"           value={metrics.turnosMissed} color="text-red-600" />
-        <MetricCard label="AM"               value={metrics.turnosAM} />
-        <MetricCard label="PM"               value={metrics.turnosPM} />
-        <MetricCard label="Individuos"       value={metrics.individuosUnicos} color="text-[#00A651]" />
-        <MetricCard label="Sin asignar"      value={metrics.turnosCreados - metrics.turnosAsignados} color="text-slate-500" />
+        <MetricCard
+          label="Turnos creados"
+          value={metrics.turnosCreados}
+          onClick={() => applyQuick({})}
+          active={showTable && !hasQuickFilter}
+        />
+        <MetricCard
+          label="Asignados"
+          value={metrics.turnosAsignados}
+          sub={pct(metrics.turnosAsignados, metrics.turnosCreados)}
+          onClick={() => applyQuick({})}
+          active={showTable && !hasQuickFilter}
+        />
+        <MetricCard
+          label="Ponchados"
+          value={metrics.turnosPonchados}
+          sub={ponchPct}
+          color="text-[#00A651]"
+          onClick={() => applyQuick({ status: 'Completed' })}
+          active={filters.status === 'Completed' && !dayFilter && !unassignedOnly}
+        />
+        <MetricCard
+          label="Missed"
+          value={metrics.turnosMissed}
+          color="text-red-600"
+          onClick={() => applyQuick({ status: 'Missed' })}
+          active={filters.status === 'Missed' && !dayFilter && !unassignedOnly}
+        />
+        <MetricCard
+          label="AM"
+          value={metrics.turnosAM}
+          onClick={() => applyQuick({ ampm: 'am' })}
+          active={filters.ampm === 'am' && !dayFilter && !unassignedOnly}
+        />
+        <MetricCard
+          label="PM"
+          value={metrics.turnosPM}
+          onClick={() => applyQuick({ ampm: 'pm' })}
+          active={filters.ampm === 'pm' && !dayFilter && !unassignedOnly}
+        />
+        <MetricCard
+          label="Individuos"
+          value={metrics.individuosUnicos}
+          color="text-[#00A651]"
+          onClick={() => applyQuick({})}
+          active={showTable && !hasQuickFilter}
+        />
+        <MetricCard
+          label="Sin asignar"
+          value={metrics.turnosCreados - metrics.turnosAsignados}
+          color="text-slate-500"
+          onClick={() => applyQuick({ unassigned: true })}
+          active={unassignedOnly && !dayFilter}
+        />
       </div>
 
       {/* Ponch bar */}
@@ -141,8 +230,15 @@ export default function ChannelView({
             const miss = dayRows.filter(s => s.shiftStatus === 'Missed').length
             const uniq = new Set(dayRows.map(s => s.email)).size
             const dow = new Date(date + 'T12:00:00').toLocaleDateString('es', { weekday: 'short' })
+            const isActive = dayFilter === date
             return (
-              <div key={date} className="bg-white rounded-lg border border-slate-200 p-3 text-center">
+              <div
+                key={date}
+                onClick={() => applyQuick({ day: date })}
+                className={`bg-white rounded-lg border p-3 text-center cursor-pointer select-none transition-all hover:shadow-md hover:border-[#00A651]/40
+                  ${isActive ? 'border-[#00A651] ring-1 ring-[#00A651]/30' : 'border-slate-200'}
+                `}
+              >
                 <p className="text-xs text-slate-400 font-medium uppercase">{dow}</p>
                 <p className="text-xs text-slate-500">{date.slice(5)}</p>
                 <p className="text-lg font-bold text-slate-800 mt-1">{dayRows.length}</p>
@@ -168,6 +264,21 @@ export default function ChannelView({
 
         {showTable && (
           <div className="mt-3">
+            {/* Active quick-filter chip */}
+            {hasQuickFilter && (
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs bg-[#00A651]/10 text-[#00A651] px-2 py-0.5 rounded-full font-medium">
+                  {quickFilterLabel()}
+                </span>
+                <button
+                  onClick={clearAll}
+                  className="text-xs text-slate-400 hover:text-slate-700"
+                >
+                  × Limpiar
+                </button>
+              </div>
+            )}
+
             {/* Filters */}
             <div className="flex flex-wrap gap-2 mb-3">
               <select
