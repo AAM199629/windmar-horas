@@ -224,11 +224,10 @@ export function calcMonthMetrics(
   for (const row of rows) {
     if (!isActive(row)) continue
 
-    const isOwn       = row.salesTeamName.toLowerCase() === nameLower
-    const isAssist    = row.salesRepAssistTrainee.toLowerCase() === nameLower
-    const isRecruiter = row.recruitedBy.toLowerCase() === nameLower
+    const isOwn    = row.salesTeamName.toLowerCase() === nameLower
+    const isAssist = row.salesRepAssistTrainee.toLowerCase() === nameLower
 
-    if (!isOwn && !isAssist && !isRecruiter) continue
+    if (!isOwn && !isAssist) continue
 
     if (isCDBG(row)) {
       if (isOwn) {
@@ -249,11 +248,9 @@ export function calcMonthMetrics(
       else if (isAnker(row))   anker++
       else if (isSolar(row))   solar++
       else if (isRoofing(row)) roofing++
-    } else {
+    } else if (isAssist) {
       const TRAINEE_RANKS = new Set(['1st sale', '2nd sale', '3rd sale', '4th sale'])
-      const hasTraineeSales = TRAINEE_RANKS.has((row.traineeSales ?? '').toLowerCase())
-      if (isAssist && hasTraineeSales) asistidas++
-      if (isRecruiter && !row.salesRepAssistTrainee) asistidas++
+      if (TRAINEE_RANKS.has((row.traineeSales ?? '').toLowerCase())) asistidas++
     }
   }
 

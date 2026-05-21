@@ -15,3 +15,11 @@ body {
   color: #0D1654;
   font-family: 'Barlow', Arial, sans-serif;
 }
+
+@layer components {
+  .wm-heading    { @apply text-[#0D1654] font-bold; }
+  .wm-subheading { @apply text-[#0D1654] font-semibold; }
+  .wm-thead      { @apply bg-[#0D1654] text-white; }
+  .wm-thead-sub  { @apply bg-[#1565C0]/10 text-[#0D1654]; }
+  .wm-total-row  { @apply bg-[#0D1654]/10 font-semibold; }
+}

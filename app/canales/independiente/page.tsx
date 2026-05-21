@@ -26,7 +26,7 @@ export default async function IndependientePage({
     <div>
       <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Canal Independiente &amp; Eventos</h1>
+          <h1 className="text-2xl font-bold text-[#0D1654]">Canal Independiente &amp; Eventos</h1>
           <p className="text-slate-500 text-sm mt-0.5">
             Semana {report.weekKey} · {report.weekStart} → {report.weekEnd}
           </p>

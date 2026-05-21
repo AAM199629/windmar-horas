@@ -139,7 +139,7 @@ export default function NominaSection({ weekKey, weekStart, weekEnd, salaried }:
   })).filter(g => g.employees.length > 0)
 
   const colHeaders = (
-    <tr className="bg-slate-100 text-slate-600 text-xs uppercase">
+    <tr className="bg-[#0D1654] text-white text-xs uppercase">
       <th className="px-3 py-2.5 text-left font-semibold">Nombre</th>
       <th className="px-3 py-2.5 text-left font-semibold">Puesto</th>
       <th className="px-3 py-2.5 text-center font-semibold">Horas</th>
@@ -216,7 +216,7 @@ export default function NominaSection({ weekKey, weekStart, weekEnd, salaried }:
     <div className="mt-10 border-t border-slate-200 pt-8">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <div>
-          <h2 className="text-xl font-bold text-slate-900">Confirmación de Nómina</h2>
+          <h2 className="text-xl font-bold text-[#0D1654]">Confirmación de Nómina</h2>
           <p className="text-sm text-slate-500 mt-0.5">
             Semana {weekKey} · {salaried.length} asalariados
           </p>

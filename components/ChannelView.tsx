@@ -222,7 +222,7 @@ export default function ChannelView({
 
       {/* Day-by-day summary */}
       <div>
-        <h3 className="text-sm font-semibold text-slate-600 mb-2">Por día</h3>
+        <h3 className="text-sm font-semibold text-[#0D1654] mb-2">Por día</h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
           {sortedDays.map(date => {
             const dayRows = byDay[date]
@@ -312,7 +312,7 @@ export default function ChannelView({
 
             <div className="overflow-x-auto rounded-lg border border-slate-200">
               <table className="w-full text-sm">
-                <thead className="bg-slate-50 text-xs text-slate-500 uppercase tracking-wide">
+                <thead className="bg-[#0D1654] text-white text-xs uppercase tracking-wide">
                   <tr>
                     <th className="py-2 px-3 text-left">Estado</th>
                     <th className="py-2 px-3 text-left">Fecha</th>

@@ -136,7 +136,7 @@ export default async function AsalariadosPage() {
     <div>
       <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Asalariados</h1>
+          <h1 className="text-2xl font-bold text-[#0D1654]">Asalariados</h1>
           <p className="text-slate-500 text-sm mt-0.5">
             Seguimiento de metas y comunicados — Empleados directos
           </p>

@@ -41,7 +41,7 @@ export default async function HomePage() {
         {/* Upload section */}
         <div className="space-y-5">
           <div>
-            <h2 className="text-lg font-semibold text-slate-800 mb-3">Subir reporte de turnos (Shifter)</h2>
+            <h2 className="text-lg font-semibold text-[#0D1654] mb-3">Subir reporte de turnos (Shifter)</h2>
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
               <UploadForm />
             </div>
@@ -51,7 +51,7 @@ export default async function HomePage() {
           </div>
 
           <div>
-            <h2 className="text-lg font-semibold text-slate-800 mb-3">Subir reporte de ventas</h2>
+            <h2 className="text-lg font-semibold text-[#0D1654] mb-3">Subir reporte de ventas</h2>
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
               <VentasUploadForm uploadedAt={ventasUploadedAt} />
             </div>
@@ -63,7 +63,7 @@ export default async function HomePage() {
 
         {/* Quick links */}
         <div>
-          <h2 className="text-lg font-semibold text-slate-800 mb-3">Vistas disponibles</h2>
+          <h2 className="text-lg font-semibold text-[#0D1654] mb-3">Vistas disponibles</h2>
           <div className="space-y-2">
             {CHANNELS.map(({ href, label, icon, desc }) => (
               <Link
