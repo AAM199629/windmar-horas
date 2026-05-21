@@ -2,6 +2,27 @@ import { getRedshiftPool } from './redshift'
 import { listWeekKeys, getWeeklyReport } from './kv'
 import type { DayShiftSummary } from './types'
 
+const ALLOWED_ROLES = [
+  'Consultor',
+  'Empleado - Consultor',
+  'Lider',
+  'Empleado - Lider',
+  'Gerente',
+  'Empleado - Gerente',
+  'Trainee',
+]
+
+async function getAllowedEmails(): Promise<Set<string>> {
+  const pool = getRedshiftPool()
+  const placeholders = ALLOWED_ROLES.map((_, i) => `$${i + 1}`).join(', ')
+  const { rows } = await pool.query<{ email: string }>(
+    `SELECT LOWER(email) as email FROM dw_zoho.dim_sales_team_member
+     WHERE email IS NOT NULL AND email <> '' AND sales_role IN (${placeholders})`,
+    ALLOWED_ROLES,
+  )
+  return new Set(rows.map(r => r.email))
+}
+
 export interface BingoLBRow {
   email: string
   name: string
@@ -209,14 +230,17 @@ export async function computeBingoLeaderboard(month: string): Promise<BingoLBRow
   const firstDay   = `${year}-${mm}-01`
   const lastDay    = `${year}-${mm}-${String(lastDayNum).padStart(2, '0')}`
 
-  const [deals, shiftsMap] = await Promise.all([
+  const [deals, shiftsMap, allowedEmails] = await Promise.all([
     getDealsForMonth(firstDay, lastDay).catch(() => [] as DealRow[]),
     getShiftsForMonth(firstDay, lastDay).catch(() => new Map<string, TaggedShift[]>()),
+    getAllowedEmails().catch(() => new Set<string>()),
   ])
 
-  // Build rep registry from deals (only reps with deals appear in the leaderboard)
+  // Build rep registry from deals filtered by allowed sales roles
   const repNames = new Map<string, string>()
-  for (const d of deals) repNames.set(d.email, d.fullName)
+  for (const d of deals) {
+    if (allowedEmails.size === 0 || allowedEmails.has(d.email)) repNames.set(d.email, d.fullName)
+  }
 
   const dealsByRep = new Map<string, DealRow[]>()
   for (const d of deals) {
