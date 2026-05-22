@@ -3,6 +3,7 @@ import { getVentasUploadedAt } from '@/lib/asalariados-kv'
 import { auth } from '@/auth'
 import Link from 'next/link'
 import UploadForm from '@/components/UploadForm'
+import StipSyncForm from '@/components/StipSyncForm'
 import VentasUploadForm from '@/components/VentasUploadForm'
 import WeeksManager from '@/components/WeeksManager'
 
@@ -41,14 +42,26 @@ export default async function HomePage() {
         {/* Upload section */}
         <div className="space-y-5">
           <div>
-            <h2 className="text-lg font-semibold text-[#0D1654] mb-3">Subir reporte de turnos (Shifter)</h2>
+            <h2 className="text-lg font-semibold text-[#0D1654] mb-3">Sincronizar turnos desde STIP</h2>
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+              <StipSyncForm />
+            </div>
+          </div>
+
+          <details className="group">
+            <summary className="text-xs text-slate-400 cursor-pointer hover:text-slate-600 select-none list-none flex items-center gap-1">
+              <svg className="w-3 h-3 transition-transform group-open:rotate-90" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd"/>
+              </svg>
+              Subir CSV manual (fallback)
+            </summary>
+            <div className="mt-3 bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
               <UploadForm />
             </div>
             <p className="text-xs text-slate-400 mt-2">
               Shifter exporta el CSV desde <strong>Akcelita → Reports → Weekly Shift Report</strong>.
             </p>
-          </div>
+          </details>
 
           <div>
             <h2 className="text-lg font-semibold text-[#0D1654] mb-3">Subir reporte de ventas</h2>
