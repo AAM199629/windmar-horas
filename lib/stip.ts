@@ -20,13 +20,18 @@ function getStipPool(): mysql.Pool {
   return pool
 }
 
-// Parse "MM/DD/YYYY HH:MM:SS" → Date (returns null if blank/invalid)
-function parseStipDateTime(val: string): Date | null {
+// Parse STIP clock time → Date (UTC). STIP uses two formats:
+//   ISO:        "2026-05-19T13:00:27.649Z"
+//   MM/DD/YYYY: "05/19/2026 13:00:22"  (stored as UTC)
+function parseStipDateTime(val: string | null): Date | null {
   if (!val || val === '---') return null
-  // MM/DD/YYYY HH:MM:SS
+  if (val.includes('T')) {
+    const d = new Date(val)
+    return isNaN(d.getTime()) ? null : d
+  }
   const m = val.match(/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2}):(\d{2})$/)
   if (!m) return null
-  return new Date(`${m[3]}-${m[1]}-${m[2]}T${m[4]}:${m[5]}:${m[6]}`)
+  return new Date(`${m[3]}-${m[1]}-${m[2]}T${m[4]}:${m[5]}:${m[6]}Z`)
 }
 
 // Returns "HH:MM" decimal-hours string like the CSV shiftHours field
@@ -42,10 +47,12 @@ function calcShiftHours(clockIn: string, clockOut: string): string {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
 }
 
-// Midnight clock-out (auto-clocked-out by system at 00:00:00 next day)
-function isAutoClockedOut(clockOut: string): 'Yes' | 'No' {
+// Midnight clock-out (auto-clocked-out by system at 00:00:00 UTC next day)
+function isAutoClockedOut(clockOut: string | null): 'Yes' | 'No' {
   if (!clockOut || clockOut === '---') return 'No'
-  return clockOut.endsWith('00:00:00') ? 'Yes' : 'No'
+  if (clockOut.endsWith('00:00:00')) return 'Yes'                    // MM/DD/YYYY format
+  if (/T00:00:00(\.000)?Z$/.test(clockOut)) return 'Yes'            // ISO format
+  return 'No'
 }
 
 interface StipRow {
