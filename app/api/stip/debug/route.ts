@@ -53,14 +53,15 @@ export async function GET(req: NextRequest) {
       [from, to],
     )
 
-    // 4. Raw rows — all columns — for the range (optionally filtered by email)
+    // 4a. When filtering by email: include ALL rows (even user_id=0) to detect
+    //     shifts that are assigned by email but missing a user_id
+    // 4b. Without email filter: only non-zero user_id to avoid empty slots
     const [rawRows] = email
       ? await db.execute<mysql.RowDataPacket[]>(
           `SELECT * FROM shift_instances
            WHERE shift_date BETWEEN ? AND ?
-             AND user_id != 0
              AND LOWER(user_email) = LOWER(?)
-           ORDER BY shift_date, user_name
+           ORDER BY shift_date, shift_name
            LIMIT 500`,
           [from, to, email],
         )
