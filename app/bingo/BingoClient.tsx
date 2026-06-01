@@ -4,33 +4,33 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import type { BingoLBRow } from '@/lib/bingo-leaderboard'
 
-// Matches UNIFIED_BOARD.cells in windmar-bingo/lib/challenges.ts
+// Mirrors UNIFIED_BOARD challenges defined in bingo.windmar.com/lib/challenges.ts
 // Challenge index i maps to board[i < 12 ? i : i + 1] (board[12] is FREE center)
 const CELLS = [
-  { icon: '🏠', text: 'Cierra 5 ventas en la semana' },
-  { icon: '⚡', text: 'Primera venta antes del mediodía' },
-  { icon: '📋', text: 'Genera 10 leads calificados en un día' },
-  { icon: '🔥', text: 'Cierra 3 ventas en un solo día' },
-  { icon: '🌟', text: 'Convierte 5 leads en citas en un día' },
-  { icon: '💡', text: 'Una venta por LightReach' },
-  { icon: '🏬', text: 'Trabaja 2 fines de semana corridos en Booth Malls' },
-  { icon: '🏪', text: 'Trabaja 1 domingo en HD' },
+  { icon: '🏠', text: '5 ventas en la semana' },
+  { icon: '💰', text: '5 cierres en el mes' },
+  { icon: '📋', text: '10 leads en un día' },
+  { icon: '🔥', text: '3 ventas en un solo día' },
+  { icon: '📅', text: '3 citas coordinadas en un día' },
+  { icon: '💡', text: 'Una venta LightReach' },
+  { icon: '🏬', text: '3 cierres en Booth Mall' },
+  { icon: '🏪', text: '3 cierres en Home Depot' },
   { icon: '☀️', text: 'Vende sistema >10 kW' },
   { icon: '🚀', text: 'Vende combo solar + batería' },
-  { icon: '🚶', text: 'Participa en 3 cambaceos en una semana' },
-  { icon: '🚶', text: '3 ventas de Canvassing' },
-  { icon: '✅', text: 'Ponches perfectos en una semana' },
-  { icon: '🎯', text: 'Participa en los 3 canales en una misma semana' },
-  { icon: '🌙', text: '2 turnos 4-9pm en una semana' },
-  { icon: '📦', text: '1 venta de cada producto en el mes' },
-  { icon: '🌅', text: 'Primera venta antes de las 10am' },
-  { icon: '📝', text: 'Registra leads en todos tus turnos de la semana' },
-  { icon: '🛒', text: '3 ventas por Booth y Eventos' },
-  { icon: '🗓️', text: 'Genera 3 citas en un turno' },
-  { icon: '💪', text: '5 días consecutivos prospectando' },
-  { icon: '📊', text: 'Genera leads en 5 turnos consecutivos' },
-  { icon: '🏅', text: '3 cierres de Booth Malls & HD' },
-  { icon: '🔥', text: 'Genera leads en cada canal en una misma semana' },
+  { icon: '🎪', text: '3 cierres en Evento' },
+  { icon: '🚶', text: '3 ventas Canvassing' },
+  { icon: '✌️', text: '2 cierres en el mismo día' },
+  { icon: '🚶', text: '5 cierres Canvassing en el mes' },
+  { icon: '💡', text: '2 ventas LightReach' },
+  { icon: '📆', text: 'Cierra en 3 semanas distintas' },
+  { icon: '🗓️', text: 'Cierra en las 4 semanas del mes' },
+  { icon: '🎯', text: '4 canales distintos' },
+  { icon: '🛒', text: '3 ventas Booth y Eventos' },
+  { icon: '🏕️', text: '2 Canvassing en una semana' },
+  { icon: '🏆', text: 'Completa 1 línea de bingo' },
+  { icon: '⭐', text: 'Completa 2 líneas de bingo' },
+  { icon: '🏅', text: '3 cierres Booth Malls & HD' },
+  { icon: '☀️', text: '2 sistemas >10 kW' },
 ]
 
 const MONTH_LABELS: Record<string, string> = {

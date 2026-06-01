@@ -36,3 +36,26 @@ export async function deleteWeeklyReport(weekKey: string): Promise<void> {
   await redis.del(KEY_PREFIX + weekKey)
   await redis.srem(INDEX_KEY, weekKey)
 }
+
+// ── Bingo data (written by bingo.windmar.com) ──────────────────────────────
+
+export async function getBingoPlayers(month: string): Promise<string[]> {
+  const members = await redis.smembers<string[]>(`bingo:players:${month}`)
+  return members ?? []
+}
+
+export async function getBingoBoard(email: string, month: string): Promise<boolean[] | null> {
+  const raw = await redis.get(`bingo:board:${email}:${month}`)
+  if (raw == null) return null
+  if (Array.isArray(raw)) return raw as boolean[]
+  if (typeof raw === 'string') return JSON.parse(raw) as boolean[]
+  return null
+}
+
+export async function getBingoUserName(email: string): Promise<string | null> {
+  const raw = await redis.get(`bingo:user:${email}`)
+  if (raw == null) return null
+  if (typeof raw === 'string') return raw
+  if (typeof raw === 'object' && 'name' in (raw as object)) return (raw as Record<string, string>).name
+  return String(raw)
+}
