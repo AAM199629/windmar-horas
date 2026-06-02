@@ -33,6 +33,13 @@ const CELLS = [
   { icon: '☀️', text: '2 sistemas >10 kW' },
 ]
 
+function getPrize(lines: number, completed: number): string | null {
+  if (completed === 24) return '👟 Tenis'
+  if (lines >= 2)       return '⚡ Anker C1000'
+  if (lines >= 1)       return '🥤 Vaso Yeti'
+  return null
+}
+
 const MONTH_LABELS: Record<string, string> = {
   '01': 'Enero',    '02': 'Febrero',   '03': 'Marzo',     '04': 'Abril',
   '05': 'Mayo',     '06': 'Junio',     '07': 'Julio',     '08': 'Agosto',
@@ -82,8 +89,10 @@ export default function BingoClient({
 }) {
   const router   = useRouter()
   const months   = getMonths()
-  const totalEarned = leaderboard.reduce((s, r) => s + r.earned, 0)
   const withLines   = leaderboard.filter(r => r.lines > 0).length
+  const yetis       = leaderboard.filter(r => r.lines === 1 && r.completed < 24).length
+  const ankers      = leaderboard.filter(r => r.lines >= 2 && r.completed < 24).length
+  const tenis       = leaderboard.filter(r => r.completed === 24).length
 
   const [tooltip, setTooltip] = useState<{ text: string; x: number; y: number } | null>(null)
 
@@ -119,7 +128,7 @@ export default function BingoClient({
         <div className="flex flex-wrap gap-3">
           <KpiBox label="Vendedores" value={String(leaderboard.length)} />
           <KpiBox label="Con líneas" value={String(withLines)} color="text-[#1565C0]" />
-          <KpiBox label="Total ganado" value={`$${totalEarned.toLocaleString()}`} color="text-[#00A651]" />
+          <KpiBox label="Premios" value={`🥤${yetis} · ⚡${ankers} · 👟${tenis}`} />
         </div>
       </div>
 
@@ -210,8 +219,11 @@ export default function BingoClient({
                   <td className="px-3 py-2.5 text-center font-bold text-[#1565C0]">
                     {row.lines}
                   </td>
-                  <td className={`px-3 py-2.5 text-right font-bold whitespace-nowrap ${row.earned > 0 ? 'text-[#00A651]' : 'text-slate-300'}`}>
-                    {row.earned > 0 ? `$${row.earned.toLocaleString()}` : '—'}
+                  <td className="px-3 py-2.5 text-right font-semibold whitespace-nowrap">
+                    {getPrize(row.lines, row.completed)
+                      ? <span className="text-[#00A651]">{getPrize(row.lines, row.completed)}</span>
+                      : <span className="text-slate-300">—</span>
+                    }
                   </td>
                 </tr>
               ))}
