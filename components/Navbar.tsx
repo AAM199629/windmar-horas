@@ -44,6 +44,7 @@ export default function Navbar() {
   const allLinks = [
     ...links,
     ...(canSeeAsalariados ? [
+      { href: '/ventas',      label: 'Dashboard Ventas' },
       { href: '/asalariados', label: 'Asalariados' },
       { href: '/promotores',  label: 'Promotores'  },
       { href: '/bingo',       label: 'Bingo'        },

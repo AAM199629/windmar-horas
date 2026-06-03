@@ -30,7 +30,7 @@ export default function VentasUploadForm({ uploadedAt }: { uploadedAt: string | 
     <div className="space-y-3">
       {uploadedAt && (
         <p className="text-xs text-slate-500">
-          Último upload: <span className="font-semibold text-slate-700">
+          Último upload: <span className="font-semibold text-slate-700" suppressHydrationWarning>
             {new Date(uploadedAt).toLocaleDateString('es-PR', { dateStyle: 'medium' })}
           </span>
         </p>

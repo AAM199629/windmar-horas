@@ -34,7 +34,7 @@ export default function DealModal({ deals, title, onClose }: Props) {
     >
       <div
         ref={dialogRef}
-        className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[85vh] flex flex-col"
+        className="bg-white rounded-xl shadow-xl w-full max-w-5xl max-h-[85vh] flex flex-col"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 bg-[#0D1654] rounded-t-xl">
@@ -61,6 +61,7 @@ export default function DealModal({ deals, title, onClose }: Props) {
           <table className="text-sm border-collapse w-full">
             <thead>
               <tr className="bg-[#0D1654] text-left text-xs text-white uppercase tracking-wide">
+                <th className="px-3 py-2 border border-[#1565C0] font-semibold">Case #</th>
                 <th className="px-3 py-2 border border-[#1565C0] font-semibold">Vendedor</th>
                 <th className="px-3 py-2 border border-[#1565C0] font-semibold">Fecha Cierre</th>
                 <th className="px-3 py-2 border border-[#1565C0] font-semibold">Pipeline</th>
@@ -72,6 +73,9 @@ export default function DealModal({ deals, title, onClose }: Props) {
             <tbody>
               {deals.map((deal, i) => (
                 <tr key={deal.zohoId || i} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
+                  <td className="px-3 py-2 border border-slate-200 text-[#0D1654] font-mono text-xs">
+                    {deal.dealName ?? '—'}
+                  </td>
                   <td className="px-3 py-2 border border-slate-200 text-slate-800 font-medium">
                     {deal.vendedor}
                   </td>

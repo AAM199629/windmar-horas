@@ -1,5 +1,6 @@
 import { Pool } from 'pg'
 import type { VentaRow } from './ventas'
+import { MALL_BOOTH_LOCATIONS } from './constants'
 
 let pool: Pool | null = null
 
@@ -371,24 +372,10 @@ export interface MallBoothDealDetail {
   cancellationReason: string | null
   isCdbg: boolean
   zohoId: string
+  dealName: string | null
 }
 
-export const MALL_BOOTH_LOCATIONS = [
-  'Home Depot - Caguas',
-  'Home Depot - Colobos',
-  'Home Depot - Escorial',
-  'Home Depot - Hatillo',
-  'Home Depot - Humacao',
-  'Home Depot - Mayaguez',
-  'Home Depot - Montehiedra',
-  'Home Depot - Plaza del Sol',
-  'Home Depot - Ponce',
-  'Home Depot - Rexville',
-  'Malls - Plaza las Americas',
-  'Malls - Plaza del Caribe',
-  'Malls - Santa Rosa',
-  'Malls - Aguadilla Mall',
-] as const
+export { MALL_BOOTH_LOCATIONS } from './constants'
 
 export async function getMallBoothDealDetails(year: number): Promise<MallBoothDealDetail[]> {
   const pool = getRedshiftPool()
@@ -404,7 +391,8 @@ export async function getMallBoothDealDetails(year: number): Promise<MallBoothDe
       dsr.on_hold_status,
       dsr.cancellation_reason,
       (dfl.cdbg_number IS NOT NULL)                          AS is_cdbg,
-      fd.zoho_deal_id
+      fd.zoho_deal_id,
+      fd.deal_name
     FROM dwh.fact_deals fd
     LEFT JOIN dwh.dim_marketing_source dms
       ON dms.id_marketing_source = fd.id_marketing_source
@@ -437,6 +425,7 @@ export async function getMallBoothDealDetails(year: number): Promise<MallBoothDe
     cancellationReason: r.cancellation_reason ?? null,
     isCdbg:             Boolean(r.is_cdbg),
     zohoId:             r.zoho_deal_id as string,
+    dealName:           (r.deal_name as string | null) ?? null,
   }))
 }
 
@@ -453,36 +442,56 @@ export interface MallBoothLeadDetail {
 
 export async function getMallBoothLeadDetails(year: number): Promise<MallBoothLeadDetail[]> {
   const pool = getRedshiftPool()
+  const yearStart = `${year}-01-01`
+  const yearEnd   = `${year + 1}-01-01`
   const { rows } = await pool.query(`
+    WITH src AS (
+      SELECT id_lead_source
+      FROM   dwh.dim_lead_source
+      WHERE  lead_source = ANY($1)
+    ),
+    base AS (
+      SELECT
+        fl.zoho_lead_id,
+        fl.id_employee,
+        fl.id_audit_system,
+        dasl.first_name,
+        dasl.last_name,
+        dasl.created_time,
+        dls.lead_source
+      FROM dwh.dim_audit_system_leads dasl
+      JOIN dwh.fact_leads fl
+        ON fl.id_audit_system = dasl.id_audit_system
+      JOIN src
+        ON src.id_lead_source = fl.id_lead_source
+      JOIN dwh.dim_lead_source dls
+        ON dls.id_lead_source = fl.id_lead_source
+      WHERE dasl.created_time >= $2
+        AND dasl.created_time <  $3
+    )
     SELECT
-      fl.zoho_lead_id                                        AS lead_id,
-      TRIM(COALESCE(dasl.first_name, '') || ' ' || COALESCE(dasl.last_name, '')) AS lead_name,
-      dls.lead_source                                        AS location,
-      TO_CHAR(dasl.created_time, 'YYYY-MM-DD')              AS created_date,
-      EXTRACT(MONTH FROM dasl.created_time)::int             AS month,
+      b.zoho_lead_id                                         AS lead_id,
+      TRIM(COALESCE(b.first_name, '') || ' ' || COALESCE(b.last_name, '')) AS lead_name,
+      b.lead_source                                          AS location,
+      TO_CHAR(b.created_time, 'YYYY-MM-DD')                 AS created_date,
+      EXTRACT(MONTH FROM b.created_time)::int                AS month,
       COALESCE(stm_emp.full_name, de.sales_rep_email)        AS registrado_por,
       (fd.zoho_deal_id IS NOT NULL
         AND dsr.on_hold_status IS NULL)                      AS is_sold,
       dp.pipeline                                            AS deal_pipeline
-    FROM dwh.fact_leads fl
+    FROM base b
     JOIN  dwh.dim_employee de
-      ON  de.id_employee = fl.id_employee AND de.is_current = true
+      ON  de.id_employee = b.id_employee AND de.is_current = true
     LEFT JOIN dw_zoho.dim_sales_team_member stm_emp
       ON  LOWER(stm_emp.email) = LOWER(de.sales_rep_email)
-    JOIN  dwh.dim_lead_source dls
-      ON  dls.id_lead_source = fl.id_lead_source
-    JOIN  dwh.dim_audit_system_leads dasl
-      ON  dasl.id_audit_system = fl.id_audit_system
     LEFT JOIN dwh.fact_deals fd
-      ON  fd.associated_lead = fl.zoho_lead_id
+      ON  fd.associated_lead = b.zoho_lead_id
     LEFT JOIN dwh.dim_status_reason dsr
       ON  dsr.id_status_reason = fd.id_status_reason AND dsr.is_current = true
     LEFT JOIN dwh.dim_profiles dp
       ON  dp.id_profile = fd.id_profile
-    WHERE dls.lead_source = ANY($1)
-      AND EXTRACT(YEAR FROM dasl.created_time) = $2
-    ORDER BY dasl.created_time DESC
-  `, [MALL_BOOTH_LOCATIONS, year])
+    ORDER BY b.created_time DESC
+  `, [MALL_BOOTH_LOCATIONS, yearStart, yearEnd])
 
   return rows.map((r: any) => ({
     leadId:        r.lead_id as string,
@@ -494,6 +503,154 @@ export async function getMallBoothLeadDetails(year: number): Promise<MallBoothLe
     isSold:        Boolean(r.is_sold),
     dealPipeline:  r.deal_pipeline ?? null,
   }))
+}
+
+export interface BoothSaleRow {
+  booth:  string
+  ventas: number
+}
+
+export async function getMallBoothSalesByPeriod(from: string, to: string): Promise<BoothSaleRow[]> {
+  const pool = getRedshiftPool()
+  const { rows } = await pool.query(`
+    SELECT
+      dod.booth     AS booth,
+      COUNT(*)::int AS ventas
+    FROM dwh.fact_deals fd
+    JOIN dwh.dim_staff ds
+      ON ds.id_staff = fd.id_staff AND ds.is_current = true
+    JOIN dwh.dim_status_reason dsr
+      ON dsr.id_status_reason = fd.id_status_reason AND dsr.is_current = true
+    LEFT JOIN dwh.dim_operations_details dod
+      ON dod.id_operations_details = fd.id_operations_details
+    WHERE fd.closing_date >= $1 AND fd.closing_date <= $2
+      AND dsr.cancellation_reason IS NULL
+      AND dsr.on_hold_status IS NULL
+      AND ds.sale_rep_email IS NOT NULL
+      AND dod.booth = ANY($3)
+    GROUP BY dod.booth
+    ORDER BY dod.booth
+  `, [from, to, MALL_BOOTH_LOCATIONS])
+
+  return rows.map((r: any) => ({
+    booth:  r.booth  as string,
+    ventas: Number(r.ventas),
+  }))
+}
+
+export interface SalesGroupRow {
+  salesRole: string
+  leadSource: string
+  ventas: number
+}
+
+export async function getSalesGroupedByPeriod(
+  from: string,
+  to: string,
+): Promise<SalesGroupRow[]> {
+  const pool = getRedshiftPool()
+  const { rows } = await pool.query(`
+    SELECT
+      COALESCE(stm.sales_role, 'Sin Rol') AS sales_role,
+      COALESCE(dms.lead_source, '')        AS lead_source,
+      COUNT(*)::int                        AS ventas
+    FROM dwh.fact_deals fd
+    JOIN dwh.dim_staff ds
+      ON ds.id_staff = fd.id_staff AND ds.is_current = true
+    JOIN dwh.dim_status_reason dsr
+      ON dsr.id_status_reason = fd.id_status_reason AND dsr.is_current = true
+    LEFT JOIN dw_zoho.dim_sales_team_member stm
+      ON LOWER(stm.email) = LOWER(ds.sale_rep_email)
+    LEFT JOIN dwh.dim_marketing_source dms
+      ON dms.id_marketing_source = fd.id_marketing_source
+    WHERE fd.closing_date >= $1 AND fd.closing_date <= $2
+      AND dsr.cancellation_reason IS NULL
+      AND dsr.on_hold_status IS NULL
+      AND ds.sale_rep_email IS NOT NULL
+    GROUP BY stm.sales_role, dms.lead_source
+  `, [from, to])
+
+  return rows.map((r: any) => ({
+    salesRole:  r.sales_role  as string,
+    leadSource: r.lead_source as string,
+    ventas:     Number(r.ventas),
+  }))
+}
+
+export interface IndepBoothRow {
+  leadSource: string
+  boothName:  string   // from dim_operations_details.booth; empty when not set
+  ventas:     number
+}
+
+export async function getIndependienteBoothSummary(
+  from: string,
+  to: string,
+): Promise<IndepBoothRow[]> {
+  const pool = getRedshiftPool()
+  const { rows } = await pool.query(`
+    SELECT
+      COALESCE(dms.lead_source, '') AS lead_source,
+      COALESCE(dod.booth, '')       AS booth_name,
+      COUNT(*)::int                 AS ventas
+    FROM dwh.fact_deals fd
+    JOIN dwh.dim_staff ds
+      ON ds.id_staff = fd.id_staff AND ds.is_current = true
+    JOIN dwh.dim_status_reason dsr
+      ON dsr.id_status_reason = fd.id_status_reason AND dsr.is_current = true
+    LEFT JOIN dwh.dim_marketing_source dms
+      ON dms.id_marketing_source = fd.id_marketing_source
+    LEFT JOIN dwh.dim_operations_details dod
+      ON dod.id_operations_details = fd.id_operations_details
+    WHERE fd.closing_date >= $1 AND fd.closing_date <= $2
+      AND dsr.cancellation_reason IS NULL
+      AND dsr.on_hold_status IS NULL
+      AND ds.sale_rep_email IS NOT NULL
+      AND dms.lead_source IS NOT NULL
+      AND TRIM(dms.lead_source) <> ''
+      AND LOWER(dms.lead_source) NOT LIKE '%mall%'
+      AND LOWER(dms.lead_source) NOT LIKE '%centro comercial%'
+      AND LOWER(dms.lead_source) NOT LIKE '%plaza%'
+      AND LOWER(dms.lead_source) NOT LIKE '%home depot%'
+      AND LOWER(dms.lead_source) NOT LIKE '%canvass%'
+      AND LOWER(dms.lead_source) NOT LIKE '%redes sociales%'
+      AND LOWER(dms.lead_source) NOT LIKE '%cuenta propia%'
+      AND LOWER(dms.lead_source) NOT LIKE '%telemarketing%'
+      AND LOWER(dms.lead_source) NOT LIKE '%showroom%'
+    GROUP BY dms.lead_source, dod.booth
+    ORDER BY ventas DESC
+  `, [from, to])
+
+  return rows.map((r: any) => ({
+    leadSource: r.lead_source as string,
+    boothName:  r.booth_name  as string,
+    ventas:     Number(r.ventas),
+  }))
+}
+
+export interface SellersSummaryRow {
+  total:          number
+  asalariados:    number
+  fullCommission: number
+}
+
+export async function getActiveSellersSummary(): Promise<SellersSummaryRow> {
+  const pool = getRedshiftPool()
+  const { rows } = await pool.query<{ total: string; asalariados: string }>(`
+    SELECT
+      COUNT(*)::int AS total,
+      COUNT(CASE
+        WHEN sales_role IN ('Empleado - Consultor','Empleado - Lider','Empleado - Gerente')
+        THEN 1
+      END)::int AS asalariados
+    FROM dw_zoho.dim_sales_team_member
+    WHERE status = 'Activo'
+      AND email IS NOT NULL
+  `)
+  const r = rows[0]
+  const total = Number(r.total)
+  const asal  = Number(r.asalariados)
+  return { total, asalariados: asal, fullCommission: total - asal }
 }
 
 export async function getFollowUpFromRedshift(): Promise<Map<string, FollowUpRedshiftEntry>> {

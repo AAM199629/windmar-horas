@@ -1,6 +1,5 @@
-import { getVentasUploadedAt } from '@/lib/asalariados-kv'
 import Link from 'next/link'
-import VentasUploadForm from '@/components/VentasUploadForm'
+import UploadForm from '@/components/UploadForm'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,11 +8,10 @@ const CHANNELS = [
   { href: '/canales/cambaceo',         label: 'Canal Cambaceo',           icon: '🚶', desc: 'Canvaseo · métricas de turnos, AM/PM, individuos' },
   { href: '/canales/mall',             label: 'Canal Mall / Home Depot',  icon: '🏬', desc: 'Booth Malls · Home Depot · ponche, asignación' },
   { href: '/canales/independiente',    label: 'Canal Independiente',      icon: '📍', desc: 'Booth Ind · BCN · Eventos · Selectos y más' },
+  { href: '/ventas',                   label: 'Dashboard de Ventas',      icon: '📊', desc: 'Reporte ejecutivo · Asalariados vs Full Commission · Lead Sources · Export PDF' },
 ]
 
-export default async function HomePage() {
-  const ventasUploadedAt = await getVentasUploadedAt()
-
+export default function HomePage() {
   return (
     <div className="space-y-8">
       {/* Hero */}
@@ -24,14 +22,14 @@ export default async function HomePage() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-8">
-        {/* Ventas upload */}
+        {/* Turnos CSV upload */}
         <div>
-          <h2 className="text-lg font-semibold text-[#0D1654] mb-3">Subir reporte de ventas</h2>
+          <h2 className="text-lg font-semibold text-[#0D1654] mb-3">Subir turnos (CSV Shifter)</h2>
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-            <VentasUploadForm uploadedAt={ventasUploadedAt} />
+            <UploadForm />
           </div>
           <p className="text-xs text-slate-400 mt-2">
-            Exporta desde Smartsheet → <strong>Ventas Follow Up 2025</strong> → File → Export → CSV.
+            Exporta el reporte semanal desde Shifter/Akcelita y súbelo aquí. Los datos se cargan en todas las vistas automáticamente.
           </p>
         </div>
 

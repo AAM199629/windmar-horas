@@ -77,6 +77,7 @@ export default function MallDashboard({ year }: { year: number }) {
   const [modal, setModal]       = useState<ModalState | null>(null)
 
   const [allLeads, setAllLeads]     = useState<MallBoothLeadDetail[] | null>(null)
+  const [leadsError, setLeadsError] = useState<string | null>(null)
   const [leadModal, setLeadModal]   = useState<{ leads: MallBoothLeadDetail[]; title: string } | null>(null)
 
   const today    = new Date().toISOString().slice(0, 10)
@@ -97,8 +98,15 @@ export default function MallDashboard({ year }: { year: number }) {
 
     fetch('/api/canales/mall/leads')
       .then(r => r.json())
-      .then(data => { if (Array.isArray(data)) setAllLeads(data) })
-      .catch(() => setAllLeads([]))
+      .then(data => {
+        if (Array.isArray(data)) {
+          setAllLeads(data)
+        } else {
+          setLeadsError(data.error ?? 'Error desconocido al cargar leads')
+          setAllLeads([])
+        }
+      })
+      .catch(e => { setLeadsError(e.message); setAllLeads([]) })
   }, [])
 
   const fromMonth = Math.max(1, Math.min(12, Number(fromDate.slice(5, 7))))
@@ -557,6 +565,10 @@ export default function MallDashboard({ year }: { year: number }) {
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
               </svg>
               Cargando leads…
+            </div>
+          ) : leadsError ? (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              Error al cargar leads: {leadsError}
             </div>
           ) : (filteredLeads?.length ?? 0) === 0 ? (
             <p className="text-slate-500 text-sm">Sin leads para el período seleccionado.</p>

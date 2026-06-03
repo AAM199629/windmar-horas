@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getShiftRowsForRange } from '@/lib/stip'
-import { buildWeeklyReport } from '@/lib/shifter'
+import { buildWeeklyReport, getWeekKey } from '@/lib/shifter'
+import { getWeeklyReport } from '@/lib/kv'
 
 export async function GET(req: NextRequest) {
   try {
@@ -14,12 +15,18 @@ export async function GET(req: NextRequest) {
 
     const rows = await getShiftRowsForRange(from, to)
 
-    if (rows.length === 0) {
-      return NextResponse.json({ error: 'No hay turnos para ese período' }, { status: 404 })
+    if (rows.length > 0) {
+      return NextResponse.json(buildWeeklyReport(rows))
     }
 
-    const report = buildWeeklyReport(rows)
-    return NextResponse.json(report)
+    // Fallback: try CSV-uploaded data from KV
+    const weekKey = getWeekKey(from)
+    const kvReport = await getWeeklyReport(weekKey)
+    if (kvReport) {
+      return NextResponse.json({ ...kvReport, source: 'csv' })
+    }
+
+    return NextResponse.json({ error: 'No hay turnos para ese período' }, { status: 404 })
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Error desconocido'
     return NextResponse.json({ error: msg }, { status: 500 })
