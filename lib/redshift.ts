@@ -455,8 +455,6 @@ export async function getMallBoothLeadDetails(year: number): Promise<MallBoothLe
         fl.zoho_lead_id,
         fl.id_employee,
         fl.id_audit_system,
-        dasl.first_name,
-        dasl.last_name,
         dasl.created_time,
         dls.lead_source
       FROM dwh.dim_audit_system_leads dasl
@@ -471,7 +469,7 @@ export async function getMallBoothLeadDetails(year: number): Promise<MallBoothLe
     )
     SELECT
       b.zoho_lead_id                                         AS lead_id,
-      TRIM(COALESCE(b.first_name, '') || ' ' || COALESCE(b.last_name, '')) AS lead_name,
+      COALESCE(dl.full_name, TRIM(COALESCE(dl.first_name, '') || ' ' || COALESCE(dl.last_name, ''))) AS lead_name,
       b.lead_source                                          AS location,
       TO_CHAR(b.created_time, 'YYYY-MM-DD')                 AS created_date,
       EXTRACT(MONTH FROM b.created_time)::int                AS month,
@@ -482,6 +480,8 @@ export async function getMallBoothLeadDetails(year: number): Promise<MallBoothLe
     FROM base b
     JOIN  dwh.dim_employee de
       ON  de.id_employee = b.id_employee AND de.is_current = true
+    LEFT JOIN dwh.dim_lead dl
+      ON  dl.zoho_lead_id = b.zoho_lead_id AND dl.is_current = true
     LEFT JOIN dw_zoho.dim_sales_team_member stm_emp
       ON  LOWER(stm_emp.email) = LOWER(de.sales_rep_email)
     LEFT JOIN dwh.fact_deals fd
