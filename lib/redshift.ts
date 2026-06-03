@@ -392,7 +392,7 @@ export async function getMallBoothDealDetails(year: number): Promise<MallBoothDe
       dsr.cancellation_reason,
       (dfl.cdbg_number IS NOT NULL)                          AS is_cdbg,
       fd.zoho_deal_id,
-      fd.deal_name
+      dp.case_number                                          AS deal_name
     FROM dwh.fact_deals fd
     LEFT JOIN dwh.dim_marketing_source dms
       ON dms.id_marketing_source = fd.id_marketing_source
