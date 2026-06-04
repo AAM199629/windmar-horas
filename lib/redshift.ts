@@ -448,7 +448,7 @@ export async function getMallBoothLeadDetails(year: number): Promise<MallBoothLe
     WITH src AS (
       SELECT id_lead_source
       FROM   dwh.dim_lead_source
-      WHERE  lead_source = ANY($1)
+      WHERE  LOWER(TRIM(lead_source)) = ANY($1)
     ),
     base AS (
       SELECT
@@ -491,7 +491,7 @@ export async function getMallBoothLeadDetails(year: number): Promise<MallBoothLe
     LEFT JOIN dwh.dim_profiles dp
       ON  dp.id_profile = fd.id_profile
     ORDER BY b.created_time DESC
-  `, [MALL_BOOTH_LOCATIONS, yearStart, yearEnd])
+  `, [MALL_BOOTH_LOCATIONS.map(l => l.toLowerCase().trim()), yearStart, yearEnd])
 
   return rows.map((r: any) => ({
     leadId:        r.lead_id as string,
@@ -651,6 +651,74 @@ export async function getActiveSellersSummary(): Promise<SellersSummaryRow> {
   const total = Number(r.total)
   const asal  = Number(r.asalariados)
   return { total, asalariados: asal, fullCommission: total - asal }
+}
+
+export interface SaleDealDetail {
+  dealName:    string | null
+  vendedor:    string
+  salesRole:   string
+  closingDate: string
+  pipeline:    string
+  leadSource:  string
+  amount:      number | null
+  isCdbg:      boolean
+  zohoId:      string
+}
+
+export async function getSalesDealDetailsByRoles(
+  from: string,
+  to: string,
+  roles: string[],
+  exclude = false,
+): Promise<SaleDealDetail[]> {
+  const pool = getRedshiftPool()
+  const roleFilter = exclude
+    ? `AND COALESCE(stm.sales_role, 'Sin Rol') <> ALL($3)`
+    : `AND COALESCE(stm.sales_role, 'Sin Rol') = ANY($3)`
+
+  const { rows } = await pool.query(`
+    SELECT
+      dp.case_number                                         AS deal_name,
+      COALESCE(stm.full_name, ds.sale_rep_email)            AS vendedor,
+      COALESCE(stm.sales_role, 'Sin Rol')                   AS sales_role,
+      TO_CHAR(fd.closing_date, 'YYYY-MM-DD')                AS closing_date,
+      dp.pipeline,
+      COALESCE(dms.lead_source, '')                         AS lead_source,
+      fd.amount,
+      (dfl.cdbg_number IS NOT NULL)                         AS is_cdbg,
+      fd.zoho_deal_id
+    FROM dwh.fact_deals fd
+    JOIN dwh.dim_staff ds
+      ON ds.id_staff = fd.id_staff AND ds.is_current = true
+    JOIN dwh.dim_status_reason dsr
+      ON dsr.id_status_reason = fd.id_status_reason AND dsr.is_current = true
+    LEFT JOIN dw_zoho.dim_sales_team_member stm
+      ON LOWER(stm.email) = LOWER(ds.sale_rep_email)
+    JOIN dwh.dim_profiles dp
+      ON dp.id_profile = fd.id_profile
+    LEFT JOIN dwh.dim_marketing_source dms
+      ON dms.id_marketing_source = fd.id_marketing_source
+    LEFT JOIN dwh.dim_finance_legal dfl
+      ON dfl.id_finance_legal = fd.id_finance_legal AND dfl.is_current = true
+    WHERE fd.closing_date >= $1 AND fd.closing_date <= $2
+      AND dsr.cancellation_reason IS NULL
+      AND dsr.on_hold_status IS NULL
+      AND ds.sale_rep_email IS NOT NULL
+      ${roleFilter}
+    ORDER BY fd.closing_date DESC
+  `, [from, to, roles])
+
+  return rows.map((r: any) => ({
+    dealName:    r.deal_name ?? null,
+    vendedor:    r.vendedor as string,
+    salesRole:   r.sales_role as string,
+    closingDate: r.closing_date as string,
+    pipeline:    r.pipeline as string,
+    leadSource:  r.lead_source as string,
+    amount:      r.amount != null ? Number(r.amount) : null,
+    isCdbg:      Boolean(r.is_cdbg),
+    zohoId:      r.zoho_deal_id as string,
+  }))
 }
 
 export async function getFollowUpFromRedshift(): Promise<Map<string, FollowUpRedshiftEntry>> {

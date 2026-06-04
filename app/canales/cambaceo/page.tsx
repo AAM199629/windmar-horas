@@ -19,7 +19,18 @@ export default async function CambaceoPage({
   const month = monthParam ?? currentYearMonth()
 
   if (view === 'performance') {
-    const { vendedores, coordinadores } = await computeCambaceoPerformance(month)
+    let vendedores: Awaited<ReturnType<typeof computeCambaceoPerformance>>['vendedores'] = []
+    let coordinadores: Awaited<ReturnType<typeof computeCambaceoPerformance>>['coordinadores'] = []
+    let perfError: string | null = null
+
+    try {
+      const result = await computeCambaceoPerformance(month)
+      vendedores   = result.vendedores
+      coordinadores = result.coordinadores
+    } catch (err: any) {
+      perfError = err?.message ?? 'Error desconocido'
+    }
+
     return (
       <div>
         <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
@@ -33,11 +44,18 @@ export default async function CambaceoPage({
             hrefPerformance={`/canales/cambaceo?view=performance&month=${month}`}
           />
         </div>
-        <CambaceoPerformance
-          vendedores={vendedores}
-          coordinadores={coordinadores}
-          month={month}
-        />
+        {perfError ? (
+          <div className="rounded-2xl bg-red-50/70 border border-red-200/70 p-6 text-red-700 text-sm">
+            <p className="font-semibold mb-1">Error al cargar el performance</p>
+            <p className="font-mono text-xs opacity-70">{perfError}</p>
+          </div>
+        ) : (
+          <CambaceoPerformance
+            vendedores={vendedores}
+            coordinadores={coordinadores}
+            month={month}
+          />
+        )}
       </div>
     )
   }

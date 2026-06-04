@@ -31,6 +31,25 @@ interface SummaryData {
   sellers?: SellersSummaryRow
 }
 
+interface SaleDealDetail {
+  dealName:    string | null
+  vendedor:    string
+  salesRole:   string
+  closingDate: string
+  pipeline:    string
+  leadSource:  string
+  amount:      number | null
+  isCdbg:      boolean
+  zohoId:      string
+}
+
+interface SaleModalState {
+  title:   string
+  deals:   SaleDealDetail[]
+  loading: boolean
+  error:   string | null
+}
+
 // ── Brand palette ─────────────────────────────────────────────────────────────
 const PALETTE = ['#0D1654','#E88B0C','#1565C0','#00A651','#64748b','#2196F3','#F5A623','#DC2626','#7C3AED','#0891B2']
 const NAVY    = '#0D1654'
@@ -118,7 +137,7 @@ function SectionCard({
   title, badge, accent = NAVY, children,
 }: { title: string; badge?: string; accent?: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl overflow-hidden shadow-sm print:shadow-none print:border print:border-slate-300">
+    <div className="rounded-xl overflow-hidden shadow-sm print:shadow-none print:border print:border-slate-300 ring-1 ring-white/30">
       <div style={{ background: accent }} className="px-6 py-3 flex items-center justify-between gap-4">
         <h2
           className="text-base font-bold uppercase tracking-widest text-white"
@@ -132,7 +151,7 @@ function SectionCard({
           </span>
         )}
       </div>
-      <div className="bg-white p-6 print:p-4">{children}</div>
+      <div className="bg-white/60 backdrop-blur-lg p-6 print:p-4 print:bg-white">{children}</div>
     </div>
   )
 }
@@ -144,7 +163,7 @@ function KpiCard({ label, primary, sub, secondary, secondaryLabel }: {
   return (
     <div
       style={{ borderTop: `3px solid ${ORANGE}` }}
-      className="rounded-xl bg-white shadow-sm px-5 py-4 flex flex-col gap-0.5 print:shadow-none print:border print:border-slate-300"
+      className="rounded-xl bg-white/60 backdrop-blur-lg shadow-sm px-5 py-4 flex flex-col gap-0.5 print:shadow-none print:border print:border-slate-300 print:bg-white ring-1 ring-white/40"
     >
       <span className="text-xs font-semibold uppercase tracking-widest truncate" style={{ color: '#94a3b8' }}>
         {label}
@@ -201,6 +220,89 @@ function PeriodPill({ label, range, color }: { label: string; range: string; col
   )
 }
 
+// ── Sale Deal Modal ───────────────────────────────────────────────────────────
+function SaleDealModal({ state, onClose }: { state: SaleModalState; onClose: () => void }) {
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [onClose])
+
+  function fmtAmt(n: number | null) {
+    if (n == null) return '—'
+    return `$${n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-5xl max-h-[85vh] flex flex-col">
+        <div className="flex items-center justify-between px-5 py-4 rounded-t-xl" style={{ background: NAVY }}>
+          <div>
+            <h2 className="text-base font-semibold text-white">{state.title}</h2>
+            {!state.loading && !state.error && (
+              <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                {state.deals.length} venta{state.deals.length !== 1 ? 's' : ''}
+              </p>
+            )}
+          </div>
+          <button onClick={onClose} className="p-1 rounded transition-colors" style={{ color: 'rgba(255,255,255,0.6)' }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'white')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')}
+          >
+            <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </div>
+        <div className="overflow-auto flex-1 px-5 py-4">
+          {state.loading && (
+            <div className="flex items-center justify-center py-12 gap-3 text-slate-400">
+              <div className="w-8 h-8 border-4 border-slate-200 border-t-[#0D1654] rounded-full animate-spin" />
+              <span className="text-sm">Cargando ventas…</span>
+            </div>
+          )}
+          {state.error && (
+            <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-red-700 text-sm">
+              Error: {state.error}
+            </div>
+          )}
+          {!state.loading && !state.error && (
+            <table className="text-sm border-collapse w-full">
+              <thead>
+                <tr style={{ background: NAVY }} className="text-left text-xs text-white uppercase tracking-wide">
+                  <th className="px-3 py-2 border border-[#1565C0] font-semibold">Case #</th>
+                  <th className="px-3 py-2 border border-[#1565C0] font-semibold">Vendedor</th>
+                  <th className="px-3 py-2 border border-[#1565C0] font-semibold">Rol</th>
+                  <th className="px-3 py-2 border border-[#1565C0] font-semibold">Fecha Cierre</th>
+                  <th className="px-3 py-2 border border-[#1565C0] font-semibold">Pipeline</th>
+                  <th className="px-3 py-2 border border-[#1565C0] font-semibold">Lead Source</th>
+                  <th className="px-3 py-2 border border-[#1565C0] font-semibold text-right">Monto</th>
+                </tr>
+              </thead>
+              <tbody>
+                {state.deals.map((d, i) => (
+                  <tr key={d.zohoId || i} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
+                    <td className="px-3 py-2 border border-slate-200 font-mono text-xs" style={{ color: NAVY }}>{d.dealName ?? '—'}</td>
+                    <td className="px-3 py-2 border border-slate-200 text-slate-800 font-medium">{d.vendedor}</td>
+                    <td className="px-3 py-2 border border-slate-200 text-slate-600 text-xs">{d.salesRole}</td>
+                    <td className="px-3 py-2 border border-slate-200 text-slate-600">{d.closingDate}</td>
+                    <td className="px-3 py-2 border border-slate-200 text-slate-700">{d.pipeline}</td>
+                    <td className="px-3 py-2 border border-slate-200 text-slate-600 max-w-[140px] truncate" title={d.leadSource}>{d.leadSource || '—'}</td>
+                    <td className="px-3 py-2 border border-slate-200 text-slate-800 text-right font-mono">{fmtAmt(d.amount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Main Component ────────────────────────────────────────────────────────────
 
 interface Props { fromA: string; toA: string; fromB: string; toB: string }
@@ -217,6 +319,7 @@ export default function VentasDashboard({
   const [loading,      setLoading]      = useState(true)
   const [error,        setError]        = useState<string | null>(null)
   const [pdfLoading,   setPdfLoading]   = useState(false)
+  const [saleModal,    setSaleModal]    = useState<SaleModalState | null>(null)
   const contentRef = useRef<HTMLDivElement>(null)
 
   const fetchData = useCallback(async (fa: string, ta: string, fb: string, tb: string) => {
@@ -238,6 +341,20 @@ export default function VentasDashboard({
     const r = { fromA, toA, fromB, toB }
     setApplied(r)
     fetchData(r.fromA, r.toA, r.fromB, r.toB)
+  }
+
+  function openSaleModal(title: string, roles: string[], from: string, to: string, exclude = false) {
+    setSaleModal({ title, deals: [], loading: true, error: null })
+    const params = new URLSearchParams({ from, to })
+    roles.forEach(r => params.append('role', r))
+    if (exclude) params.set('exclude', '1')
+    fetch(`/api/ventas/deals?${params}`)
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) setSaleModal(prev => prev ? { ...prev, deals: data, loading: false } : null)
+        else setSaleModal(prev => prev ? { ...prev, loading: false, error: data.error ?? 'Error' } : null)
+      })
+      .catch(e => setSaleModal(prev => prev ? { ...prev, loading: false, error: e.message } : null))
   }
 
   async function generatePDF() {
@@ -380,6 +497,7 @@ export default function VentasDashboard({
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div ref={contentRef} className="min-h-screen" style={{ background: '#EEF1F8' }}>
+      {saleModal && <SaleDealModal state={saleModal} onClose={() => setSaleModal(null)} />}
 
       {/* ── HEADER ── */}
       <div style={{ background: `linear-gradient(135deg, ${NAVY} 0%, #1a2870 100%)` }}>
@@ -417,7 +535,7 @@ export default function VentasDashboard({
 
       {/* ── DATE CONTROLS (screen only) ── */}
       <div className="print:hidden max-w-7xl mx-auto px-6 py-4" data-pdf-ignore="true">
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-5 py-4 flex flex-wrap items-end gap-6">
+        <div className="bg-white/60 backdrop-blur-lg rounded-xl border border-white/70 shadow-md px-5 py-4 flex flex-wrap items-end gap-6 ring-1 ring-white/30">
           <div>
             <p className="text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2" style={{ color: NAVY }}>
               <span className="w-2 h-2 rounded-sm inline-block flex-shrink-0" style={{ background: NAVY }} />
@@ -456,7 +574,7 @@ export default function VentasDashboard({
 
       {/* ── PERIOD LEGEND BAR ── */}
       <div className="max-w-7xl mx-auto px-6 print:px-4 print:pt-4">
-        <div className="bg-white/80 print:bg-white rounded-xl px-5 py-3 flex flex-wrap gap-6 items-center border border-white/60 print:border-slate-300 print:mb-4 shadow-sm print:shadow-none">
+        <div className="bg-white/60 backdrop-blur-lg print:bg-white rounded-xl px-5 py-3 flex flex-wrap gap-6 items-center border border-white/70 print:border-slate-300 print:mb-4 shadow-md print:shadow-none ring-1 ring-white/30">
           <PeriodPill label="Período A" range={rangeA} color={NAVY} />
           <div className="w-px h-4 bg-slate-200" />
           <PeriodPill label="Período B" range={rangeB} color="#64748b" />
@@ -513,7 +631,7 @@ export default function VentasDashboard({
             </div>
 
             {/* ── FUERZA DE VENTAS — vendedores activos + pie ── */}
-            <div className="rounded-xl overflow-hidden shadow-sm print:shadow-none print:border print:border-slate-300 bg-white">
+            <div className="rounded-xl overflow-hidden shadow-sm print:shadow-none print:border print:border-slate-300 bg-white/60 backdrop-blur-lg ring-1 ring-white/30">
               <div className="px-6 py-4 flex flex-wrap items-center gap-6 lg:gap-10">
                 {/* Stat block */}
                 <div className="flex flex-col gap-0.5 min-w-[130px]">
@@ -592,11 +710,18 @@ export default function VentasDashboard({
                         const vb = byRole(data.salesB ?? [], role)
                         const v  = varLabel(va, vb)
                         return (
-                          <tr key={role} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
+                          <tr key={role} className={i % 2 === 0 ? 'bg-white/60' : 'bg-slate-50/40'}>
                             <Td className="font-medium">{role}</Td>
-                            <Td className="text-right font-bold" style={{ color: NAVY }}>{fmt(va)}</Td>
+                            <Td
+                              className={`text-right font-bold ${va > 0 ? 'cursor-pointer hover:underline' : ''}`}
+                              style={{ color: NAVY }}
+                              onClick={() => va > 0 && openSaleModal(`${role} — ${colA}`, [role], applied.fromA, applied.toA)}
+                            >{fmt(va)}</Td>
                             <Td className="text-right text-xs text-slate-400">{pct(va, totalA)}</Td>
-                            <Td className="text-right">{fmt(vb)}</Td>
+                            <Td
+                              className={`text-right ${vb > 0 ? 'cursor-pointer hover:underline' : ''}`}
+                              onClick={() => vb > 0 && openSaleModal(`${role} — ${colB}`, [role], applied.fromB, applied.toB)}
+                            >{fmt(vb)}</Td>
                             <Td className="text-right text-xs text-slate-400">{pct(vb, totalB)}</Td>
                             <Td className="text-right font-semibold" style={{ color: v.color }}>{v.text}</Td>
                           </tr>
@@ -604,17 +729,29 @@ export default function VentasDashboard({
                       })}
                       <TotalRow>
                         <Td>TOTAL Asalariados</Td>
-                        <Td className="text-right">{fmt(salA)}</Td>
+                        <Td
+                          className={`text-right ${salA > 0 ? 'cursor-pointer hover:underline' : ''}`}
+                          onClick={() => salA > 0 && openSaleModal(`Asalariados — ${colA}`, [...EMPLEADO_ROLES], applied.fromA, applied.toA)}
+                        >{fmt(salA)}</Td>
                         <Td className="text-right text-xs">{pct(salA, totalA)}</Td>
-                        <Td className="text-right">{fmt(salB)}</Td>
+                        <Td
+                          className={`text-right ${salB > 0 ? 'cursor-pointer hover:underline' : ''}`}
+                          onClick={() => salB > 0 && openSaleModal(`Asalariados — ${colB}`, [...EMPLEADO_ROLES], applied.fromB, applied.toB)}
+                        >{fmt(salB)}</Td>
                         <Td className="text-right text-xs">{pct(salB, totalB)}</Td>
                         <Td className="text-right" style={{ color: varLabel(salA, salB).color }}>{varLabel(salA, salB).text}</Td>
                       </TotalRow>
                       <TotalRow>
                         <Td>Full Commission</Td>
-                        <Td className="text-right">{fmt(fcA)}</Td>
+                        <Td
+                          className={`text-right ${fcA > 0 ? 'cursor-pointer hover:underline' : ''}`}
+                          onClick={() => fcA > 0 && openSaleModal(`Full Commission — ${colA}`, [...EMPLEADO_ROLES], applied.fromA, applied.toA, true)}
+                        >{fmt(fcA)}</Td>
                         <Td className="text-right text-xs">{pct(fcA, totalA)}</Td>
-                        <Td className="text-right">{fmt(fcB)}</Td>
+                        <Td
+                          className={`text-right ${fcB > 0 ? 'cursor-pointer hover:underline' : ''}`}
+                          onClick={() => fcB > 0 && openSaleModal(`Full Commission — ${colB}`, [...EMPLEADO_ROLES], applied.fromB, applied.toB, true)}
+                        >{fmt(fcB)}</Td>
                         <Td className="text-right text-xs">{pct(fcB, totalB)}</Td>
                         <Td className="text-right" style={{ color: varLabel(fcA, fcB).color }}>{varLabel(fcA, fcB).text}</Td>
                       </TotalRow>
@@ -699,7 +836,7 @@ export default function VentasDashboard({
                         const vb = leadMapB.get(source) ?? 0
                         const v  = varLabel(va, vb)
                         return (
-                          <tr key={source} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
+                          <tr key={source} className={i % 2 === 0 ? 'bg-white/60' : 'bg-slate-50/40'}>
                             <Td className="max-w-[180px] truncate" title={source}>{source}</Td>
                             <Td className="text-right font-bold" style={{ color: NAVY }}>{fmt(va)}</Td>
                             <Td className="text-right text-xs text-slate-400">{pct(va, totalSrcA)}</Td>
@@ -746,7 +883,7 @@ export default function VentasDashboard({
                         const vb = boothVentas(data.boothB ?? [], loc)
                         const v  = varLabel(va, vb)
                         return (
-                          <tr key={loc} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
+                          <tr key={loc} className={i % 2 === 0 ? 'bg-white/60' : 'bg-slate-50/40'}>
                             <Td>{loc.replace('Home Depot - ', '')}</Td>
                             <Td className="text-right font-bold" style={{ color: NAVY }}>{fmt(va)}</Td>
                             <Td className="text-right">{fmt(vb)}</Td>
@@ -784,7 +921,7 @@ export default function VentasDashboard({
                         const vb = boothVentas(data.boothB ?? [], loc)
                         const v  = varLabel(va, vb)
                         return (
-                          <tr key={loc} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
+                          <tr key={loc} className={i % 2 === 0 ? 'bg-white/60' : 'bg-slate-50/40'}>
                             <Td>{loc.replace('Malls - ', '')}</Td>
                             <Td className="text-right font-bold" style={{ color: NAVY }}>{fmt(va)}</Td>
                             <Td className="text-right">{fmt(vb)}</Td>
@@ -832,7 +969,7 @@ export default function VentasDashboard({
                         const vb = rb?.ventas ?? 0
                         const vv = varLabel(va, vb)
                         return (
-                          <tr key={coord} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
+                          <tr key={coord} className={i % 2 === 0 ? 'bg-white/60' : 'bg-slate-50/40'}>
                             <Td className="font-medium">{coord}</Td>
                             <Td className="text-right">{fmt(la)}</Td>
                             <Td className="text-right font-bold" style={{ color: NAVY }}>{fmt(va)}</Td>
@@ -891,7 +1028,7 @@ export default function VentasDashboard({
                         const src  = rowA ?? rowB!
                         const name = indepDisplay(src)
                         return (
-                          <tr key={key} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
+                          <tr key={key} className={i % 2 === 0 ? 'bg-white/60' : 'bg-slate-50/40'}>
                             <Td className="max-w-[260px] truncate" title={name}>{name}</Td>
                             <Td className="text-right font-bold" style={{ color: NAVY }}>{fmt(va)}</Td>
                             <Td className="text-right text-xs text-slate-400">{pct(va, indepTotalA)}</Td>
