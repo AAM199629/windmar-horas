@@ -38,7 +38,7 @@ export async function computeCambaceoPerformance(month: string): Promise<{
 
     for (const emp of report.employees) {
       const email = emp.email.toLowerCase()
-      for (const shift of emp.shifts) {
+      for (const shift of (emp.shifts ?? [])) {
         if (shift.canal !== 'cambaceo') continue
         if (shift.date < monthStart || shift.date > monthEnd) continue
 
