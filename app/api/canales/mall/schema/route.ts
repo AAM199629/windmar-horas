@@ -75,5 +75,48 @@ export async function GET() {
     result.dwh_deal_tables_error = e.message
   }
 
+  // Distinct lead_source values in dim_lead_source that look like Mall/Home Depot
+  try {
+    const { rows } = await pool.query(`
+      SELECT DISTINCT lead_source
+      FROM dwh.dim_lead_source
+      WHERE LOWER(lead_source) LIKE '%home depot%'
+         OR LOWER(lead_source) LIKE '%mall%'
+         OR LOWER(lead_source) LIKE '%depot%'
+         OR LOWER(lead_source) LIKE '%booth%'
+      ORDER BY lead_source
+    `)
+    result.mall_lead_sources = rows.map((r: any) => r.lead_source)
+  } catch (e: any) {
+    result.mall_lead_sources_error = e.message
+  }
+
+  // Also: total count in dim_lead_source and first 20 rows
+  try {
+    const { rows } = await pool.query(`
+      SELECT lead_source, COUNT(*) as cnt
+      FROM dwh.dim_lead_source
+      GROUP BY lead_source
+      ORDER BY cnt DESC
+      LIMIT 30
+    `)
+    result.lead_source_top30 = rows.map((r: any) => `${r.lead_source} (${r.cnt})`)
+  } catch (e: any) {
+    result.lead_source_top30_error = e.message
+  }
+
+  // Also: check dim_lead_source columns
+  try {
+    const { rows } = await pool.query(`
+      SELECT column_name, data_type
+      FROM information_schema.columns
+      WHERE table_schema = 'dwh' AND table_name = 'dim_lead_source'
+      ORDER BY ordinal_position
+    `)
+    result.dim_lead_source_columns = rows.map((r: any) => `${r.column_name} (${r.data_type})`)
+  } catch (e: any) {
+    result.dim_lead_source_error = e.message
+  }
+
   return NextResponse.json(result)
 }
