@@ -47,7 +47,9 @@ export interface MonthMetrics {
   water: number      // Water products  (×0.5 each)
   anker: number      // Anker / PPS     (×0.5 each)
   asistidas: number  // assisted trainee sales                   (×0.5 each)
+  gross: number      // raw count: solar+roofing+cdbg+water+anker each ×1 (own deals only)
   total: number      // computed weighted total
+  cancellations: number  // deals (own or assisted) whose closing date falls in this month but are cancelled/on-hold
   meta: number       // 5 (Apr–Sep) | 3 (Oct–Mar)
   met: boolean
   isGrace: boolean   // hire month + any month before hire → not counted toward comunicados
@@ -254,8 +256,23 @@ export function calcMonthMetrics(
     }
   }
 
+  const gross = solar + roofing + cdbg + water * 0.5 + anker * 0.5
   const total = solar + roofing + cdbg + water * 0.5 + anker * 0.5 + asistidas * 0.5
-  return { year, month, solar, roofing, cdbg, water, anker, asistidas, total, meta, met: isGrace || total >= meta, isGrace }
+
+  // Cancellations: own or assisted deals that closed in this month but are now cancelled/on-hold
+  let cancellations = 0
+  for (const row of rows) {
+    if (isActive(row)) continue
+    const isOwn    = row.salesTeamName.toLowerCase() === nameLower
+    const isAssist = row.salesRepAssistTrainee.toLowerCase() === nameLower
+    if (!isOwn && !isAssist) continue
+    const cd = parseDate(row.closingDate)
+    if (!cd || cd.getFullYear() !== year || cd.getMonth() + 1 !== month) continue
+    if (hireParsed && cd < hireParsed) continue
+    cancellations++
+  }
+
+  return { year, month, solar, roofing, cdbg, water, anker, asistidas, gross, total, cancellations, meta, met: isGrace || total >= meta, isGrace }
 }
 
 // Build the last N months relative to today

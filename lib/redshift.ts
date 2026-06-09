@@ -478,14 +478,21 @@ export async function getMallBoothLeadDetails(year: number): Promise<MallBoothLe
         AND dsr.on_hold_status IS NULL)                      AS is_sold,
       dp.pipeline                                            AS deal_pipeline
     FROM base b
-    JOIN  dwh.dim_employee de
-      ON  de.id_employee = b.id_employee AND de.is_current = true
+    LEFT JOIN (
+      SELECT DISTINCT ON (id_employee) id_employee, sales_rep_email
+      FROM dwh.dim_employee
+      ORDER BY id_employee, is_current DESC
+    ) de ON de.id_employee = b.id_employee
     LEFT JOIN dwh.dim_lead dl
       ON  dl.zoho_lead_id = b.zoho_lead_id AND dl.is_current = true
     LEFT JOIN dw_zoho.dim_sales_team_member stm_emp
       ON  LOWER(stm_emp.email) = LOWER(de.sales_rep_email)
-    LEFT JOIN dwh.fact_deals fd
-      ON  fd.associated_lead = b.zoho_lead_id
+    LEFT JOIN (
+      SELECT DISTINCT ON (associated_lead)
+        associated_lead, zoho_deal_id, id_status_reason, id_profile
+      FROM dwh.fact_deals
+      ORDER BY associated_lead, closing_date DESC NULLS LAST
+    ) fd ON fd.associated_lead = b.zoho_lead_id
     LEFT JOIN dwh.dim_status_reason dsr
       ON  dsr.id_status_reason = fd.id_status_reason AND dsr.is_current = true
     LEFT JOIN dwh.dim_profiles dp
@@ -663,6 +670,149 @@ export interface SaleDealDetail {
   amount:      number | null
   isCdbg:      boolean
   zohoId:      string
+}
+
+export interface AsalariadoSaleDeal {
+  dealNumber:   string | null
+  closingDate:  string
+  pipeline:     string
+  clientName:   string | null
+  sellerName:   string
+  traineeSales: string
+  isAssisted:   boolean
+}
+
+export async function getAsalariadoDealDetails(
+  employeeName: string,
+  year: number,
+  month: number,
+): Promise<AsalariadoSaleDeal[]> {
+  const pool = getRedshiftPool()
+  const { rows } = await pool.query(`
+    WITH own_deals AS (
+      SELECT
+        dp.case_number                                                      AS deal_number,
+        TO_CHAR(fd.closing_date, 'YYYY-MM-DD')                             AS closing_date,
+        dp.pipeline,
+        NULLIF(TRIM(COALESCE(dl.full_name,
+          COALESCE(dl.first_name,'') || ' ' || COALESCE(dl.last_name,''))), '') AS client_name,
+        COALESCE(stm.full_name, ds.sale_rep_email)                         AS seller_name,
+        COALESCE(ds.trainee_sales, '')                                     AS trainee_sales,
+        false                                                               AS is_assisted
+      FROM dwh.fact_deals fd
+      JOIN dwh.dim_staff ds
+        ON ds.id_staff = fd.id_staff AND ds.is_current = true
+      LEFT JOIN dw_zoho.dim_sales_team_member stm
+        ON LOWER(stm.email) = LOWER(ds.sale_rep_email)
+      JOIN dwh.dim_profiles dp
+        ON dp.id_profile = fd.id_profile
+      JOIN dwh.dim_status_reason dsr
+        ON dsr.id_status_reason = fd.id_status_reason AND dsr.is_current = true
+      LEFT JOIN dwh.dim_lead dl
+        ON dl.zoho_lead_id = fd.associated_lead AND dl.is_current = true
+      WHERE EXTRACT(YEAR  FROM fd.closing_date)::int = $1
+        AND EXTRACT(MONTH FROM fd.closing_date)::int = $2
+        AND dsr.cancellation_reason IS NULL
+        AND dsr.on_hold_status IS NULL
+        AND LOWER(COALESCE(stm.full_name, ds.sale_rep_email)) = LOWER($3)
+    ),
+    assisted_deals AS (
+      SELECT
+        dp.case_number                                                      AS deal_number,
+        TO_CHAR(fd.closing_date, 'YYYY-MM-DD')                             AS closing_date,
+        dp.pipeline,
+        NULLIF(TRIM(COALESCE(dl.full_name,
+          COALESCE(dl.first_name,'') || ' ' || COALESCE(dl.last_name,''))), '') AS client_name,
+        COALESCE(stm.full_name, ds.sale_rep_email)                         AS seller_name,
+        COALESCE(ds.trainee_sales, '')                                     AS trainee_sales,
+        true                                                                AS is_assisted
+      FROM dwh.fact_deals fd
+      JOIN dwh.dim_staff ds
+        ON ds.id_staff = fd.id_staff AND ds.is_current = true
+      LEFT JOIN dw_zoho.dim_sales_team_member stm
+        ON LOWER(stm.email) = LOWER(ds.sale_rep_email)
+      LEFT JOIN dw_zoho.dim_sales_team_member stm_mentor
+        ON stm.sponsor_id = stm_mentor.member_id
+      JOIN dwh.dim_profiles dp
+        ON dp.id_profile = fd.id_profile
+      JOIN dwh.dim_status_reason dsr
+        ON dsr.id_status_reason = fd.id_status_reason AND dsr.is_current = true
+      LEFT JOIN dwh.dim_lead dl
+        ON dl.zoho_lead_id = fd.associated_lead AND dl.is_current = true
+      WHERE EXTRACT(YEAR  FROM fd.closing_date)::int = $1
+        AND EXTRACT(MONTH FROM fd.closing_date)::int = $2
+        AND dsr.cancellation_reason IS NULL
+        AND dsr.on_hold_status IS NULL
+        AND LOWER(ds.trainee_sales) IN ('1st sale','2nd sale','3rd sale','4th sale')
+        AND LOWER(COALESCE(stm_mentor.full_name, stm.sponsor_name, '')) = LOWER($3)
+    )
+    SELECT * FROM own_deals
+    UNION ALL
+    SELECT * FROM assisted_deals
+    ORDER BY closing_date DESC
+  `, [year, month, employeeName])
+
+  return rows.map((r: any) => ({
+    dealNumber:   r.deal_number ?? null,
+    closingDate:  r.closing_date as string,
+    pipeline:     r.pipeline as string,
+    clientName:   r.client_name ?? null,
+    sellerName:   r.seller_name as string,
+    traineeSales: r.trainee_sales as string,
+    isAssisted:   Boolean(r.is_assisted),
+  }))
+}
+
+export interface AsalariadoCancelledDeal {
+  dealNumber:         string | null
+  closingDate:        string
+  pipeline:           string
+  clientName:         string | null
+  sellerName:         string
+  cancellationReason: string | null
+}
+
+export async function getAsalariadoCancelledDeals(
+  employeeName: string,
+  year: number,
+  month: number,
+): Promise<AsalariadoCancelledDeal[]> {
+  const pool = getRedshiftPool()
+  const { rows } = await pool.query(`
+    SELECT
+      dp.case_number                                                        AS deal_number,
+      TO_CHAR(fd.closing_date, 'YYYY-MM-DD')                               AS closing_date,
+      dp.pipeline,
+      NULLIF(TRIM(COALESCE(dl.full_name,
+        COALESCE(dl.first_name,'') || ' ' || COALESCE(dl.last_name,''))), '') AS client_name,
+      COALESCE(stm.full_name, ds.sale_rep_email)                           AS seller_name,
+      dsr.cancellation_reason
+    FROM dwh.fact_deals fd
+    JOIN dwh.dim_staff ds
+      ON ds.id_staff = fd.id_staff AND ds.is_current = true
+    LEFT JOIN dw_zoho.dim_sales_team_member stm
+      ON LOWER(stm.email) = LOWER(ds.sale_rep_email)
+    JOIN dwh.dim_profiles dp
+      ON dp.id_profile = fd.id_profile
+    JOIN dwh.dim_status_reason dsr
+      ON dsr.id_status_reason = fd.id_status_reason AND dsr.is_current = true
+    LEFT JOIN dwh.dim_lead dl
+      ON dl.zoho_lead_id = fd.associated_lead AND dl.is_current = true
+    WHERE EXTRACT(YEAR  FROM fd.closing_date)::int = $1
+      AND EXTRACT(MONTH FROM fd.closing_date)::int = $2
+      AND (dsr.cancellation_reason IS NOT NULL OR dsr.on_hold_status IS NOT NULL)
+      AND LOWER(COALESCE(stm.full_name, ds.sale_rep_email)) = LOWER($3)
+    ORDER BY fd.closing_date DESC
+  `, [year, month, employeeName])
+
+  return rows.map((r: any) => ({
+    dealNumber:         r.deal_number ?? null,
+    closingDate:        r.closing_date as string,
+    pipeline:           r.pipeline as string,
+    clientName:         r.client_name ?? null,
+    sellerName:         r.seller_name as string,
+    cancellationReason: r.cancellation_reason ?? null,
+  }))
 }
 
 export async function getSalesDealDetailsByRoles(

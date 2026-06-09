@@ -1,8 +1,164 @@
 'use client'
 
-import { useState, useMemo, useTransition } from 'react'
+import { useState, useEffect, useMemo, useTransition, useRef } from 'react'
 import type { AsalariadoData } from './page'
 import type { MonthMetrics } from '@/lib/ventas'
+
+// ── Deal detail types ─────────────────────────────────────────────────────────
+interface SaleDeal {
+  dealNumber:          string | null
+  closingDate:         string
+  pipeline:            string
+  clientName:          string | null
+  sellerName:          string
+  traineeSales:        string
+  isAssisted:          boolean
+  cancellationReason?: string | null
+}
+
+type DealFilter = 'all' | 'solar' | 'roofing' | 'water' | 'anker' | 'asistidas' | 'gross'
+
+function filterDeals(deals: SaleDeal[], f: DealFilter): SaleDeal[] {
+  if (f === 'all')       return deals
+  if (f === 'gross')     return deals.filter(d => !d.isAssisted)
+  if (f === 'asistidas') return deals.filter(d => d.isAssisted)
+  return deals.filter(d => {
+    if (d.isAssisted) return false
+    const p = d.pipeline.toLowerCase()
+    if (f === 'solar')   return /solar/.test(p) && !/water/.test(p) && !/pps|anker/.test(p)
+    if (f === 'roofing') return /roofing/.test(p)
+    if (f === 'water')   return /water/.test(p)
+    if (f === 'anker')   return /pps|anker/.test(p)
+    return false
+  })
+}
+
+const DOW_ES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+function closeDayLabel(date: string) {
+  const [y, m, d] = date.split('-').map(Number)
+  return DOW_ES[new Date(y, m - 1, d).getDay()]
+}
+
+// ── Sale Deals Modal ──────────────────────────────────────────────────────────
+function SaleDealsModal({
+  title, deals, loading, error, mode, onClose,
+}: {
+  title: string
+  deals: SaleDeal[]
+  loading: boolean
+  error: string | null
+  mode: 'active' | 'cancelled'
+  onClose: () => void
+}) {
+  const NAVY = '#0D1654'
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [onClose])
+
+  const emptyMsg = mode === 'cancelled' ? 'Sin cancelaciones para este período.' : 'Sin ventas para este período.'
+  const countLabel = mode === 'cancelled' ? 'cancelación' : 'venta'
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[85vh] flex flex-col">
+        <div className="flex items-center justify-between px-5 py-4 rounded-t-xl"
+          style={{ background: mode === 'cancelled' ? '#7f1d1d' : NAVY }}>
+          <div>
+            <h2 className="text-sm font-semibold text-white">{title}</h2>
+            {!loading && !error && (
+              <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                {deals.length} {countLabel}{deals.length !== 1 ? 'es' : ''}
+              </p>
+            )}
+          </div>
+          <button onClick={onClose} className="p-1 rounded text-white/50 hover:text-white transition-colors">
+            <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </div>
+        <div className="overflow-auto flex-1 px-5 py-4">
+          {loading && (
+            <div className="flex items-center justify-center py-12 gap-3 text-slate-400">
+              <div className="w-7 h-7 border-4 border-slate-200 border-t-[#0D1654] rounded-full animate-spin" />
+              <span className="text-sm">Cargando…</span>
+            </div>
+          )}
+          {error && (
+            <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-red-700 text-sm">
+              Error: {error}
+            </div>
+          )}
+          {!loading && !error && deals.length === 0 && (
+            <p className="text-slate-400 text-sm text-center py-8">{emptyMsg}</p>
+          )}
+          {!loading && !error && deals.length > 0 && (
+            <table className="text-sm border-collapse w-full">
+              <thead>
+                <tr style={{ background: mode === 'cancelled' ? '#7f1d1d' : NAVY }}
+                  className="text-left text-xs text-white uppercase tracking-wide">
+                  <th className="px-3 py-2 border border-white/20 font-semibold"># Venta</th>
+                  <th className="px-3 py-2 border border-white/20 font-semibold">Cliente</th>
+                  <th className="px-3 py-2 border border-white/20 font-semibold">Fecha Cierre</th>
+                  <th className="px-3 py-2 border border-white/20 font-semibold">Día</th>
+                  <th className="px-3 py-2 border border-white/20 font-semibold">Pipeline</th>
+                  <th className="px-3 py-2 border border-white/20 font-semibold">Vendedor</th>
+                  {mode === 'active'
+                    ? <th className="px-3 py-2 border border-white/20 font-semibold text-center">Tipo</th>
+                    : <th className="px-3 py-2 border border-white/20 font-semibold">Razón Cancelación</th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                {deals.map((d, i) => (
+                  <tr key={`${d.dealNumber}-${i}`} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
+                    <td className="px-3 py-2 border border-slate-200 font-mono text-xs" style={{ color: NAVY }}>
+                      {d.dealNumber ?? '—'}
+                    </td>
+                    <td className="px-3 py-2 border border-slate-200 text-slate-800 font-medium">
+                      {d.clientName ?? '—'}
+                    </td>
+                    <td className="px-3 py-2 border border-slate-200 text-slate-600">
+                      {d.closingDate}
+                    </td>
+                    <td className="px-3 py-2 border border-slate-200 text-slate-500 text-xs">
+                      {closeDayLabel(d.closingDate)}
+                    </td>
+                    <td className="px-3 py-2 border border-slate-200 text-slate-700">
+                      {d.pipeline}
+                    </td>
+                    <td className="px-3 py-2 border border-slate-200 text-slate-700">
+                      {d.sellerName}
+                    </td>
+                    {mode === 'active'
+                      ? <td className="px-3 py-2 border border-slate-200 text-center">
+                          {d.isAssisted
+                            ? <span className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-medium">
+                                Asistida {d.traineeSales ? `(${d.traineeSales})` : ''}
+                              </span>
+                            : <span className="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-medium">Propia</span>
+                          }
+                        </td>
+                      : <td className="px-3 py-2 border border-slate-200 text-red-700 text-xs">
+                          {d.cancellationReason ?? 'Sin razón'}
+                        </td>
+                    }
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 const MONTH_NAMES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 
@@ -150,6 +306,78 @@ function AsalariadoCard({
 }) {
   const [open, setOpen] = useState(false)
 
+  // ── Deal modal state ──────────────────────────────────────────────────────
+  const [dealModal, setDealModal] = useState<{
+    title: string
+    mode: 'active' | 'cancelled'
+    filter: DealFilter
+    loading: boolean
+    deals: SaleDeal[]
+    error: string | null
+  } | null>(null)
+  const dealCache   = useRef<Map<string, SaleDeal[]>>(new Map())
+  const cancelCache = useRef<Map<string, SaleDeal[]>>(new Map())
+
+  async function openDeals(year: number, month: number, filter: DealFilter, label: string) {
+    const key   = `${year}-${month}`
+    const title = `${emp.nombre} · ${MONTH_NAMES[month - 1]} ${year}${filter !== 'all' ? ` · ${label}` : ''}`
+
+    const cached = dealCache.current.get(key)
+    if (cached) {
+      setDealModal({ title, mode: 'active', filter, loading: false, deals: filterDeals(cached, filter), error: null })
+      return
+    }
+
+    setDealModal({ title, mode: 'active', filter, loading: true, deals: [], error: null })
+    try {
+      const res  = await fetch(`/api/asalariados/deals?name=${encodeURIComponent(emp.nombre)}&year=${year}&month=${month}`)
+      const data = await res.json()
+      if (Array.isArray(data)) {
+        dealCache.current.set(key, data)
+        setDealModal({ title, mode: 'active', filter, loading: false, deals: filterDeals(data, filter), error: null })
+      } else {
+        setDealModal(prev => prev ? { ...prev, loading: false, error: data.error ?? 'Error' } : null)
+      }
+    } catch (e: any) {
+      setDealModal(prev => prev ? { ...prev, loading: false, error: e.message } : null)
+    }
+  }
+
+  async function openCancellations(year: number, month: number) {
+    const key   = `${year}-${month}`
+    const title = `${emp.nombre} · ${MONTH_NAMES[month - 1]} ${year} · Cancelaciones`
+
+    const cached = cancelCache.current.get(key)
+    if (cached) {
+      setDealModal({ title, mode: 'cancelled', filter: 'all', loading: false, deals: cached, error: null })
+      return
+    }
+
+    setDealModal({ title, mode: 'cancelled', filter: 'all', loading: true, deals: [], error: null })
+    try {
+      const res  = await fetch(`/api/asalariados/deals?name=${encodeURIComponent(emp.nombre)}&year=${year}&month=${month}&cancelled=1`)
+      const data = await res.json()
+      if (Array.isArray(data)) {
+        const mapped: SaleDeal[] = data.map((d: any) => ({
+          dealNumber:         d.dealNumber ?? null,
+          closingDate:        d.closingDate,
+          pipeline:           d.pipeline,
+          clientName:         d.clientName ?? null,
+          sellerName:         d.sellerName,
+          traineeSales:       '',
+          isAssisted:         false,
+          cancellationReason: d.cancellationReason ?? null,
+        }))
+        cancelCache.current.set(key, mapped)
+        setDealModal({ title, mode: 'cancelled', filter: 'all', loading: false, deals: mapped, error: null })
+      } else {
+        setDealModal(prev => prev ? { ...prev, loading: false, error: data.error ?? 'Error' } : null)
+      }
+    } catch (e: any) {
+      setDealModal(prev => prev ? { ...prev, loading: false, error: e.message } : null)
+    }
+  }
+
   const displayStatus =
     emp.redshiftStatus !== 'none' ? emp.redshiftStatus :
     (emp.approved?.status && emp.approved.status !== 'none' ? emp.approved.status : emp.pendingStatus)
@@ -158,6 +386,17 @@ function AsalariadoCard({
   const lastMonth = emp.months[emp.months.length - 1]
 
   return (
+    <>
+      {dealModal && (
+        <SaleDealsModal
+          title={dealModal.title}
+          deals={dealModal.deals}
+          loading={dealModal.loading}
+          error={dealModal.error}
+          mode={dealModal.mode}
+          onClose={() => setDealModal(null)}
+        />
+      )}
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
       <button
         onClick={() => setOpen(o => !o)}
@@ -240,7 +479,9 @@ function AsalariadoCard({
                   <th className="pb-1 font-semibold text-right">Water</th>
                   <th className="pb-1 font-semibold text-right">Anker</th>
                   <th className="pb-1 font-semibold text-right">Asist.</th>
+                  <th className="pb-1 font-semibold text-right text-indigo-400">Gross</th>
                   <th className="pb-1 font-semibold text-right">Total</th>
+                  <th className="pb-1 font-semibold text-right text-red-400">Cancel.</th>
                   <th className="pb-1 font-semibold text-right">Meta</th>
                   <th className="pb-1 font-semibold text-right">✓</th>
                 </tr>
@@ -256,12 +497,38 @@ function AsalariadoCard({
                           <span className="ml-1.5 text-[9px] font-semibold text-green-600 bg-green-100 px-1.5 py-0.5 rounded-full">gracia</span>
                         )}
                       </td>
-                      <td className={`py-1.5 text-right ${gc}`}>{m.solar || '—'}</td>
-                      <td className={`py-1.5 text-right ${gc}`}>{m.roofing || '—'}</td>
-                      <td className={`py-1.5 text-right ${gc}`}>{m.water > 0 ? `${m.water} (${fmt(m.water * 0.5)})` : '—'}</td>
-                      <td className={`py-1.5 text-right ${gc}`}>{m.anker > 0 ? `${m.anker} (${fmt(m.anker * 0.5)})` : '—'}</td>
-                      <td className={`py-1.5 text-right ${gc}`}>{m.asistidas > 0 ? `${m.asistidas} (${fmt(m.asistidas * 0.5)})` : '—'}</td>
-                      <td className={`py-1.5 text-right font-bold ${gc}`}>{m.total > 0 ? fmt(m.total) : '—'}</td>
+                      <td
+                        className={`py-1.5 text-right ${gc} ${m.solar > 0 ? 'cursor-pointer hover:underline' : ''}`}
+                        onClick={() => m.solar > 0 && openDeals(m.year, m.month, 'solar', 'Solar')}
+                      >{m.solar || '—'}</td>
+                      <td
+                        className={`py-1.5 text-right ${gc} ${m.roofing > 0 ? 'cursor-pointer hover:underline' : ''}`}
+                        onClick={() => m.roofing > 0 && openDeals(m.year, m.month, 'roofing', 'Roofing')}
+                      >{m.roofing || '—'}</td>
+                      <td
+                        className={`py-1.5 text-right ${gc} ${m.water > 0 ? 'cursor-pointer hover:underline' : ''}`}
+                        onClick={() => m.water > 0 && openDeals(m.year, m.month, 'water', 'Water')}
+                      >{m.water > 0 ? `${m.water} (${fmt(m.water * 0.5)})` : '—'}</td>
+                      <td
+                        className={`py-1.5 text-right ${gc} ${m.anker > 0 ? 'cursor-pointer hover:underline' : ''}`}
+                        onClick={() => m.anker > 0 && openDeals(m.year, m.month, 'anker', 'Anker')}
+                      >{m.anker > 0 ? `${m.anker} (${fmt(m.anker * 0.5)})` : '—'}</td>
+                      <td
+                        className={`py-1.5 text-right ${gc} ${m.asistidas > 0 ? 'cursor-pointer hover:underline' : ''}`}
+                        onClick={() => m.asistidas > 0 && openDeals(m.year, m.month, 'asistidas', 'Asistidas')}
+                      >{m.asistidas > 0 ? `${m.asistidas} (${fmt(m.asistidas * 0.5)})` : '—'}</td>
+                      <td
+                        className={`py-1.5 text-right text-indigo-600 font-medium ${m.gross > 0 ? 'cursor-pointer hover:underline' : ''}`}
+                        onClick={() => m.gross > 0 && openDeals(m.year, m.month, 'gross', 'Gross')}
+                      >{m.gross || '—'}</td>
+                      <td
+                        className={`py-1.5 text-right font-bold ${gc} ${m.total > 0 ? 'cursor-pointer hover:underline' : ''}`}
+                        onClick={() => m.total > 0 && openDeals(m.year, m.month, 'all', 'Todas')}
+                      >{m.total > 0 ? fmt(m.total) : '—'}</td>
+                      <td
+                        className={`py-1.5 text-right text-red-500 font-medium ${m.cancellations > 0 ? 'cursor-pointer hover:underline' : ''}`}
+                        onClick={() => m.cancellations > 0 && openCancellations(m.year, m.month)}
+                      >{m.cancellations || '—'}</td>
                       <td className="py-1.5 text-right text-slate-400">{m.meta}</td>
                       <td className="py-1.5 text-right">
                         {m.isGrace
@@ -336,6 +603,7 @@ function AsalariadoCard({
         </div>
       )}
     </div>
+    </>
   )
 }
 
@@ -350,16 +618,18 @@ export default function AsalariadosClient({
   recentMonths: Array<{ year: number; month: number }>
   isAdmin: boolean
 }) {
-  const [search, setSearch]         = useState('')
-  const [roleFilter, setRoleFilter] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
-  const [editingEmp, setEditingEmp] = useState<AsalariadoData | null>(null)
-  const [saving, setSaving]         = useState(false)
+  const [search, setSearch]               = useState('')
+  const [roleFilter, setRoleFilter]       = useState('')
+  const [statusFilter, setStatusFilter]   = useState('')
+  const [regionFilter, setRegionFilter]   = useState('')
+  const [editingEmp, setEditingEmp]       = useState<AsalariadoData | null>(null)
+  const [saving, setSaving]               = useState(false)
   const [localOverrides, setLocalOverrides] = useState<Record<string, string>>({})
-  const [, startTransition]         = useTransition()
+  const [, startTransition]               = useTransition()
 
   const filtered = useMemo(() => asalariados.filter(e => {
     if (roleFilter && e.salesRole !== roleFilter) return false
+    if (regionFilter && (e.supervisorRegional ?? '__sin__') !== regionFilter) return false
     if (statusFilter) {
       const eff = localOverrides[e.nombre] ??
         (e.redshiftStatus !== 'none' ? e.redshiftStatus :
@@ -371,7 +641,7 @@ export default function AsalariadosClient({
       if (!e.nombre.toLowerCase().includes(q) && !(e.email ?? '').toLowerCase().includes(q)) return false
     }
     return true
-  }), [asalariados, roleFilter, statusFilter, search, localOverrides])
+  }), [asalariados, roleFilter, regionFilter, statusFilter, search, localOverrides])
 
   // Group by supervisor
   const grouped = useMemo(() => {
@@ -411,7 +681,10 @@ export default function AsalariadosClient({
     startTransition(() => { window.location.reload() })
   }
 
-  const roleOptions = [...new Set(asalariados.map(e => e.salesRole))].sort()
+  const roleOptions   = [...new Set(asalariados.map(e => e.salesRole))].sort()
+  const regionOptions = useMemo(() =>
+    [...new Set(asalariados.map(e => e.supervisorRegional).filter((r): r is string => r !== null))].sort()
+  , [asalariados])
 
   return (
     <div>
@@ -450,6 +723,11 @@ export default function AsalariadosClient({
           <option value="">Todos los roles</option>
           {roleOptions.map(r => <option key={r} value={r}>{r}</option>)}
         </select>
+        <select value={regionFilter} onChange={e => setRegionFilter(e.target.value)}
+          className="border border-slate-200 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#E88B0C]">
+          <option value="">Todas las regiones</option>
+          {regionOptions.map(r => <option key={r} value={r}>{r}</option>)}
+        </select>
         <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
           className="border border-slate-200 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#E88B0C]">
           <option value="">Todos los estados</option>
@@ -458,8 +736,8 @@ export default function AsalariadosClient({
           <option value="comunicado2">Comunicado 2</option>
           <option value="terminacion">Terminación</option>
         </select>
-        {(search || roleFilter || statusFilter) && (
-          <button onClick={() => { setSearch(''); setRoleFilter(''); setStatusFilter('') }}
+        {(search || roleFilter || regionFilter || statusFilter) && (
+          <button onClick={() => { setSearch(''); setRoleFilter(''); setRegionFilter(''); setStatusFilter('') }}
             className="text-xs text-slate-400 hover:text-red-500 transition">
             ✕ Limpiar
           </button>
