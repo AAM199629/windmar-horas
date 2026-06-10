@@ -533,7 +533,9 @@ function AsalariadoCard({
                       <td className="py-1.5 text-right">
                         {m.isGrace
                           ? <span className="text-green-500 font-bold text-[10px]">G</span>
-                          : m.met ? '✓' : <span className="text-red-500">✗</span>}
+                          : m.met
+                            ? <span className="text-green-600 font-bold">✓</span>
+                            : <span className="text-red-500 font-bold">✗</span>}
                       </td>
                     </tr>
                   )

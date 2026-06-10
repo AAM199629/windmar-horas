@@ -259,14 +259,16 @@ export function calcMonthMetrics(
   const gross = solar + roofing + cdbg + water * 0.5 + anker * 0.5
   const total = solar + roofing + cdbg + water * 0.5 + anker * 0.5 + asistidas * 0.5
 
-  // Cancellations: own or assisted deals that closed in this month but are now cancelled/on-hold
+  // Cancellations: own or assisted deals that are on-hold/cancelled in this month.
+  // Use cancellationDate first (most accurate); fall back to closingDate for on-hold deals.
   let cancellations = 0
   for (const row of rows) {
     if (isActive(row)) continue
     const isOwn    = row.salesTeamName.toLowerCase() === nameLower
     const isAssist = row.salesRepAssistTrainee.toLowerCase() === nameLower
     if (!isOwn && !isAssist) continue
-    const cd = parseDate(row.closingDate)
+    const dateStr = (row.cancellationDate && row.cancellationDate.trim()) ? row.cancellationDate : row.closingDate
+    const cd = parseDate(dateStr)
     if (!cd || cd.getFullYear() !== year || cd.getMonth() + 1 !== month) continue
     if (hireParsed && cd < hireParsed) continue
     cancellations++
