@@ -13,23 +13,44 @@ export default function ViewToggle({
 }) {
   const router = useRouter()
 
-  const active   = 'px-4 py-1.5 rounded-lg text-sm font-semibold bg-[#0D1654] text-white shadow-md transition-all'
-  const inactive = 'px-4 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-white/60 transition-all'
+  const views = [
+    { key: 'horas' as const, label: 'Turnos', href: hrefHoras },
+    { key: 'performance' as const, label: 'Performance', href: hrefPerformance },
+  ]
 
   return (
-    <div className="flex gap-1 p-1 rounded-xl bg-white/50 backdrop-blur-md border border-white/70 shadow-md shadow-slate-200/50">
-      <button
-        className={currentView === 'horas' ? active : inactive}
-        onClick={() => router.push(hrefHoras)}
-      >
-        Horas
-      </button>
-      <button
-        className={currentView === 'performance' ? active : inactive}
-        onClick={() => router.push(hrefPerformance)}
-      >
-        Performance
-      </button>
+    <div style={{
+      display: 'flex',
+      background: '#EEF3FD',
+      borderRadius: 999,
+      padding: 4,
+      gap: 2,
+      fontFamily: "'Montserrat', sans-serif",
+    }}>
+      {views.map(({ key, label, href }) => {
+        const isActive = currentView === key
+        return (
+          <button
+            key={key}
+            onClick={() => router.push(href)}
+            style={{
+              padding: '8px 20px',
+              borderRadius: 999,
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: 13,
+              fontWeight: 600,
+              fontFamily: 'inherit',
+              transition: 'all 0.15s',
+              background: isActive ? 'linear-gradient(180deg, #3D6BFF, #1D429B)' : 'transparent',
+              color: isActive ? '#FFFFFF' : '#1D429B',
+              boxShadow: isActive ? '0 4px 14px rgba(61,107,255,0.35)' : 'none',
+            }}
+          >
+            {label}
+          </button>
+        )
+      })}
     </div>
   )
 }

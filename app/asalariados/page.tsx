@@ -56,11 +56,21 @@ function maxStatus(
 function memoImpliedStatus(
   memo1Date: string | null,
   memo2Date: string | null,
+  months: MonthMetrics[],
 ): AsalariadoData['pendingStatus'] {
-  const now = new Date()
-  const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-  if (memo2Date && memo2Date.slice(0, 7) < currentMonthStr) return 'terminacion'
-  if (memo1Date && memo1Date.slice(0, 7) < currentMonthStr) return 'comunicado2'
+  if (months.length < 2) return 'none'
+  const current  = months[months.length - 1]  // mes actual (en curso)
+  const previous = months[months.length - 2]  // mes anterior (completo)
+  const prevStr  = `${previous.year}-${String(previous.month).padStart(2, '0')}`
+
+  const memo2LastMonth = Boolean(memo2Date && memo2Date.slice(0, 7) === prevStr)
+  const memo1LastMonth = Boolean(memo1Date && memo1Date.slice(0, 7) === prevStr)
+
+  if (memo2LastMonth) return !current.met ? 'terminacion' : 'none'
+  if (memo1LastMonth) return !current.met ? 'comunicado2' : 'none'
+
+  // Sin memo el mes pasado: comunicado1 si el mes anterior (ya completo) no fue cumplido
+  if (!previous.isGrace && !previous.met) return 'comunicado1'
   return 'none'
 }
 
@@ -102,7 +112,7 @@ export default async function AsalariadosPage() {
 
     const consecutive = calcConsecutiveMisses(months)
     const { status }  = pendingComunicado(consecutive)
-    const implied     = memoImpliedStatus(emp.memo1Date, emp.memo2Date)
+    const implied     = memoImpliedStatus(emp.memo1Date, emp.memo2Date, months)
     const approved    = comunicadoMap.get(emp.fullName.toLowerCase()) ?? null
 
     const fu = followUpMap.get(emp.email) ?? followUpMap.get(emp.fullName.toLowerCase()) ?? null
@@ -134,15 +144,15 @@ export default async function AsalariadosPage() {
 
   return (
     <div>
-      <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 26, fontFamily: "'Montserrat', sans-serif" }}>
         <div>
-          <h1 className="text-2xl font-bold text-[#0D1654]">Asalariados</h1>
-          <p className="text-slate-500 text-sm mt-0.5">
-            Seguimiento de metas y comunicados — Empleados directos
+          <p style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.16em', color: '#1D429B', marginBottom: 6 }}>
+            EMPLEADOS DIRECTOS · METAS Y COMUNICADOS · REDSHIFT
           </p>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Datos de ventas en vivo · Redshift
-          </p>
+          <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(40px, 5vw, 60px)', lineHeight: 0.9, margin: 0 }}>
+            <span style={{ color: '#21274E' }}>Equipo </span>
+            <span style={{ color: '#F89B24' }}>Asalariados</span>
+          </h1>
         </div>
       </div>
       <AsalariadosClient

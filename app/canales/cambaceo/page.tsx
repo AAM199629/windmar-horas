@@ -33,10 +33,15 @@ export default async function CambaceoPage({
 
     return (
       <div>
-        <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 26, fontFamily: "'Montserrat', sans-serif" }}>
           <div>
-            <h1 className="text-2xl font-bold text-[#0D1654]">Canal Cambaceo / Canvaseo</h1>
-            <p className="text-slate-500 text-sm mt-0.5">Vista de Performance</p>
+            <p style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.16em', color: '#1D429B', marginBottom: 6 }}>
+              CANAL · REPORTE DE PERFORMANCE · STIP
+            </p>
+            <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(40px, 5vw, 60px)', lineHeight: 0.9, margin: 0 }}>
+              <span style={{ color: '#21274E' }}>Canal </span>
+              <span style={{ color: '#F89B24' }}>Cambaceo / Canvaseo</span>
+            </h1>
           </div>
           <ViewToggle
             currentView="performance"
@@ -62,10 +67,15 @@ export default async function CambaceoPage({
 
   return (
     <div>
-      <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 26, fontFamily: "'Montserrat', sans-serif" }}>
         <div>
-          <h1 className="text-2xl font-bold text-[#0D1654]">Canal Cambaceo / Canvaseo</h1>
-          <p className="text-slate-500 text-sm mt-0.5">Turnos en tiempo real · STIP</p>
+          <p style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.16em', color: '#1D429B', marginBottom: 6 }}>
+            CANAL · TURNOS EN TIEMPO REAL · STIP
+          </p>
+          <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(40px, 5vw, 60px)', lineHeight: 0.9, margin: 0 }}>
+            <span style={{ color: '#21274E' }}>Canal </span>
+            <span style={{ color: '#F89B24' }}>Cambaceo / Canvaseo</span>
+          </h1>
         </div>
         <ViewToggle
           currentView="horas"
