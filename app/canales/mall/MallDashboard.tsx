@@ -9,8 +9,9 @@ import TrendStrip from './components/TrendStrip'
 import LocationBars from './components/LocationBars'
 import HeatmapTable from './components/HeatmapTable'
 import PipelineDonut from './components/PipelineDonut'
-import SellerCards from './components/SellerCards'
-import type { SellerStat } from './components/SellerCards'
+import LeadsByDayTable from './components/LeadsByDayTable'
+import LeadsBySellerTable from './components/LeadsBySellerTable'
+import LeadsByProductTable from './components/LeadsByProductTable'
 import { useAnim } from './hooks/useAnim'
 
 // ─── Constantes ──────────────────────────────────────────────────────────────
@@ -123,6 +124,20 @@ function Spinner() {
         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
       </svg>
       Cargando datos de Redshift…
+    </div>
+  )
+}
+
+// ─── LeadsLoadingSpinner ──────────────────────────────────────────────────────
+
+function LeadsLoadingSpinner() {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#8A8A8F', fontSize: 13, fontFamily: "'Montserrat',sans-serif" }}>
+      <svg className="animate-spin" style={{ width: 16, height: 16 }} viewBox="0 0 24 24" fill="none">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+      </svg>
+      Cargando leads…
     </div>
   )
 }
@@ -293,32 +308,6 @@ export default function MallDashboard({ year }: { year: number }) {
     return allLeads.filter(l => l.createdDate >= fromDate && l.createdDate <= toDate)
   }, [allLeads, fromDate, toDate])
 
-  // Leads por vendedor
-  const leadsBySellerAndLocation = useMemo(() => {
-    if (!filteredLeads) return null
-    const data: Record<string, Record<string, MallBoothLeadDetail[]>> = {}
-    for (const l of filteredLeads) {
-      if (!data[l.registradoPor]) data[l.registradoPor] = {}
-      if (!data[l.registradoPor][l.location]) data[l.registradoPor][l.location] = []
-      data[l.registradoPor][l.location].push(l)
-    }
-    return data
-  }, [filteredLeads])
-
-  const sellerStats: SellerStat[] = useMemo(() => {
-    if (!leadsBySellerAndLocation) return []
-    return Object.entries(leadsBySellerAndLocation)
-      .map(([name, locMap]) => {
-        const allSellerLeads = Object.values(locMap).flat()
-        const converted = allSellerLeads.filter(l => l.isSold).length
-        const topLoc = Object.entries(locMap)
-          .sort((a, b) => b[1].length - a[1].length)[0]?.[0] ?? ''
-        return { name, location: locLabel(topLoc), leads: allSellerLeads.length, converted }
-      })
-      .sort((a, b) => b.leads - a.leads)
-      .slice(0, 16)
-  }, [leadsBySellerAndLocation])
-
   // ── Modal helpers ──
   function openDealModal(deals: MallBoothDealDetail[], title: string) {
     if (deals.length === 0) return
@@ -421,7 +410,7 @@ export default function MallDashboard({ year }: { year: number }) {
         }}>
           <KpiCard
             label="Ventas totales"
-            value={totalSales}
+            value={totalSales + totalCancellations}
             sub={`${locations.length} ubicaciones · ${rangeLabel}`}
             color="#1D429B"
             glow="#3D6BFF"
@@ -527,7 +516,26 @@ export default function MallDashboard({ year }: { year: number }) {
           </div>
         </div>
 
-        {/* ── Leads por Vendedor ────────────────────────────────────────── */}
+        {/* ── Tabla 1: Leads por día por ubicación ─────────────────────── */}
+        <div style={CARD_STYLE}>
+          <SectionHead
+            eyebrow="LEADS POR DÍA"
+            title="Leads por Día y Ubicación"
+            chip={filteredLeads ? `${filteredLeads.length} leads` : undefined}
+          />
+          {allLeads === null ? (
+            <LeadsLoadingSpinner />
+          ) : leadsError ? (
+            <p style={{ fontSize: 13, color: '#E0334B', fontFamily: "'Montserrat',sans-serif" }}>Error al cargar leads: {leadsError}</p>
+          ) : (
+            <LeadsByDayTable
+              leads={filteredLeads ?? []}
+              onClickCell={(ls, title) => setLeadModal({ leads: ls, title })}
+            />
+          )}
+        </div>
+
+        {/* ── Tabla 2: Leads por vendedor por ubicación ─────────────────── */}
         <div style={CARD_STYLE}>
           <SectionHead
             eyebrow="LEADS POR VENDEDOR"
@@ -535,25 +543,30 @@ export default function MallDashboard({ year }: { year: number }) {
             chip={filteredLeads ? `${filteredLeads.length} leads` : undefined}
           />
           {allLeads === null ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#8A8A8F', fontSize: 13 }}>
-              <svg className="animate-spin" style={{ width: 16, height: 16 }} viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-              </svg>
-              Cargando leads…
-            </div>
+            <LeadsLoadingSpinner />
           ) : leadsError ? (
-            <p style={{ fontSize: 13, color: '#E0334B' }}>Error al cargar leads: {leadsError}</p>
+            <p style={{ fontSize: 13, color: '#E0334B', fontFamily: "'Montserrat',sans-serif" }}>Error al cargar leads: {leadsError}</p>
           ) : (
-            <SellerCards
-              sellers={sellerStats}
-              onClickCard={name => {
-                const leads = leadsBySellerAndLocation
-                  ? Object.values(leadsBySellerAndLocation[name] ?? {}).flat()
-                  : []
-                if (leads.length > 0) setLeadModal({ leads, title: `${name} — todos los leads` })
-              }}
+            <LeadsBySellerTable
+              leads={filteredLeads ?? []}
+              onClickCell={(ls, title) => setLeadModal({ leads: ls, title })}
             />
+          )}
+        </div>
+
+        {/* ── Tabla 3: Leads por producto por región ────────────────────── */}
+        <div style={CARD_STYLE}>
+          <SectionHead
+            eyebrow="LEADS POR PRODUCTO"
+            title="Leads por Producto y Región"
+            chip={filteredLeads ? `${filteredLeads.length} leads` : undefined}
+          />
+          {allLeads === null ? (
+            <LeadsLoadingSpinner />
+          ) : leadsError ? (
+            <p style={{ fontSize: 13, color: '#E0334B', fontFamily: "'Montserrat',sans-serif" }}>Error al cargar leads: {leadsError}</p>
+          ) : (
+            <LeadsByProductTable leads={filteredLeads ?? []} />
           )}
         </div>
 

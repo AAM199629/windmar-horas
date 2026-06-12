@@ -393,7 +393,7 @@ export default function IndepDashboard({ year }: { year: number }) {
         }}>
           <KpiCard
             label="Ventas totales"
-            value={totalSales}
+            value={totalSales + totalCancellations}
             sub={`${uniqueEvents} eventos · ${rangeLabel}`}
             color="#1D429B"
             glow="#3D6BFF"
