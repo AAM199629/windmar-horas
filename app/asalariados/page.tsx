@@ -6,7 +6,7 @@ import { getActiveAsalariados, getVentasFromRedshift, getFollowUpFromRedshift } 
 import {
   isActiveSupervisor,
   calcMonthMetrics, getRecentMonths,
-  calcConsecutiveMisses, pendingComunicado, monthsAsAsalariado,
+  calcConsecutiveMisses, monthsAsAsalariado,
 } from '@/lib/ventas'
 import AsalariadosClient from './AsalariadosClient'
 import type { ComunicadoRecord } from '@/lib/asalariados-kv'
@@ -111,7 +111,6 @@ export default async function AsalariadosPage() {
     )
 
     const consecutive = calcConsecutiveMisses(months)
-    const { status }  = pendingComunicado(consecutive)
     const implied     = memoImpliedStatus(emp.memo1Date, emp.memo2Date, months)
     const approved    = comunicadoMap.get(emp.fullName.toLowerCase()) ?? null
 
@@ -126,7 +125,7 @@ export default async function AsalariadosPage() {
       hireDate:           emp.hireDate,
       months,
       consecutive,
-      pendingStatus:      maxStatus(status, implied),
+      pendingStatus:      implied,
       redshiftStatus:     memoLevelToStatus(emp.memoLevel),
       memo1Date:          emp.memo1Date,
       memo2Date:          emp.memo2Date,
