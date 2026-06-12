@@ -436,6 +436,7 @@ export interface MallBoothLeadDetail {
   createdDate:   string
   month:         number
   registradoPor: string
+  ciudad:        string | null
   isSold:        boolean
   dealPipeline:  string | null
 }
@@ -474,24 +475,30 @@ export async function getMallBoothLeadDetails(year: number): Promise<MallBoothLe
       TO_CHAR(b.created_time, 'YYYY-MM-DD')                 AS created_date,
       EXTRACT(MONTH FROM b.created_time)::int                AS month,
       COALESCE(stm_emp.full_name, de.sales_rep_email)        AS registrado_por,
+      stm_emp.ciudad                                         AS ciudad,
       (fd.zoho_deal_id IS NOT NULL
         AND dsr.on_hold_status IS NULL)                      AS is_sold,
       dp.pipeline                                            AS deal_pipeline
     FROM base b
     LEFT JOIN (
-      SELECT DISTINCT ON (id_employee) id_employee, sales_rep_email
-      FROM dwh.dim_employee
-      ORDER BY id_employee, is_current DESC
+      SELECT id_employee, sales_rep_email
+      FROM (
+        SELECT id_employee, sales_rep_email,
+               ROW_NUMBER() OVER (PARTITION BY id_employee ORDER BY is_current DESC) AS rn
+        FROM dwh.dim_employee
+      ) t WHERE t.rn = 1
     ) de ON de.id_employee = b.id_employee
     LEFT JOIN dwh.dim_lead dl
       ON  dl.zoho_lead_id = b.zoho_lead_id AND dl.is_current = true
     LEFT JOIN dw_zoho.dim_sales_team_member stm_emp
       ON  LOWER(stm_emp.email) = LOWER(de.sales_rep_email)
     LEFT JOIN (
-      SELECT DISTINCT ON (associated_lead)
-        associated_lead, zoho_deal_id, id_status_reason, id_profile
-      FROM dwh.fact_deals
-      ORDER BY associated_lead, closing_date DESC NULLS LAST
+      SELECT associated_lead, zoho_deal_id, id_status_reason, id_profile
+      FROM (
+        SELECT associated_lead, zoho_deal_id, id_status_reason, id_profile,
+               ROW_NUMBER() OVER (PARTITION BY associated_lead ORDER BY closing_date DESC NULLS LAST) AS rn
+        FROM dwh.fact_deals
+      ) t WHERE t.rn = 1
     ) fd ON fd.associated_lead = b.zoho_lead_id
     LEFT JOIN dwh.dim_status_reason dsr
       ON  dsr.id_status_reason = fd.id_status_reason AND dsr.is_current = true
@@ -507,6 +514,7 @@ export async function getMallBoothLeadDetails(year: number): Promise<MallBoothLe
     createdDate:   r.created_date as string,
     month:         Number(r.month),
     registradoPor: r.registrado_por as string,
+    ciudad:        (r.ciudad as string | null) ?? null,
     isSold:        Boolean(r.is_sold),
     dealPipeline:  r.deal_pipeline ?? null,
   }))
@@ -868,6 +876,157 @@ export async function getSalesDealDetailsByRoles(
     amount:      r.amount != null ? Number(r.amount) : null,
     isCdbg:      Boolean(r.is_cdbg),
     zohoId:      r.zoho_deal_id as string,
+  }))
+}
+
+// ─── Canal Independiente ─────────────────────────────────────────────────────
+
+const INDEP_EXCLUDE = [
+  '%home depot%',
+  '%malls -%',
+  '%plaza las americas%',
+  '%plaza del caribe%',
+  '%santa rosa%',
+  '%aguadilla mall%',
+  '%centro comercial%',
+  '%canvass%',
+  '%redes sociales%',
+  '%cuenta propia%',
+  '%telemarketing%',
+  '%showroom%',
+]
+
+function indepExcludeSQL(col: string): string {
+  return INDEP_EXCLUDE.map(p => `AND LOWER(${col}) NOT LIKE '${p}'`).join('\n      ')
+}
+
+export async function getIndepDealDetails(year: number): Promise<MallBoothDealDetail[]> {
+  const pool = getRedshiftPool()
+  const { rows } = await pool.query(`
+    SELECT
+      COALESCE(dms.lead_source, 'Sin Fuente')           AS location,
+      TO_CHAR(fd.closing_date, 'YYYY-MM-DD')             AS closing_date,
+      EXTRACT(MONTH FROM fd.closing_date)::int           AS month,
+      dp.pipeline,
+      (dsr.on_hold_status IS NOT NULL)                   AS is_cancelled,
+      COALESCE(stm.full_name, ds.sale_rep_email)         AS vendedor,
+      fd.amount,
+      dsr.on_hold_status,
+      dsr.cancellation_reason,
+      (dfl.cdbg_number IS NOT NULL)                      AS is_cdbg,
+      fd.zoho_deal_id,
+      dp.case_number                                     AS deal_name
+    FROM dwh.fact_deals fd
+    JOIN dwh.dim_staff ds
+      ON ds.id_staff = fd.id_staff AND ds.is_current = true
+    LEFT JOIN dwh.dim_marketing_source dms
+      ON dms.id_marketing_source = fd.id_marketing_source
+    JOIN dwh.dim_profiles dp
+      ON dp.id_profile = fd.id_profile
+    LEFT JOIN dw_zoho.dim_sales_team_member stm
+      ON LOWER(stm.email) = LOWER(ds.sale_rep_email)
+    JOIN dwh.dim_status_reason dsr
+      ON dsr.id_status_reason = fd.id_status_reason AND dsr.is_current = true
+    LEFT JOIN dwh.dim_finance_legal dfl
+      ON dfl.id_finance_legal = fd.id_finance_legal AND dfl.is_current = true
+    WHERE EXTRACT(YEAR FROM fd.closing_date) = $1
+      AND dms.lead_source IS NOT NULL
+      AND TRIM(dms.lead_source) <> ''
+      ${indepExcludeSQL('dms.lead_source')}
+    ORDER BY fd.closing_date DESC
+  `, [year])
+
+  return rows.map((r: any) => ({
+    location:           r.location as string,
+    closingDate:        r.closing_date as string,
+    month:              Number(r.month),
+    pipeline:           r.pipeline as string,
+    isCancelled:        Boolean(r.is_cancelled),
+    vendedor:           r.vendedor as string,
+    amount:             r.amount != null ? Number(r.amount) : null,
+    onHoldStatus:       r.on_hold_status ?? null,
+    cancellationReason: r.cancellation_reason ?? null,
+    isCdbg:             Boolean(r.is_cdbg),
+    zohoId:             r.zoho_deal_id as string,
+    dealName:           (r.deal_name as string | null) ?? null,
+  }))
+}
+
+export async function getIndepLeadDetails(year: number): Promise<MallBoothLeadDetail[]> {
+  const pool = getRedshiftPool()
+  const yearStart = `${year}-01-01`
+  const yearEnd   = `${year + 1}-01-01`
+  const { rows } = await pool.query(`
+    WITH src AS (
+      SELECT id_lead_source, lead_source
+      FROM dwh.dim_lead_source
+      WHERE lead_source IS NOT NULL
+        AND TRIM(lead_source) <> ''
+        ${indepExcludeSQL('lead_source')}
+    ),
+    base AS (
+      SELECT
+        fl.zoho_lead_id,
+        fl.id_employee,
+        fl.id_audit_system,
+        dasl.created_time,
+        src.lead_source
+      FROM dwh.dim_audit_system_leads dasl
+      JOIN dwh.fact_leads fl
+        ON fl.id_audit_system = dasl.id_audit_system
+      JOIN src
+        ON src.id_lead_source = fl.id_lead_source
+      WHERE dasl.created_time >= $1
+        AND dasl.created_time <  $2
+    )
+    SELECT
+      b.zoho_lead_id                                                   AS lead_id,
+      COALESCE(dl.full_name, TRIM(COALESCE(dl.first_name,'') || ' ' || COALESCE(dl.last_name,''))) AS lead_name,
+      b.lead_source                                                    AS location,
+      TO_CHAR(b.created_time, 'YYYY-MM-DD')                           AS created_date,
+      EXTRACT(MONTH FROM b.created_time)::int                         AS month,
+      COALESCE(stm_emp.full_name, de.sales_rep_email)                  AS registrado_por,
+      stm_emp.ciudad                                                   AS ciudad,
+      (fd.zoho_deal_id IS NOT NULL AND dsr.on_hold_status IS NULL)     AS is_sold,
+      dp.pipeline                                                      AS deal_pipeline
+    FROM base b
+    LEFT JOIN (
+      SELECT id_employee, sales_rep_email
+      FROM (
+        SELECT id_employee, sales_rep_email,
+               ROW_NUMBER() OVER (PARTITION BY id_employee ORDER BY is_current DESC) AS rn
+        FROM dwh.dim_employee
+      ) t WHERE t.rn = 1
+    ) de ON de.id_employee = b.id_employee
+    LEFT JOIN dwh.dim_lead dl
+      ON dl.zoho_lead_id = b.zoho_lead_id AND dl.is_current = true
+    LEFT JOIN dw_zoho.dim_sales_team_member stm_emp
+      ON LOWER(stm_emp.email) = LOWER(de.sales_rep_email)
+    LEFT JOIN (
+      SELECT associated_lead, zoho_deal_id, id_status_reason, id_profile
+      FROM (
+        SELECT associated_lead, zoho_deal_id, id_status_reason, id_profile,
+               ROW_NUMBER() OVER (PARTITION BY associated_lead ORDER BY closing_date DESC NULLS LAST) AS rn
+        FROM dwh.fact_deals
+      ) t WHERE t.rn = 1
+    ) fd ON fd.associated_lead = b.zoho_lead_id
+    LEFT JOIN dwh.dim_status_reason dsr
+      ON dsr.id_status_reason = fd.id_status_reason AND dsr.is_current = true
+    LEFT JOIN dwh.dim_profiles dp
+      ON dp.id_profile = fd.id_profile
+    ORDER BY b.created_time DESC
+  `, [yearStart, yearEnd])
+
+  return rows.map((r: any) => ({
+    leadId:        r.lead_id as string,
+    leadName:      (r.lead_name as string)?.trim() || null,
+    location:      r.location as string,
+    createdDate:   r.created_date as string,
+    month:         Number(r.month),
+    registradoPor: r.registrado_por as string,
+    ciudad:        (r.ciudad as string | null) ?? null,
+    isSold:        Boolean(r.is_sold),
+    dealPipeline:  r.deal_pipeline ?? null,
   }))
 }
 
