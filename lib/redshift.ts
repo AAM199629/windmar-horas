@@ -344,6 +344,7 @@ export async function getCambaceoDealDetails(
       ON dfl.id_finance_legal = fd.id_finance_legal AND dfl.is_current = true
     WHERE fd.closing_date >= $1 AND fd.closing_date <= $2
       AND ds.sale_rep_email IS NOT NULL
+      AND (LOWER(dms.lead_source) LIKE '%canvass%' OR LOWER(dms.lead_source) LIKE '%cambaceo%')
     ORDER BY fd.closing_date DESC
   `, [monthStart, monthEnd])
 
