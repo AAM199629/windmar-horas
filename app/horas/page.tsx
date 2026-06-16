@@ -1,6 +1,7 @@
 import { getVendedores, buildVendedorMap } from '@/lib/smartsheet'
 import { getAsalariadoData } from '@/lib/redshift'
 import { auth } from '@/auth'
+import { redirect } from 'next/navigation'
 import HorasDateView from '@/components/HorasDateView'
 
 export const dynamic = 'force-dynamic'
@@ -14,6 +15,8 @@ export default async function HorasPage() {
 
   const vmap = buildVendedorMap(vendedores)
   const role = (session?.user as any)?.role
+
+  if (role === 'canal') redirect('/canales/cambaceo')
 
   // Serialize Maps to plain objects for client component
   const vendedorMapObj = Object.fromEntries(

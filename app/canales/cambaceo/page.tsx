@@ -2,6 +2,8 @@ import ViewToggle from '@/components/ViewToggle'
 import CambaceoPerformance from '@/components/CambaceoPerformance'
 import StipTurnosView from '@/components/StipTurnosView'
 import { computeCambaceoPerformance } from '@/lib/performance'
+import { auth } from '@/auth'
+import { redirect } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,9 +17,15 @@ export default async function CambaceoPage({
 }: {
   searchParams: Promise<{ view?: string; month?: string }>
 }) {
+  const session = await auth()
+  const role = (session?.user as any)?.role
+  const isCanal = role === 'canal'
+
   const { view, month: monthParam } = await searchParams
   const month = monthParam ?? currentYearMonth()
   const isDashboard = view === 'dashboard' || view === 'performance'
+
+  if (isCanal && isDashboard) redirect('/canales/cambaceo')
 
   if (isDashboard) {
     let vendedores: Awaited<ReturnType<typeof computeCambaceoPerformance>>['vendedores'] = []
@@ -42,12 +50,12 @@ export default async function CambaceoPage({
               <span style={{ color: '#F89B24' }}>Cambaceo / Canvaseo</span>
             </h1>
           </div>
-          <ViewToggle
+          {!isCanal && <ViewToggle
             currentView="performance"
             hrefHoras="/canales/cambaceo"
             hrefPerformance={`/canales/cambaceo?view=dashboard&month=${month}`}
             labelPerformance="Dashboard"
-          />
+          />}
         </div>
         {perfError ? (
           <div className="rounded-2xl bg-red-50/70 border border-red-200/70 p-6 text-red-700 text-sm">
@@ -76,12 +84,12 @@ export default async function CambaceoPage({
             <span style={{ color: '#F89B24' }}>Cambaceo / Canvaseo</span>
           </h1>
         </div>
-        <ViewToggle
+        {!isCanal && <ViewToggle
           currentView="horas"
           hrefHoras="/canales/cambaceo"
           hrefPerformance={`/canales/cambaceo?view=dashboard&month=${month}`}
           labelPerformance="Dashboard"
-        />
+        />}
       </div>
       <StipTurnosView canal="cambaceo" />
     </div>

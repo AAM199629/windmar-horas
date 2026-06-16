@@ -38,10 +38,17 @@ export default function Navbar() {
   const { data: session } = useSession()
   const role = (session?.user as any)?.role as string | undefined
   const isAdmin = role === 'admin'
+  const isCanal = role === 'canal'
   const canSeeAsalariados = role === 'admin' || role === 'supervisor'
   const dataAge = useDataStatus()
 
-  const allLinks = [
+  const canalLinks = [
+    { href: '/canales/cambaceo',      label: 'Cambaceo' },
+    { href: '/canales/mall',          label: 'Mall / Home Depot' },
+    { href: '/canales/independiente', label: 'Independiente' },
+  ]
+
+  const allLinks = isCanal ? canalLinks : [
     ...links,
     ...(canSeeAsalariados ? [
       { href: '/ventas',      label: 'Dashboard Ventas' },

@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import UploadForm from '@/components/UploadForm'
+import { auth } from '@/auth'
+import { redirect } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,7 +13,9 @@ const CHANNELS = [
   { href: '/ventas',                   label: 'Dashboard de Ventas',      icon: '📊', desc: 'Reporte ejecutivo · Asalariados vs Full Commission · Lead Sources · Export PDF' },
 ]
 
-export default function HomePage() {
+export default async function HomePage() {
+  const session = await auth()
+  if ((session?.user as any)?.role === 'canal') redirect('/canales/cambaceo')
   return (
     <div className="space-y-8">
       {/* Hero */}

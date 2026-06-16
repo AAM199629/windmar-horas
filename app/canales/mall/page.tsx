@@ -1,6 +1,8 @@
 import MallViewToggle from './MallViewToggle'
 import MallDashboard from './MallDashboard'
 import StipTurnosView from '@/components/StipTurnosView'
+import { auth } from '@/auth'
+import { redirect } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,7 +11,14 @@ export default async function MallPage({
 }: {
   searchParams: Promise<{ view?: string }>
 }) {
+  const session = await auth()
+  const role = (session?.user as any)?.role
+  const isCanal = role === 'canal'
+
   const { view } = await searchParams
+
+  if (isCanal && view !== 'turnos') redirect('/canales/mall?view=turnos')
+
   const currentView = view === 'turnos' ? 'turnos' : 'dashboard'
   const year = new Date().getFullYear()
 
@@ -46,7 +55,7 @@ export default async function MallPage({
           </span>
         </h1>
       </div>
-      <MallViewToggle current={currentView} />
+      {!isCanal && <MallViewToggle current={currentView} />}
     </div>
   )
 
