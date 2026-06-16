@@ -198,8 +198,6 @@ export default function MallDashboard({ year }: { year: number }) {
 
   // ── Fetch ──
   useEffect(() => {
-    setLoading(true)
-    setFetchError(null)
     fetch('/api/canales/mall/deals')
       .then(r => r.json())
       .then(data => {

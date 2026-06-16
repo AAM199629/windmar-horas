@@ -167,8 +167,6 @@ export default function IndepDashboard({ year }: { year: number }) {
 
   // ── Fetch ──
   useEffect(() => {
-    setLoading(true)
-    setFetchError(null)
     fetch('/api/canales/independiente/deals')
       .then(r => r.json())
       .then(data => {
@@ -394,7 +392,7 @@ export default function IndepDashboard({ year }: { year: number }) {
           <KpiCard
             label="Ventas totales"
             value={totalSales + totalCancellations}
-            sub={`${uniqueEvents} eventos · ${rangeLabel}`}
+            sub={`${uniqueEvents} ubicaciones · ${rangeLabel}`}
             color="#1D429B"
             glow="#3D6BFF"
             animOn={animOn}
@@ -435,8 +433,8 @@ export default function IndepDashboard({ year }: { year: number }) {
         <div style={CARD_STYLE}>
           <SectionHead
             eyebrow="RANKING DEL PERÍODO"
-            title="Ventas por Canal / Evento"
-            chip={`${uniqueEvents} eventos · ${totalSales} ventas`}
+            title="Ventas por Ubicación"
+            chip={`${uniqueEvents} ubicaciones · ${totalSales} ventas`}
           />
           {salesByLocation.length === 0 ? (
             <p style={{ fontSize: 13, color: '#8A8A8F' }}>Sin datos para el período seleccionado.</p>
@@ -459,7 +457,7 @@ export default function IndepDashboard({ year }: { year: number }) {
             <SectionHead
               eyebrow="MAPA DE CALOR MENSUAL"
               title="Detalle Mensual"
-              chip={uniqueEvents > HEATMAP_MAX_ROWS ? `Top ${HEATMAP_MAX_ROWS} eventos` : undefined}
+              chip={uniqueEvents > HEATMAP_MAX_ROWS ? `Top ${HEATMAP_MAX_ROWS} ubicaciones` : undefined}
             />
             {heatmapLocations.length === 0 ? (
               <p style={{ fontSize: 13, color: '#8A8A8F' }}>Sin datos para el período seleccionado.</p>
@@ -481,11 +479,11 @@ export default function IndepDashboard({ year }: { year: number }) {
                 )}
                 onClickMonthTotal={m => openDealModal(
                   filtered.filter(d => d.month === m && !d.isCancelled),
-                  `Todos los eventos · ${MONTH_LABELS[m]}`,
+                  `Todas las ubicaciones · ${MONTH_LABELS[m]}`,
                 )}
                 onClickGrandTotal={() => openDealModal(
                   filtered.filter(d => !d.isCancelled),
-                  'Todos los eventos — total ventas',
+                  'Todas las ubicaciones — total ventas',
                 )}
               />
             )}
