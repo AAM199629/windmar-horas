@@ -4,7 +4,7 @@ import { getIndepLeadDetails } from '@/lib/redshift'
 
 const getCachedLeads = unstable_cache(
   getIndepLeadDetails,
-  ['indep-lead-details'],
+  ['indep-lead-details-v2'],
   { revalidate: 300 },
 )
 

@@ -4,7 +4,7 @@ import { getIndepDealDetails } from '@/lib/redshift'
 
 const getCachedDeals = unstable_cache(
   getIndepDealDetails,
-  ['indep-deal-details'],
+  ['indep-deal-details-v2'],
   { revalidate: 300 },
 )
 
