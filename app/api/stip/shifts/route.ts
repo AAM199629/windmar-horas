@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getShiftRowsForRange } from '@/lib/stip'
-import { buildWeeklyReport, getWeekKey } from '@/lib/shifter'
-import { getWeeklyReport } from '@/lib/kv'
+import { buildWeeklyReport } from '@/lib/shifter'
+import { getWeeklyReport, listWeekKeys } from '@/lib/kv'
 
 export async function GET(req: NextRequest) {
   try {
@@ -19,11 +19,16 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(buildWeeklyReport(rows))
     }
 
-    // Fallback: try CSV-uploaded data from KV
-    const weekKey = getWeekKey(from)
-    const kvReport = await getWeeklyReport(weekKey)
-    if (kvReport) {
-      return NextResponse.json({ ...kvReport, source: 'csv' })
+    // Fallback: search all stored CSV reports for one that overlaps the requested range
+    const allKeys = await listWeekKeys()
+    for (const key of allKeys) {
+      const kvReport = await getWeeklyReport(key)
+      if (!kvReport) continue
+      if (kvReport.weekStart > to || kvReport.weekEnd < from) continue
+      const filtered = kvReport.allShifts.filter(s => s.date >= from && s.date <= to)
+      if (filtered.length > 0) {
+        return NextResponse.json({ ...buildWeeklyReport(filtered), source: 'csv' })
+      }
     }
 
     return NextResponse.json({ error: 'No hay turnos para ese período' }, { status: 404 })
