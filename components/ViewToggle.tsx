@@ -6,16 +6,18 @@ export default function ViewToggle({
   currentView,
   hrefHoras,
   hrefPerformance,
+  labelPerformance = 'Performance',
 }: {
   currentView: 'horas' | 'performance'
   hrefHoras: string
   hrefPerformance: string
+  labelPerformance?: string
 }) {
   const router = useRouter()
 
   const views = [
     { key: 'horas' as const, label: 'Turnos', href: hrefHoras },
-    { key: 'performance' as const, label: 'Performance', href: hrefPerformance },
+    { key: 'performance' as const, label: labelPerformance, href: hrefPerformance },
   ]
 
   return (

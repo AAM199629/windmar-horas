@@ -17,16 +17,15 @@ export default async function CambaceoPage({
 }) {
   const { view, month: monthParam } = await searchParams
   const month = monthParam ?? currentYearMonth()
+  const isDashboard = view === 'dashboard' || view === 'performance'
 
-  if (view === 'performance') {
+  if (isDashboard) {
     let vendedores: Awaited<ReturnType<typeof computeCambaceoPerformance>>['vendedores'] = []
-    let coordinadores: Awaited<ReturnType<typeof computeCambaceoPerformance>>['coordinadores'] = []
     let perfError: string | null = null
 
     try {
       const result = await computeCambaceoPerformance(month)
       vendedores   = result.vendedores
-      coordinadores = result.coordinadores
     } catch (err: any) {
       perfError = err?.message ?? 'Error desconocido'
     }
@@ -36,7 +35,7 @@ export default async function CambaceoPage({
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 26, fontFamily: "'Montserrat', sans-serif" }}>
           <div>
             <p style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.16em', color: '#1D429B', marginBottom: 6 }}>
-              CANAL · REPORTE DE PERFORMANCE · STIP
+              CANAL · DASHBOARD DE VENTAS EN VIVO · REDSHIFT
             </p>
             <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(40px, 5vw, 60px)', lineHeight: 0.9, margin: 0 }}>
               <span style={{ color: '#21274E' }}>Canal </span>
@@ -46,7 +45,8 @@ export default async function CambaceoPage({
           <ViewToggle
             currentView="performance"
             hrefHoras="/canales/cambaceo"
-            hrefPerformance={`/canales/cambaceo?view=performance&month=${month}`}
+            hrefPerformance={`/canales/cambaceo?view=dashboard&month=${month}`}
+            labelPerformance="Dashboard"
           />
         </div>
         {perfError ? (
@@ -57,7 +57,6 @@ export default async function CambaceoPage({
         ) : (
           <CambaceoPerformance
             vendedores={vendedores}
-            coordinadores={coordinadores}
             month={month}
           />
         )}
@@ -80,7 +79,8 @@ export default async function CambaceoPage({
         <ViewToggle
           currentView="horas"
           hrefHoras="/canales/cambaceo"
-          hrefPerformance={`/canales/cambaceo?view=performance&month=${month}`}
+          hrefPerformance={`/canales/cambaceo?view=dashboard&month=${month}`}
+          labelPerformance="Dashboard"
         />
       </div>
       <StipTurnosView canal="cambaceo" />

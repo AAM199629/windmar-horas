@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { unstable_cache } from 'next/cache'
 import { getRedshiftPool } from '@/lib/redshift'
 
-async function fetchLeadDetails(monthStart: string, monthEnd: string) {
+async function fetchLeadDetails(dateFrom: string, dateTo: string) {
   const pool = getRedshiftPool()
   const { rows } = await pool.query(`
     SELECT
@@ -38,7 +38,7 @@ async function fetchLeadDetails(monthStart: string, monthEnd: string) {
       AND DATE(dasl.created_time) >= $1
       AND DATE(dasl.created_time) <= $2
     ORDER BY dasl.created_time DESC
-  `, [monthStart, monthEnd])
+  `, [dateFrom, dateTo])
 
   return rows.map((r: any) => ({
     leadId:          r.lead_id as string,
@@ -54,10 +54,10 @@ async function fetchLeadDetails(monthStart: string, monthEnd: string) {
   }))
 }
 
-function makeCachedFn(monthStart: string, monthEnd: string) {
+function makeCachedFn(dateFrom: string, dateTo: string) {
   return unstable_cache(
-    () => fetchLeadDetails(monthStart, monthEnd),
-    [`cambaceo-leads-${monthStart}`],
+    () => fetchLeadDetails(dateFrom, dateTo),
+    [`cambaceo-leads-${dateFrom}-${dateTo}`],
     { revalidate: 300 },
   )
 }
@@ -65,16 +65,31 @@ function makeCachedFn(monthStart: string, monthEnd: string) {
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = req.nextUrl
-    const month = searchParams.get('month') ?? ''
-    if (!/^\d{4}-\d{2}$/.test(month)) {
-      return NextResponse.json({ error: 'month param required (YYYY-MM)' }, { status: 400 })
-    }
-    const [year, mm] = month.split('-')
-    const lastDay    = new Date(Number(year), Number(mm), 0).getDate()
-    const monthStart = `${year}-${mm}-01`
-    const monthEnd   = `${year}-${mm}-${String(lastDay).padStart(2, '0')}`
+    const from  = searchParams.get('from')
+    const to    = searchParams.get('to')
+    const month = searchParams.get('month')
 
-    const leads = await makeCachedFn(monthStart, monthEnd)()
+    let dateFrom: string, dateTo: string
+
+    if (from && to) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
+        return NextResponse.json({ error: 'from/to must be YYYY-MM-DD' }, { status: 400 })
+      }
+      dateFrom = from
+      dateTo   = to
+    } else if (month) {
+      if (!/^\d{4}-\d{2}$/.test(month)) {
+        return NextResponse.json({ error: 'month param must be YYYY-MM' }, { status: 400 })
+      }
+      const [year, mm] = month.split('-')
+      const lastDay    = new Date(Number(year), Number(mm), 0).getDate()
+      dateFrom = `${year}-${mm}-01`
+      dateTo   = `${year}-${mm}-${String(lastDay).padStart(2, '0')}`
+    } else {
+      return NextResponse.json({ error: 'Provide from+to (YYYY-MM-DD) or month (YYYY-MM)' }, { status: 400 })
+    }
+
+    const leads = await makeCachedFn(dateFrom, dateTo)()
     return NextResponse.json(leads)
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })

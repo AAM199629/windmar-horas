@@ -305,6 +305,7 @@ export interface CambaceoDealDetail {
   amount: number | null
   onHoldStatus: string | null
   cancellationReason: string | null
+  isCancelled: boolean
   isCdbg: boolean
   isCanvassing: boolean
   zohoId: string
@@ -324,6 +325,7 @@ export async function getCambaceoDealDetails(
       fd.amount,
       dsr.on_hold_status,
       dsr.cancellation_reason,
+      (dsr.on_hold_status IS NOT NULL OR dsr.stage = 'Cancelled') AS is_cancelled,
       (dfl.cdbg_number IS NOT NULL)                         AS is_cdbg,
       (LOWER(dms.lead_source) LIKE '%canvass%')             AS is_canvassing,
       fd.zoho_deal_id
@@ -341,7 +343,6 @@ export async function getCambaceoDealDetails(
     LEFT JOIN dwh.dim_finance_legal dfl
       ON dfl.id_finance_legal = fd.id_finance_legal AND dfl.is_current = true
     WHERE fd.closing_date >= $1 AND fd.closing_date <= $2
-      AND dsr.stage <> 'Cancelled'
       AND ds.sale_rep_email IS NOT NULL
     ORDER BY fd.closing_date DESC
   `, [monthStart, monthEnd])
@@ -354,6 +355,7 @@ export async function getCambaceoDealDetails(
     amount:             r.amount != null ? Number(r.amount) : null,
     onHoldStatus:       r.on_hold_status ?? null,
     cancellationReason: r.cancellation_reason ?? null,
+    isCancelled:        Boolean(r.is_cancelled),
     isCdbg:             Boolean(r.is_cdbg),
     isCanvassing:       Boolean(r.is_canvassing),
     zohoId:             r.zoho_deal_id as string,
