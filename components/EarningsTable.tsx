@@ -140,27 +140,27 @@ export default function EarningsTable({ defaultCanal = 'mall' }: Props) {
   const rows = useMemo<EarningsRow[]>(() => {
     const map = new Map<string, EarningsRow>()
 
+    const getKey = (deal: MallBoothDealDetail | CambaceoEarningsDeal): string =>
+      canal === 'cambaceo'
+        ? ((deal as CambaceoEarningsDeal).coordinador ?? 'Sin coordinador')
+        : ((deal as MallBoothDealDetail).location ?? 'Sin ubicación')
+
+    // First pass: register all unique booths/coordinators
     for (const deal of filtered) {
-      if (deal.isCancelled || deal.amount == null || deal.amount <= 0) continue
-
-      const rate = commissionRate(deal.pipeline)
-      if (rate === 0) continue
-
-      const cat  = pipelineCategory(deal.pipeline)
-      const gain = deal.amount * rate
-
-      let key: string
-      if (canal === 'cambaceo') {
-        key = (deal as CambaceoEarningsDeal).coordinador ?? 'Sin coordinador'
-      } else {
-        key = (deal as MallBoothDealDetail).location ?? 'Sin ubicación'
-      }
-
+      const key = getKey(deal)
       if (!map.has(key)) {
         map.set(key, { name: key, solar: 0, roofing: 0, water: 0, anker: 0, total: 0 })
       }
+    }
 
-      const row = map.get(key)!
+    // Second pass: accumulate commissions for qualifying deals
+    for (const deal of filtered) {
+      if (deal.isCancelled || deal.amount == null || deal.amount <= 0) continue
+      const rate = commissionRate(deal.pipeline)
+      if (rate === 0) continue
+      const cat  = pipelineCategory(deal.pipeline)
+      const gain = deal.amount * rate
+      const row  = map.get(getKey(deal))!
       if (cat) row[cat] += gain
       row.total += gain
     }
