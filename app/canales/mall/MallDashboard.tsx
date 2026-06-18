@@ -9,9 +9,8 @@ import TrendStrip from './components/TrendStrip'
 import LocationBars from './components/LocationBars'
 import HeatmapTable from './components/HeatmapTable'
 import PipelineDonut from './components/PipelineDonut'
-import LeadsByDayTable from './components/LeadsByDayTable'
-import LeadsBySellerTable from './components/LeadsBySellerTable'
-import LeadsByProductTable from './components/LeadsByProductTable'
+import SellerCards from './components/SellerCards'
+import type { SellerStat } from './components/SellerCards'
 import { useAnim } from './hooks/useAnim'
 
 // ─── Constantes ──────────────────────────────────────────────────────────────
@@ -306,6 +305,26 @@ export default function MallDashboard({ year }: { year: number }) {
     return allLeads.filter(l => l.createdDate >= fromDate && l.createdDate <= toDate)
   }, [allLeads, fromDate, toDate])
 
+  // ── Seller stats ──
+  const sellerStats: SellerStat[] = useMemo(() => {
+    if (!filteredLeads) return []
+    const map: Record<string, { leads: number; converted: number; locCount: Record<string, number> }> = {}
+    for (const l of filteredLeads) {
+      if (!l.registradoPor) continue
+      if (!map[l.registradoPor]) map[l.registradoPor] = { leads: 0, converted: 0, locCount: {} }
+      map[l.registradoPor].leads++
+      if (l.isSold) map[l.registradoPor].converted++
+      map[l.registradoPor].locCount[l.location] = (map[l.registradoPor].locCount[l.location] ?? 0) + 1
+    }
+    return Object.entries(map)
+      .map(([name, s]) => {
+        const topLoc = Object.entries(s.locCount).sort((a, b) => b[1] - a[1])[0]?.[0] ?? ''
+        return { name, location: locLabel(topLoc), leads: s.leads, converted: s.converted }
+      })
+      .sort((a, b) => b.leads - a.leads)
+      .slice(0, 16)
+  }, [filteredLeads])
+
   // ── Modal helpers ──
   function openDealModal(deals: MallBoothDealDetail[], title: string) {
     if (deals.length === 0) return
@@ -514,29 +533,10 @@ export default function MallDashboard({ year }: { year: number }) {
           </div>
         </div>
 
-        {/* ── Tabla 1: Leads por día por ubicación ─────────────────────── */}
+        {/* ── Leads por Vendedor ────────────────────────────────────────── */}
         <div style={CARD_STYLE}>
           <SectionHead
-            eyebrow="LEADS POR DÍA"
-            title="Leads por Día y Ubicación"
-            chip={filteredLeads ? `${filteredLeads.length} leads` : undefined}
-          />
-          {allLeads === null ? (
-            <LeadsLoadingSpinner />
-          ) : leadsError ? (
-            <p style={{ fontSize: 13, color: '#E0334B', fontFamily: "'Montserrat',sans-serif" }}>Error al cargar leads: {leadsError}</p>
-          ) : (
-            <LeadsByDayTable
-              leads={filteredLeads ?? []}
-              onClickCell={(ls, title) => setLeadModal({ leads: ls, title })}
-            />
-          )}
-        </div>
-
-        {/* ── Tabla 2: Leads por vendedor por ubicación ─────────────────── */}
-        <div style={CARD_STYLE}>
-          <SectionHead
-            eyebrow="LEADS POR VENDEDOR"
+            eyebrow="DATOS DE MUESTRA"
             title="Leads por Vendedor y Ubicación"
             chip={filteredLeads ? `${filteredLeads.length} leads` : undefined}
           />
@@ -545,26 +545,13 @@ export default function MallDashboard({ year }: { year: number }) {
           ) : leadsError ? (
             <p style={{ fontSize: 13, color: '#E0334B', fontFamily: "'Montserrat',sans-serif" }}>Error al cargar leads: {leadsError}</p>
           ) : (
-            <LeadsBySellerTable
-              leads={filteredLeads ?? []}
-              onClickCell={(ls, title) => setLeadModal({ leads: ls, title })}
+            <SellerCards
+              sellers={sellerStats}
+              onClickCard={name => {
+                const leads = filteredLeads?.filter(l => l.registradoPor === name) ?? []
+                if (leads.length > 0) setLeadModal({ leads, title: `${name} — Leads` })
+              }}
             />
-          )}
-        </div>
-
-        {/* ── Tabla 3: Leads por producto por región ────────────────────── */}
-        <div style={CARD_STYLE}>
-          <SectionHead
-            eyebrow="LEADS POR PRODUCTO"
-            title="Leads por Producto y Región"
-            chip={filteredLeads ? `${filteredLeads.length} leads` : undefined}
-          />
-          {allLeads === null ? (
-            <LeadsLoadingSpinner />
-          ) : leadsError ? (
-            <p style={{ fontSize: 13, color: '#E0334B', fontFamily: "'Montserrat',sans-serif" }}>Error al cargar leads: {leadsError}</p>
-          ) : (
-            <LeadsByProductTable leads={filteredLeads ?? []} />
           )}
         </div>
 
