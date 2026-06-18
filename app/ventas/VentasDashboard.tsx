@@ -1,7 +1,6 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import Image from 'next/image'
 import {
   PieChart,
   Pie,
@@ -51,10 +50,10 @@ interface SaleModalState {
 }
 
 // ── Brand palette ─────────────────────────────────────────────────────────────
-const PALETTE = ['#0D1654','#E88B0C','#1565C0','#00A651','#64748b','#2196F3','#F5A623','#DC2626','#7C3AED','#0891B2']
-const NAVY    = '#0D1654'
-const ORANGE  = '#E88B0C'
-const BLUE    = '#1565C0'
+const PALETTE = ['#21274E','#F89B24','#1D429B','#1FA971','#64748b','#3D6BFF','#F5A623','#E0334B','#7C3AED','#0891B2']
+const NAVY    = '#21274E'
+const ORANGE  = '#F89B24'
+const BLUE    = '#1D429B'
 
 // ── Date helpers ──────────────────────────────────────────────────────────────
 function parseLocal(s: string) {
@@ -137,21 +136,21 @@ function SectionCard({
   title, badge, accent = NAVY, children,
 }: { title: string; badge?: string; accent?: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl overflow-hidden shadow-sm print:shadow-none print:border print:border-slate-300 ring-1 ring-white/30">
-      <div style={{ background: accent }} className="px-6 py-3 flex items-center justify-between gap-4">
-        <h2
-          className="text-base font-bold uppercase tracking-widest text-white"
-          style={{ fontFamily: 'Barlow Condensed, sans-serif', letterSpacing: '0.1em' }}
-        >
-          {title}
-        </h2>
+    <div style={{ background: '#fff', borderRadius: 22, boxShadow: '0 8px 24px rgba(33,39,78,.10)', overflow: 'hidden' }} className="print:border print:border-slate-200 print:shadow-none">
+      <div style={{ borderBottom: '1px solid #F1F2F5', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ width: 4, height: 20, borderRadius: 2, background: accent, flexShrink: 0, display: 'inline-block' }} />
+          <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: NAVY, margin: 0 }}>
+            {title}
+          </h2>
+        </div>
         {badge && (
-          <span className="text-xs font-medium whitespace-nowrap" style={{ color: 'rgba(255,255,255,0.5)' }}>
+          <span style={{ fontSize: 11, color: '#94a3b8', fontFamily: "'Montserrat', sans-serif", fontWeight: 500, whiteSpace: 'nowrap' }}>
             {badge}
           </span>
         )}
       </div>
-      <div className="bg-white/60 backdrop-blur-lg p-6 print:p-4 print:bg-white">{children}</div>
+      <div style={{ padding: '20px 24px' }} className="print:p-4">{children}</div>
     </div>
   )
 }
@@ -162,20 +161,20 @@ function KpiCard({ label, primary, sub, secondary, secondaryLabel }: {
 }) {
   return (
     <div
-      style={{ borderTop: `3px solid ${ORANGE}` }}
-      className="rounded-xl bg-white/60 backdrop-blur-lg shadow-sm px-5 py-4 flex flex-col gap-0.5 print:shadow-none print:border print:border-slate-300 print:bg-white ring-1 ring-white/40"
+      style={{ borderTop: `3px solid ${ORANGE}`, background: '#fff', borderRadius: 22, boxShadow: '0 8px 24px rgba(33,39,78,.10)', padding: '20px 20px 16px', display: 'flex', flexDirection: 'column', gap: 2 }}
+      className="print:border print:border-slate-200 print:shadow-none"
     >
-      <span className="text-xs font-semibold uppercase tracking-widest truncate" style={{ color: '#94a3b8' }}>
+      <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: '#94a3b8', fontFamily: "'Montserrat', sans-serif" }}>
         {label}
       </span>
-      <span className="text-3xl font-bold leading-tight" style={{ color: NAVY, fontFamily: 'Bebas Neue, sans-serif' }}>
+      <span style={{ fontSize: 44, fontWeight: 700, lineHeight: 1, color: NAVY, fontFamily: "'Bebas Neue', sans-serif" }}>
         {primary}
       </span>
-      {sub && <span className="text-xs" style={{ color: '#94a3b8' }}>{sub}</span>}
+      {sub && <span style={{ fontSize: 11, color: '#94a3b8' }}>{sub}</span>}
       {secondary !== undefined && (
-        <div className="mt-1 pt-1.5 border-t border-slate-100">
-          <span className="text-xs text-slate-400">
-            {secondaryLabel}: <span className="font-semibold text-slate-500">{secondary}</span>
+        <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid #F1F2F5' }}>
+          <span style={{ fontSize: 11, color: '#94a3b8' }}>
+            {secondaryLabel}: <span style={{ fontWeight: 600, color: '#64748b' }}>{secondary}</span>
           </span>
         </div>
       )}
@@ -204,7 +203,7 @@ function Td({ children, className = '', ...rest }: React.TdHTMLAttributes<HTMLTa
 
 function TotalRow({ children }: { children: React.ReactNode }) {
   return (
-    <tr className="font-bold text-sm border-t-2" style={{ background: 'rgba(13,22,84,0.07)', borderTopColor: NAVY }}>
+    <tr className="font-bold text-sm border-t-2" style={{ background: 'rgba(33,39,78,0.06)', borderTopColor: NAVY }}>
       {children}
     </tr>
   )
@@ -385,7 +384,7 @@ export default function VentasDashboard({
         scale: 2,
         useCORS: true,
         logging: false,
-        backgroundColor: '#EEF1F8',
+        backgroundColor: '#F1F2F5',
         scrollY: -window.scrollY,
         windowWidth: el.scrollWidth,
       })
@@ -496,46 +495,12 @@ export default function VentasDashboard({
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div ref={contentRef} className="min-h-screen" style={{ background: '#EEF1F8' }}>
+    <div ref={contentRef} className="min-h-screen" style={{ background: '#F1F2F5' }}>
       {saleModal && <SaleDealModal state={saleModal} onClose={() => setSaleModal(null)} />}
-
-      {/* ── HEADER ── */}
-      <div style={{ background: `linear-gradient(135deg, ${NAVY} 0%, #1a2870 100%)` }}>
-        <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between gap-6">
-          <div className="flex items-center gap-5">
-            <Image src="/windmar-logo.png" alt="Windmar" width={120} height={36} className="brightness-0 invert" />
-            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)' }} className="pl-5">
-              <div
-                className="text-white font-bold text-2xl"
-                style={{ fontFamily: 'Barlow Condensed, sans-serif', letterSpacing: '0.06em' }}
-              >
-                DASHBOARD DE VENTAS
-              </div>
-              <div className="text-white/55 text-xs mt-0.5 uppercase tracking-widest">
-                Fuerza de Venta y Canales · Reporte Ejecutivo
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-4 print:hidden" data-pdf-ignore="true">
-            <span className="text-white/40 text-sm capitalize">{reportLabel}</span>
-            <button
-              onClick={generatePDF}
-              disabled={pdfLoading}
-              style={{ background: ORANGE }}
-              className="px-4 py-2 rounded-lg text-sm font-semibold text-white hover:opacity-90 transition disabled:opacity-60"
-            >
-              {pdfLoading ? 'Generando…' : 'Descargar PDF'}
-            </button>
-          </div>
-          <div className="hidden print:block text-right">
-            <span className="text-white/60 text-xs capitalize">{reportLabel}</span>
-          </div>
-        </div>
-      </div>
 
       {/* ── DATE CONTROLS (screen only) ── */}
       <div className="print:hidden max-w-7xl mx-auto px-6 py-4" data-pdf-ignore="true">
-        <div className="bg-white/60 backdrop-blur-lg rounded-xl border border-white/70 shadow-md px-5 py-4 flex flex-wrap items-end gap-6 ring-1 ring-white/30">
+        <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 8px 24px rgba(33,39,78,.10)', padding: '20px 24px' }} className="flex flex-wrap items-end gap-6">
           <div>
             <p className="text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2" style={{ color: NAVY }}>
               <span className="w-2 h-2 rounded-sm inline-block flex-shrink-0" style={{ background: NAVY }} />
@@ -569,12 +534,20 @@ export default function VentasDashboard({
           >
             Aplicar
           </button>
+          <button
+            onClick={generatePDF}
+            disabled={pdfLoading}
+            style={{ background: ORANGE, marginLeft: 'auto' }}
+            className="px-6 py-2 rounded-lg text-sm font-semibold text-white hover:opacity-90 transition disabled:opacity-60"
+          >
+            {pdfLoading ? 'Generando…' : 'Descargar PDF'}
+          </button>
         </div>
       </div>
 
       {/* ── PERIOD LEGEND BAR ── */}
       <div className="max-w-7xl mx-auto px-6 print:px-4 print:pt-4">
-        <div className="bg-white/60 backdrop-blur-lg print:bg-white rounded-xl px-5 py-3 flex flex-wrap gap-6 items-center border border-white/70 print:border-slate-300 print:mb-4 shadow-md print:shadow-none ring-1 ring-white/30">
+        <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 4px 12px rgba(33,39,78,.06)', padding: '12px 20px' }} className="flex flex-wrap gap-6 items-center print:mb-4 print:border print:border-slate-200">
           <PeriodPill label="Período A" range={rangeA} color={NAVY} />
           <div className="w-px h-4 bg-slate-200" />
           <PeriodPill label="Período B" range={rangeB} color="#64748b" />
@@ -587,7 +560,7 @@ export default function VentasDashboard({
         {loading && (
           <div className="flex items-center justify-center py-24">
             <div className="flex flex-col items-center gap-3">
-              <div className="w-10 h-10 border-4 border-slate-200 border-t-[#0D1654] rounded-full animate-spin" />
+              <div className="w-10 h-10 border-4 border-slate-200 border-t-[#21274E] rounded-full animate-spin" />
               <span className="text-sm text-slate-500">Cargando datos…</span>
             </div>
           </div>
@@ -631,7 +604,7 @@ export default function VentasDashboard({
             </div>
 
             {/* ── FUERZA DE VENTAS — vendedores activos + pie ── */}
-            <div className="rounded-xl overflow-hidden shadow-sm print:shadow-none print:border print:border-slate-300 bg-white/60 backdrop-blur-lg ring-1 ring-white/30">
+            <div style={{ background: '#fff', borderRadius: 22, boxShadow: '0 8px 24px rgba(33,39,78,.10)' }} className="print:border print:border-slate-200 print:shadow-none">
               <div className="px-6 py-4 flex flex-wrap items-center gap-6 lg:gap-10">
                 {/* Stat block */}
                 <div className="flex flex-col gap-0.5 min-w-[130px]">
