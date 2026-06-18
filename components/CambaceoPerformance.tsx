@@ -6,6 +6,7 @@ import type { VendedorPerformanceRow } from '@/lib/performance'
 import type { CambaceoDealDetail } from '@/lib/redshift'
 import KpiCard from '@/app/canales/mall/components/KpiCard'
 import { useAnim } from '@/app/canales/mall/hooks/useAnim'
+import EarningsTable from '@/components/EarningsTable'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -772,6 +773,8 @@ export default function CambaceoPerformance({
         </p>
 
       </div>
+
+      <EarningsTable defaultCanal="cambaceo" />
     </>
   )
 }

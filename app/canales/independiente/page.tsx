@@ -1,8 +1,7 @@
 import IndepDashboard from './IndepDashboard'
 import StipTurnosView from '@/components/StipTurnosView'
 import IndepViewToggle from './IndepViewToggle'
-import { auth } from '@/auth'
-import { redirect } from 'next/navigation'
+
 
 export const dynamic = 'force-dynamic'
 
@@ -11,13 +10,7 @@ export default async function IndependientePage({
 }: {
   searchParams: Promise<{ view?: string }>
 }) {
-  const session = await auth()
-  const role = (session?.user as any)?.role
-  const isCanal = role === 'canal'
-
   const { view } = await searchParams
-
-  if (isCanal && view !== 'turnos') redirect('/canales/independiente?view=turnos')
 
   const currentView = view === 'turnos' ? 'turnos' : 'dashboard'
   const year = new Date().getFullYear()
@@ -57,7 +50,7 @@ export default async function IndependientePage({
           </span>
         </h1>
       </div>
-      {!isCanal && <IndepViewToggle current={currentView} />}
+      <IndepViewToggle current={currentView} />
     </div>
   )
 

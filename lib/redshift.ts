@@ -363,6 +363,68 @@ export async function getCambaceoDealDetails(
   }))
 }
 
+export interface CambaceoEarningsDeal extends CambaceoDealDetail {
+  coordinador: string | null
+}
+
+export async function getCambaceoEarningsDeals(
+  monthStart: string,
+  monthEnd: string,
+): Promise<CambaceoEarningsDeal[]> {
+  const pool = getRedshiftPool()
+  const { rows } = await pool.query(`
+    SELECT
+      LOWER(ds.sale_rep_email)                               AS email,
+      COALESCE(stm.full_name, ds.sale_rep_email)            AS vendedor,
+      TO_CHAR(fd.closing_date, 'YYYY-MM-DD')                AS closing_date,
+      dp.pipeline,
+      fd.amount,
+      dsr.on_hold_status,
+      dsr.cancellation_reason,
+      (dsr.on_hold_status IS NOT NULL OR dsr.stage = 'Cancelled') AS is_cancelled,
+      (dfl.cdbg_number IS NOT NULL)                         AS is_cdbg,
+      (LOWER(dms.lead_source) LIKE '%canvass%')             AS is_canvassing,
+      fd.zoho_deal_id,
+      de.coordinador_de_canvaseo                            AS coordinador
+    FROM dwh.fact_deals fd
+    JOIN dwh.dim_staff ds
+      ON ds.id_staff = fd.id_staff AND ds.is_current = true
+    LEFT JOIN dw_zoho.dim_sales_team_member stm
+      ON LOWER(stm.email) = LOWER(ds.sale_rep_email)
+    JOIN dwh.dim_profiles dp
+      ON dp.id_profile = fd.id_profile
+    JOIN dwh.dim_status_reason dsr
+      ON dsr.id_status_reason = fd.id_status_reason AND dsr.is_current = true
+    LEFT JOIN dwh.dim_marketing_source dms
+      ON dms.id_marketing_source = fd.id_marketing_source
+    LEFT JOIN dwh.dim_finance_legal dfl
+      ON dfl.id_finance_legal = fd.id_finance_legal AND dfl.is_current = true
+    LEFT JOIN dwh.fact_leads fl2
+      ON fl2.zoho_lead_id = fd.associated_lead
+    LEFT JOIN dwh.dim_employee de
+      ON de.id_employee = fl2.id_employee AND de.is_current = true
+    WHERE fd.closing_date >= $1 AND fd.closing_date <= $2
+      AND ds.sale_rep_email IS NOT NULL
+      AND (LOWER(dms.lead_source) LIKE '%canvass%' OR LOWER(dms.lead_source) LIKE '%cambaceo%')
+    ORDER BY fd.closing_date DESC
+  `, [monthStart, monthEnd])
+
+  return rows.map((r: any) => ({
+    email:              r.email as string,
+    vendedor:           r.vendedor as string,
+    closingDate:        r.closing_date as string,
+    pipeline:           r.pipeline as string,
+    amount:             r.amount != null ? Number(r.amount) : null,
+    onHoldStatus:       r.on_hold_status ?? null,
+    cancellationReason: r.cancellation_reason ?? null,
+    isCancelled:        Boolean(r.is_cancelled),
+    isCdbg:             Boolean(r.is_cdbg),
+    isCanvassing:       Boolean(r.is_canvassing),
+    zohoId:             r.zoho_deal_id as string,
+    coordinador:        r.coordinador ?? null,
+  }))
+}
+
 export interface MallBoothDealDetail {
   location: string
   closingDate: string          // YYYY-MM-DD

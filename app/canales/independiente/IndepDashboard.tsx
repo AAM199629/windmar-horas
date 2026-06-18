@@ -12,6 +12,7 @@ import PipelineDonut from '../mall/components/PipelineDonut'
 import SellerCards from '../mall/components/SellerCards'
 import type { SellerStat } from '../mall/components/SellerCards'
 import { useAnim } from '../mall/hooks/useAnim'
+import EarningsTable from '@/components/EarningsTable'
 
 // ─── Constantes ──────────────────────────────────────────────────────────────
 
@@ -531,6 +532,8 @@ export default function IndepDashboard({ year }: { year: number }) {
         </p>
 
       </div>
+
+      <EarningsTable defaultCanal="indep" />
     </>
   )
 }

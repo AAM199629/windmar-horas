@@ -12,6 +12,7 @@ import PipelineDonut from './components/PipelineDonut'
 import SellerCards from './components/SellerCards'
 import type { SellerStat } from './components/SellerCards'
 import { useAnim } from './hooks/useAnim'
+import EarningsTable from '@/components/EarningsTable'
 
 // ─── Constantes ──────────────────────────────────────────────────────────────
 
@@ -569,6 +570,8 @@ export default function MallDashboard({ year }: { year: number }) {
         </p>
 
       </div>
+
+      <EarningsTable defaultCanal="mall" />
     </>
   )
 }
