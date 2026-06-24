@@ -126,30 +126,57 @@ function indepDisplay(r: IndepBoothRow) {
   return r.boothName ? `${r.leadSource} › ${r.boothName}` : r.leadSource
 }
 
-// ── Conic donut (pure CSS, matches handoff) ─────────────────────────────────────
-function conicBg(data: { value: number }[], colors: string[]) {
-  const total = data.reduce((s, d) => s + d.value, 0)
-  if (total === 0) return BORDER
-  let acc = 0
-  const stops = data.map((d, i) => {
-    const start = (acc / total) * 100
-    acc += d.value
-    const end = (acc / total) * 100
-    return `${colors[i % colors.length]} ${start.toFixed(2)}% ${end.toFixed(2)}%`
-  })
-  return `conic-gradient(${stops.join(', ')})`
-}
+// ── Donut (SVG arcs — renders in html2canvas/PDF, unlike CSS conic-gradient) ─────
 function ConicDonut({ size, hole, data, colors }: {
   size: number; hole: number; data: { value: number }[]; colors: string[]
 }) {
+  const total = data.reduce((s, d) => s + d.value, 0)
+  const c = size / 2, R = size / 2, ri = hole / 2
+  const ringW = R - ri, midR = (R + ri) / 2
+
+  // Empty state — neutral ring
+  if (total <= 0) {
+    return (
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ flexShrink: 0 }}>
+        <circle cx={c} cy={c} r={midR} fill="none" stroke={BORDER} strokeWidth={ringW} />
+      </svg>
+    )
+  }
+
+  // A single non-zero slice can't be drawn as an arc (start === end) — draw a full ring
+  const nonZero = data.map((d, i) => ({ d, i })).filter(x => x.d.value > 0)
+  if (nonZero.length === 1) {
+    const color = colors[nonZero[0].i % colors.length]
+    return (
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ flexShrink: 0 }}>
+        <circle cx={c} cy={c} r={midR} fill="none" stroke={color} strokeWidth={ringW} />
+      </svg>
+    )
+  }
+
+  const START = -Math.PI / 2
+  // Cumulative value before each slice (no in-render mutation — keeps React Compiler happy)
+  const before = data.reduce<number[]>((acc, _d, i) => {
+    acc.push(i === 0 ? 0 : acc[i - 1] + Math.max(0, data[i - 1].value))
+    return acc
+  }, [])
+  const paths = data.map((d, i) => {
+    if (d.value <= 0) return null
+    const a0 = START + (before[i] / total) * 2 * Math.PI
+    const a1 = START + ((before[i] + d.value) / total) * 2 * Math.PI
+    const large = a1 - a0 > Math.PI ? 1 : 0
+    const x0o = c + R * Math.cos(a0),  y0o = c + R * Math.sin(a0)
+    const x1o = c + R * Math.cos(a1),  y1o = c + R * Math.sin(a1)
+    const x1i = c + ri * Math.cos(a1), y1i = c + ri * Math.sin(a1)
+    const x0i = c + ri * Math.cos(a0), y0i = c + ri * Math.sin(a0)
+    const path = `M${x0o} ${y0o}A${R} ${R} 0 ${large} 1 ${x1o} ${y1o}L${x1i} ${y1i}A${ri} ${ri} 0 ${large} 0 ${x0i} ${y0i}Z`
+    return <path key={i} d={path} fill={colors[i % colors.length]} />
+  })
+
   return (
-    <div style={{
-      width: size, height: size, borderRadius: '50%', flexShrink: 0,
-      background: conicBg(data, colors),
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-    }}>
-      <div style={{ width: hole, height: hole, borderRadius: '50%', background: '#fff' }} />
-    </div>
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ flexShrink: 0 }}>
+      {paths}
+    </svg>
   )
 }
 function Dot({ color, size = 11 }: { color: string; size?: number }) {
