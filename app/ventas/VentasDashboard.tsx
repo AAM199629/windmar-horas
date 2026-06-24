@@ -1,14 +1,6 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts'
 import { MALL_BOOTH_LOCATIONS, EMPLEADO_ROLES } from '@/lib/constants'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -49,11 +41,45 @@ interface SaleModalState {
   error:   string | null
 }
 
-// ── Brand palette ─────────────────────────────────────────────────────────────
-const PALETTE = ['#21274E','#F89B24','#1D429B','#1FA971','#64748b','#3D6BFF','#F5A623','#E0334B','#7C3AED','#0891B2']
-const NAVY    = '#21274E'
-const ORANGE  = '#F89B24'
-const BLUE    = '#1D429B'
+// ── Brand tokens (from WindMar HOME design system) ──────────────────────────────
+const BLUE      = '#1D429B'  // azul marca
+const NAVY      = '#21274E'  // azul profundo
+const VIBRANT   = '#0079C0'  // azul vibrante
+const HEADERB   = '#2E3866'  // header columna período B
+const ORANGE    = '#F89B24'
+const ORANGE600 = '#E28312'  // naranja sobre claro
+const ORANGE300 = '#FBC074'
+const GREEN     = '#1E9E62'
+const RED       = '#D64545'
+const FLAT      = '#9AA3B5'
+const GREY      = '#6B7388'
+const BORDER    = '#E7ECF6'
+const ROWLINE   = '#EDF0F5'
+const ZEBRA     = '#F8FAFD'
+const TOTALROW  = '#EFF3FA'
+
+const HERO_GRAD   = 'linear-gradient(180deg, #1D429B 0%, #21274E 100%)'
+const CARD_GRAD   = 'linear-gradient(180deg, #FFFFFF 0%, #F7F9FE 100%)'
+const SHADOW_MD   = '0 8px 24px rgba(33,39,78,0.10)'
+const SHADOW_BLUE = '0 18px 40px rgba(29,66,155,0.25)'
+const PAGE_BG = `
+  radial-gradient(1100px 520px at 12% -8%, #E2EAFB 0%, transparent 60%),
+  radial-gradient(900px 480px at 100% 4%, #FBE9D0 0%, transparent 55%),
+  linear-gradient(180deg, #EEF2F9 0%, #E9EDF6 100%)`
+
+const SANS    = "'Montserrat', sans-serif"
+const DISPLAY = "'Bebas Neue', sans-serif"
+
+// Lead-source donut palette (matches handoff legend order, applied to top sources by value)
+const LEAD_COLORS = [NAVY, ORANGE, BLUE, GREY, GREEN, VIBRANT, ORANGE300, RED]
+
+const SEGMENTS = [
+  { id: 'sec-kpi',        label: 'Resumen'     },
+  { id: 'sec-asalariado', label: 'Asalariado'  },
+  { id: 'sec-lead',       label: 'Lead Source' },
+  { id: 'sec-booths',     label: 'Booths'      },
+  { id: 'sec-cambaceo',   label: 'Cambaceo'    },
+]
 
 // ── Date helpers ──────────────────────────────────────────────────────────────
 function parseLocal(s: string) {
@@ -78,12 +104,11 @@ function fmt(n: number) { return n.toLocaleString('es-PR') }
 function pct(a: number, total: number) {
   return total === 0 ? '—' : `${((a / total) * 100).toFixed(1)}%`
 }
-function varLabel(a: number, b: number) {
-  if (b === 0) return { text: '—', color: '#94a3b8' }
-  const diff = a - b
-  if (diff > 0) return { text: `▲ +${diff}`, color: '#16a34a' }
-  if (diff < 0) return { text: `▼ ${diff}`, color: '#dc2626' }
-  return { text: '—', color: '#94a3b8' }
+// Variation: green ▲ / red ▼ / flat — (matches prototype v(n))
+function varOf(diff: number) {
+  if (!diff) return { text: '—', color: FLAT }
+  if (diff > 0) return { text: `▲ +${diff}`, color: GREEN }
+  return { text: `▼ –${Math.abs(diff)}`, color: RED }
 }
 
 // ── Aggregation helpers ───────────────────────────────────────────────────────
@@ -91,14 +116,9 @@ function sumVentas(rows: SalesGroupRow[]) { return rows.reduce((s, r) => s + r.v
 function byRole(rows: SalesGroupRow[], role: string) {
   return rows.filter(r => r.salesRole === role).reduce((s, r) => s + r.ventas, 0)
 }
-function bySource(rows: SalesGroupRow[], src: string) {
-  return rows.filter(r => r.leadSource === src).reduce((s, r) => s + r.ventas, 0)
-}
 function boothVentas(rows: BoothSaleRow[] | undefined, location: string) {
   return rows?.find(r => r.booth === location)?.ventas ?? 0
 }
-
-// ── Indep booth helpers ───────────────────────────────────────────────────────
 function indepKey(r: IndepBoothRow) {
   return r.boothName ? `${r.leadSource}||${r.boothName}` : r.leadSource
 }
@@ -106,115 +126,91 @@ function indepDisplay(r: IndepBoothRow) {
   return r.boothName ? `${r.leadSource} › ${r.boothName}` : r.leadSource
 }
 
-// ── Donut (custom SVG — no Recharts layout quirks) ───────────────────────────
-function DonutMini({
-  data, colors, size = 120,
-}: { data: { name: string; value: number }[]; colors: string[]; size?: number }) {
+// ── Conic donut (pure CSS, matches handoff) ─────────────────────────────────────
+function conicBg(data: { value: number }[], colors: string[]) {
   const total = data.reduce((s, d) => s + d.value, 0)
-  if (total === 0) return <div style={{ width: size, height: size }} />
-  const cx = size / 2, cy = size / 2
-  const R = size * 0.44, ri = size * 0.27
-  let θ = -Math.PI / 2
-  const slices = data.map((d, i) => {
-    const sweep = (d.value / total) * 2 * Math.PI
-    const θ0 = θ; θ += sweep
-    const [c0, s0, c1, s1] = [Math.cos(θ0), Math.sin(θ0), Math.cos(θ), Math.sin(θ)]
-    const lg = sweep > Math.PI ? 1 : 0
-    const path = `M${cx+R*c0} ${cy+R*s0} A${R} ${R} 0 ${lg} 1 ${cx+R*c1} ${cy+R*s1} L${cx+ri*c1} ${cy+ri*s1} A${ri} ${ri} 0 ${lg} 0 ${cx+ri*c0} ${cy+ri*s0}Z`
-    return { path, color: colors[i % colors.length], ...d }
+  if (total === 0) return BORDER
+  let acc = 0
+  const stops = data.map((d, i) => {
+    const start = (acc / total) * 100
+    acc += d.value
+    const end = (acc / total) * 100
+    return `${colors[i % colors.length]} ${start.toFixed(2)}% ${end.toFixed(2)}%`
   })
-  return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      {slices.map((s, i) => <path key={i} d={s.path} fill={s.color} />)}
-    </svg>
-  )
+  return `conic-gradient(${stops.join(', ')})`
 }
-
-// ── Sub-components ────────────────────────────────────────────────────────────
-
-function SectionCard({
-  title, badge, accent = NAVY, children,
-}: { title: string; badge?: string; accent?: string; children: React.ReactNode }) {
-  return (
-    <div style={{ background: '#fff', borderRadius: 22, boxShadow: '0 8px 24px rgba(33,39,78,.10)', overflow: 'hidden' }} className="print:border print:border-slate-200 print:shadow-none">
-      <div style={{ borderBottom: '1px solid #F1F2F5', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ width: 4, height: 20, borderRadius: 2, background: accent, flexShrink: 0, display: 'inline-block' }} />
-          <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: NAVY, margin: 0 }}>
-            {title}
-          </h2>
-        </div>
-        {badge && (
-          <span style={{ fontSize: 11, color: '#94a3b8', fontFamily: "'Montserrat', sans-serif", fontWeight: 500, whiteSpace: 'nowrap' }}>
-            {badge}
-          </span>
-        )}
-      </div>
-      <div style={{ padding: '20px 24px' }} className="print:p-4">{children}</div>
-    </div>
-  )
-}
-
-function KpiCard({ label, primary, sub, secondary, secondaryLabel }: {
-  label: string; primary: string | number; sub?: string
-  secondary?: string | number; secondaryLabel?: string
+function ConicDonut({ size, hole, data, colors }: {
+  size: number; hole: number; data: { value: number }[]; colors: string[]
 }) {
   return (
-    <div
-      style={{ borderTop: `3px solid ${ORANGE}`, background: '#fff', borderRadius: 22, boxShadow: '0 8px 24px rgba(33,39,78,.10)', padding: '20px 20px 16px', display: 'flex', flexDirection: 'column', gap: 2 }}
-      className="print:border print:border-slate-200 print:shadow-none"
-    >
-      <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: '#94a3b8', fontFamily: "'Montserrat', sans-serif" }}>
-        {label}
-      </span>
-      <span style={{ fontSize: 44, fontWeight: 700, lineHeight: 1, color: NAVY, fontFamily: "'Bebas Neue', sans-serif" }}>
-        {primary}
-      </span>
-      {sub && <span style={{ fontSize: 11, color: '#94a3b8' }}>{sub}</span>}
-      {secondary !== undefined && (
-        <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid #F1F2F5' }}>
-          <span style={{ fontSize: 11, color: '#94a3b8' }}>
-            {secondaryLabel}: <span style={{ fontWeight: 600, color: '#64748b' }}>{secondary}</span>
-          </span>
-        </div>
-      )}
+    <div style={{
+      width: size, height: size, borderRadius: '50%', flexShrink: 0,
+      background: conicBg(data, colors),
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      <div style={{ width: hole, height: hole, borderRadius: '50%', background: '#fff' }} />
     </div>
   )
 }
+function Dot({ color, size = 11 }: { color: string; size?: number }) {
+  return <span style={{ width: size, height: size, borderRadius: '50%', background: color, flexShrink: 0, display: 'inline-block' }} />
+}
 
-// Th with correct style merge (bg + any extra style prop)
-function Th({
-  children, className = '', bg = NAVY, style: styleProp, ...rest
-}: React.ThHTMLAttributes<HTMLTableCellElement> & { className?: string; bg?: string }) {
+// ── Table primitives (wm-th / wm-td) ────────────────────────────────────────────
+function Th({ children, align = 'right', bg = NAVY, radius }: {
+  children: React.ReactNode; align?: 'left' | 'right'; bg?: string; radius?: 'l' | 'r'
+}) {
   return (
-    <th
-      className={`px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-white whitespace-nowrap ${className}`}
-      style={{ background: bg, ...styleProp }}
-      {...rest}
+    <th style={{
+      padding: '14px 18px', fontSize: 12, fontWeight: 800, letterSpacing: '.06em',
+      textTransform: 'uppercase', color: '#fff', textAlign: align, whiteSpace: 'nowrap',
+      background: bg,
+      borderTopLeftRadius:  radius === 'l' ? 10 : 0,
+      borderTopRightRadius: radius === 'r' ? 10 : 0,
+    }}>{children}</th>
+  )
+}
+function Td({ children, align = 'right', bold, color, muted, onClick, title }: {
+  children: React.ReactNode; align?: 'left' | 'right'; bold?: boolean
+  color?: string; muted?: boolean; onClick?: () => void; title?: string
+}) {
+  return (
+    <td
+      onClick={onClick}
+      title={title}
+      style={{
+        padding: '13px 18px', fontSize: 14, textAlign: align, whiteSpace: 'nowrap',
+        color: muted ? FLAT : (color ?? NAVY),
+        fontWeight: bold ? 800 : (align === 'left' ? 500 : 400),
+        cursor: onClick ? 'pointer' : undefined,
+      }}
+      className={onClick ? 'hover:underline' : undefined}
+    >{children}</td>
+  )
+}
+function bodyRowStyle(i: number): React.CSSProperties {
+  return { borderBottom: `1px solid ${ROWLINE}`, background: i % 2 === 1 ? ZEBRA : undefined }
+}
+const totalRowStyle: React.CSSProperties = { background: TOTALROW, borderTop: `2px solid ${NAVY}` }
+
+// ── Section card shell ──────────────────────────────────────────────────────────
+function SectionCard({ id, title, children }: { id?: string; title: string; children: React.ReactNode }) {
+  return (
+    <div
+      id={id}
+      className="pdf-break"
+      style={{
+        scrollMarginTop: 96, background: CARD_GRAD, border: `1px solid ${BORDER}`,
+        borderRadius: 20, boxShadow: SHADOW_MD, padding: '30px 34px', marginTop: 26,
+      }}
     >
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <span style={{ width: 5, height: 26, background: BLUE, borderRadius: 999 }} />
+          <span style={{ fontSize: 19, fontWeight: 800, letterSpacing: '.04em', textTransform: 'uppercase', color: NAVY }}>{title}</span>
+        </div>
+      </div>
       {children}
-    </th>
-  )
-}
-
-function Td({ children, className = '', ...rest }: React.TdHTMLAttributes<HTMLTableCellElement> & { className?: string }) {
-  return <td className={`px-3 py-2 text-sm ${className}`} {...rest}>{children}</td>
-}
-
-function TotalRow({ children }: { children: React.ReactNode }) {
-  return (
-    <tr className="font-bold text-sm border-t-2" style={{ background: 'rgba(33,39,78,0.06)', borderTopColor: NAVY }}>
-      {children}
-    </tr>
-  )
-}
-
-function PeriodPill({ label, range, color }: { label: string; range: string; color: string }) {
-  return (
-    <div className="flex items-center gap-2">
-      <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: color }} />
-      <span className="text-xs font-bold uppercase tracking-wider" style={{ color }}>{label}</span>
-      <span className="text-xs text-slate-500">{range}</span>
     </div>
   )
 }
@@ -234,11 +230,11 @@ function SaleDealModal({ state, onClose }: { state: SaleModalState; onClose: () 
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4"
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-5xl max-h-[85vh] flex flex-col">
-        <div className="flex items-center justify-between px-5 py-4 rounded-t-xl" style={{ background: NAVY }}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-5xl max-h-[85vh] flex flex-col">
+        <div className="flex items-center justify-between px-5 py-4 rounded-t-2xl" style={{ background: NAVY }}>
           <div>
             <h2 className="text-base font-semibold text-white">{state.title}</h2>
             {!state.loading && !state.error && (
@@ -259,7 +255,7 @@ function SaleDealModal({ state, onClose }: { state: SaleModalState; onClose: () 
         <div className="overflow-auto flex-1 px-5 py-4">
           {state.loading && (
             <div className="flex items-center justify-center py-12 gap-3 text-slate-400">
-              <div className="w-8 h-8 border-4 border-slate-200 border-t-[#0D1654] rounded-full animate-spin" />
+              <div className="w-8 h-8 border-4 border-slate-200 rounded-full animate-spin" style={{ borderTopColor: NAVY }} />
               <span className="text-sm">Cargando ventas…</span>
             </div>
           )}
@@ -314,11 +310,12 @@ export default function VentasDashboard({
   const [fromB, setFromB] = useState(initFromB)
   const [toB,   setToB]   = useState(initToB)
   const [applied, setApplied] = useState({ fromA: initFromA, toA: initToA, fromB: initFromB, toB: initToB })
-  const [data,         setData]         = useState<SummaryData | null>(null)
-  const [loading,      setLoading]      = useState(true)
-  const [error,        setError]        = useState<string | null>(null)
-  const [pdfLoading,   setPdfLoading]   = useState(false)
-  const [saleModal,    setSaleModal]    = useState<SaleModalState | null>(null)
+  const [data,       setData]       = useState<SummaryData | null>(null)
+  const [loading,    setLoading]    = useState(true)
+  const [error,      setError]      = useState<string | null>(null)
+  const [pdfLoading, setPdfLoading] = useState(false)
+  const [saleModal,  setSaleModal]  = useState<SaleModalState | null>(null)
+  const [active,     setActive]     = useState('sec-kpi')
   const contentRef = useRef<HTMLDivElement>(null)
 
   const fetchData = useCallback(async (fa: string, ta: string, fb: string, tb: string) => {
@@ -336,6 +333,26 @@ export default function VentasDashboard({
 
   useEffect(() => { fetchData(initFromA, initToA, initFromB, initToB) }, [])
 
+  // Scroll-spy: highlight the segment of the section in view
+  useEffect(() => {
+    if (loading || error || !data) return
+    const io = new IntersectionObserver(
+      entries => entries.forEach(e => { if (e.isIntersecting) setActive(e.target.id) }),
+      { rootMargin: '-45% 0px -50% 0px', threshold: 0 },
+    )
+    SEGMENTS.forEach(s => {
+      const el = document.getElementById(s.id)
+      if (el) io.observe(el)
+    })
+    return () => io.disconnect()
+  }, [loading, error, data])
+
+  function goTo(id: string) {
+    const el = document.getElementById(id)
+    if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 88, behavior: 'smooth' })
+    setActive(id)
+  }
+
   function handleApply() {
     const r = { fromA, toA, fromB, toB }
     setApplied(r)
@@ -349,9 +366,9 @@ export default function VentasDashboard({
     if (exclude) params.set('exclude', '1')
     fetch(`/api/ventas/deals?${params}`)
       .then(r => r.json())
-      .then(data => {
-        if (Array.isArray(data)) setSaleModal(prev => prev ? { ...prev, deals: data, loading: false } : null)
-        else setSaleModal(prev => prev ? { ...prev, loading: false, error: data.error ?? 'Error' } : null)
+      .then(d => {
+        if (Array.isArray(d)) setSaleModal(prev => prev ? { ...prev, deals: d, loading: false } : null)
+        else setSaleModal(prev => prev ? { ...prev, loading: false, error: d.error ?? 'Error' } : null)
       })
       .catch(e => setSaleModal(prev => prev ? { ...prev, loading: false, error: e.message } : null))
   }
@@ -370,7 +387,6 @@ export default function VentasDashboard({
 
       const el = contentRef.current
 
-      // Hide ignored elements BEFORE measuring so layout matches the canvas exactly
       const ignoredEls = Array.from(el.querySelectorAll('[data-pdf-ignore]')) as HTMLElement[]
       const prevDisplays = ignoredEls.map(e => e.style.display)
       ignoredEls.forEach(e => { e.style.display = 'none' })
@@ -384,26 +400,23 @@ export default function VentasDashboard({
         scale: 2,
         useCORS: true,
         logging: false,
-        backgroundColor: '#F1F2F5',
+        backgroundColor: '#EEF2F9',
         scrollY: -window.scrollY,
         windowWidth: el.scrollWidth,
       })
 
-      // Restore hidden elements
       ignoredEls.forEach((e, i) => { e.style.display = prevDisplays[i] })
 
       const scaleRatio = canvas.width / el.offsetWidth
       const breaksPx   = breakPositions.map(b => b * scaleRatio)
 
-      const A4W = 297, A4H = 210
-      const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+      const A4W = 210, A4H = 297
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
       const pageHeightPx = Math.round((A4H / A4W) * canvas.width)
 
       let srcY = 0, firstPage = true
       while (srcY < canvas.height) {
         let endY = Math.min(srcY + pageHeightPx, canvas.height)
-        // look for break markers from 35% of the page onward; take the LATEST one to
-        // maximise page content while still never cutting mid-section
         const cutWindow = srcY + pageHeightPx * 0.35
         const candidates = breaksPx.filter(b => b > cutWindow && b < endY)
         if (candidates.length > 0) endY = Math.max(...candidates)
@@ -441,6 +454,7 @@ export default function VentasDashboard({
   const salB   = data ? EMPLEADO_ROLES.reduce((s, r) => s + byRole(data.salesB, r), 0) : 0
   const fcA    = totalA - salA
   const fcB    = totalB - salB
+  const diffTot = totalA - totalB
 
   const leadMapA = new Map<string, number>()
   const leadMapB = new Map<string, number>()
@@ -450,20 +464,12 @@ export default function VentasDashboard({
   }
   const allSrcA    = Array.from(leadMapA.entries()).sort((a, b) => b[1] - a[1])
   const totalSrcA  = allSrcA.reduce((s, [, v]) => s + v, 0)
+  const totalSrcB  = Array.from(leadMapB.values()).reduce((s, v) => s + v, 0)
   const pieSrcData = allSrcA.slice(0, 8).map(([name, value]) => ({ name, value }))
-
-  const pieSalData = [
-    { name: 'Asalariados',     value: salA },
-    { name: 'Full Commission', value: fcA  },
-  ]
 
   const sellTotal = data?.sellers?.total ?? 0
   const sellAsl   = data?.sellers?.asalariados ?? 0
   const sellFc    = data?.sellers?.fullCommission ?? 0
-  const pieSellerData = [
-    { name: 'Asalariados',     value: sellAsl },
-    { name: 'Full Commission', value: sellFc  },
-  ]
 
   const hdLocs     = (MALL_BOOTH_LOCATIONS as unknown as readonly string[]).filter(l => l.startsWith('Home Depot'))
   const mallLocs   = (MALL_BOOTH_LOCATIONS as unknown as readonly string[]).filter(l => l.startsWith('Malls'))
@@ -479,13 +485,12 @@ export default function VentasDashboard({
   const coordMapA  = new Map(data?.cambaceoA.map(r => [r.coordinador, r]) ?? [])
   const coordMapB  = new Map(data?.cambaceoB.map(r => [r.coordinador, r]) ?? [])
 
-  // Indep: key by "leadSource||boothName" to handle rows with same leadSource but different booths
   const indepKeys = new Set<string>()
   data?.indepA.forEach(r => indepKeys.add(indepKey(r)))
   data?.indepB.forEach(r => indepKeys.add(indepKey(r)))
-  const indepList  = Array.from(indepKeys).sort()
-  const indepMapA  = new Map<string, IndepBoothRow>(data?.indepA.map(r => [indepKey(r), r]) ?? [])
-  const indepMapB  = new Map<string, IndepBoothRow>(data?.indepB.map(r => [indepKey(r), r]) ?? [])
+  const indepList    = Array.from(indepKeys).sort()
+  const indepMapA    = new Map<string, IndepBoothRow>(data?.indepA.map(r => [indepKey(r), r]) ?? [])
+  const indepMapB    = new Map<string, IndepBoothRow>(data?.indepB.map(r => [indepKey(r), r]) ?? [])
   const activeIndepA = data?.indepA.filter(r => r.ventas > 0).length ?? 0
   const indepTotalA  = data?.indepA.reduce((s, r) => s + r.ventas, 0) ?? 0
   const indepTotalB  = data?.indepB.reduce((s, r) => s + r.ventas, 0) ?? 0
@@ -493,443 +498,432 @@ export default function VentasDashboard({
   const today = new Date()
   const reportLabel = today.toLocaleDateString('es-PR', { month: 'long', year: 'numeric' })
 
+  // ── KPI config ───────────────────────────────────────────────────────────
+  const kpis = [
+    { label: 'Ventas Totales', value: fmt(totalA), sub: colA, prev: fmt(totalB), accent: BLUE },
+    { label: 'Variación',
+      value: totalB === 0 ? '—' : `${diffTot > 0 ? '+' : ''}${diffTot}`,
+      sub: totalB === 0 ? '—' : `${((diffTot / totalB) * 100).toFixed(1)}% vs ${colB}`,
+      prev: '—', accent: ORANGE },
+    { label: 'Asalariados', value: fmt(salA), sub: colA, prev: fmt(salB), accent: VIBRANT },
+    { label: '% Asalariados', value: pct(salA, totalA), sub: colA, prev: pct(salB, totalB), accent: NAVY },
+    { label: 'Full Commission', value: fmt(fcA), sub: colA, prev: fmt(fcB), accent: ORANGE },
+  ]
+
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div ref={contentRef} className="min-h-screen" style={{ background: '#F1F2F5' }}>
+    <div
+      className="-mx-4 -mt-6 px-4 pb-16 min-h-screen"
+      style={{ background: PAGE_BG, backgroundAttachment: 'fixed', fontFamily: SANS }}
+    >
       {saleModal && <SaleDealModal state={saleModal} onClose={() => setSaleModal(null)} />}
 
-      {/* ── DATE CONTROLS (screen only) ── */}
-      <div className="print:hidden max-w-7xl mx-auto px-6 py-4" data-pdf-ignore="true">
-        <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 8px 24px rgba(33,39,78,.10)', padding: '20px 24px' }} className="flex flex-wrap items-end gap-6">
+      <div ref={contentRef} style={{ maxWidth: 1320, margin: '0 auto' }}>
+
+        {/* ── HEADER BAND ── */}
+        <div style={{
+          background: HERO_GRAD, borderRadius: '0 0 28px 28px', padding: '40px 44px 38px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          boxShadow: SHADOW_BLUE, position: 'relative', overflow: 'hidden',
+        }}>
+          <div style={{
+            position: 'absolute', right: -60, top: -80, width: 320, height: 320, borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(248,155,36,.18), transparent 70%)',
+          }} />
+          <div style={{ position: 'relative' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+              <span style={{ width: 28, height: 3, background: ORANGE, borderRadius: 999 }} />
+              <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase', color: '#AFC3EE' }}>
+                Fuerza de Venta y Canales · Reporte Ejecutivo · Zoho CRM
+              </span>
+            </div>
+            <h1 style={{
+              margin: 0, fontFamily: DISPLAY, fontWeight: 400, fontSize: 'clamp(42px, 6vw, 64px)',
+              lineHeight: 0.92, letterSpacing: '.01em', color: '#fff', textTransform: 'uppercase',
+            }}>
+              Dashboard <span style={{ color: ORANGE }}>de Ventas</span>
+            </h1>
+          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/windmar-white-yellow.png" alt="WindMar HOME"
+            style={{ position: 'relative', height: 78, width: 'auto', objectFit: 'contain' }} />
+        </div>
+
+        {/* ── PERIOD FILTER BAR (screen only) ── */}
+        <div data-pdf-ignore="true" style={{
+          background: '#fff', borderRadius: 20, boxShadow: SHADOW_MD, padding: '22px 28px',
+          marginTop: 28, display: 'flex', alignItems: 'flex-end', gap: 28, flexWrap: 'wrap',
+        }}>
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2" style={{ color: NAVY }}>
-              <span className="w-2 h-2 rounded-sm inline-block flex-shrink-0" style={{ background: NAVY }} />
-              Período A — Actual
-            </p>
-            <div className="flex items-center gap-2">
-              <input type="date" value={fromA} onChange={e => setFromA(e.target.value)}
-                className="border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#0D1654]" />
-              <span className="text-slate-400 text-sm">–</span>
-              <input type="date" value={toA} onChange={e => setToA(e.target.value)}
-                className="border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#0D1654]" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+              <Dot color={NAVY} size={9} />
+              <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: NAVY }}>Período A — Actual</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <input type="date" value={fromA} onChange={e => setFromA(e.target.value)} style={dateInputStyle} />
+              <span style={{ color: FLAT, fontWeight: 700 }}>–</span>
+              <input type="date" value={toA} onChange={e => setToA(e.target.value)} style={dateInputStyle} />
             </div>
           </div>
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2" style={{ color: '#64748b' }}>
-              <span className="w-2 h-2 rounded-sm inline-block flex-shrink-0" style={{ background: '#64748b' }} />
-              Período B — Comparación
-            </p>
-            <div className="flex items-center gap-2">
-              <input type="date" value={fromB} onChange={e => setFromB(e.target.value)}
-                className="border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#64748b]" />
-              <span className="text-slate-400 text-sm">–</span>
-              <input type="date" value={toB} onChange={e => setToB(e.target.value)}
-                className="border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#64748b]" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+              <Dot color={FLAT} size={9} />
+              <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: GREY }}>Período B — Comparación</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <input type="date" value={fromB} onChange={e => setFromB(e.target.value)} style={dateInputStyle} />
+              <span style={{ color: FLAT, fontWeight: 700 }}>–</span>
+              <input type="date" value={toB} onChange={e => setToB(e.target.value)} style={dateInputStyle} />
             </div>
           </div>
-          <button
-            onClick={handleApply}
-            style={{ background: NAVY }}
-            className="px-6 py-2 rounded-lg text-sm font-semibold text-white hover:opacity-90 transition"
-          >
-            Aplicar
-          </button>
-          <button
-            onClick={generatePDF}
-            disabled={pdfLoading}
-            style={{ background: ORANGE, marginLeft: 'auto' }}
-            className="px-6 py-2 rounded-lg text-sm font-semibold text-white hover:opacity-90 transition disabled:opacity-60"
-          >
-            {pdfLoading ? 'Generando…' : 'Descargar PDF'}
-          </button>
+          <button onClick={handleApply} style={{
+            fontFamily: SANS, fontSize: 15, fontWeight: 700, color: '#fff', background: NAVY,
+            border: 'none', borderRadius: 12, padding: '12px 30px', cursor: 'pointer',
+          }}>Aplicar</button>
+          <button onClick={generatePDF} disabled={pdfLoading} style={{
+            marginLeft: 'auto', fontFamily: SANS, fontSize: 15, fontWeight: 700, color: '#fff',
+            background: ORANGE, border: 'none', borderRadius: 12, padding: '12px 26px',
+            cursor: 'pointer', opacity: pdfLoading ? 0.6 : 1, display: 'flex', alignItems: 'center', gap: 8,
+          }}>{pdfLoading ? 'Generando…' : '↓ Descargar PDF'}</button>
         </div>
-      </div>
 
-      {/* ── PERIOD LEGEND BAR ── */}
-      <div className="max-w-7xl mx-auto px-6 print:px-4 print:pt-4">
-        <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 4px 12px rgba(33,39,78,.06)', padding: '12px 20px' }} className="flex flex-wrap gap-6 items-center print:mb-4 print:border print:border-slate-200">
-          <PeriodPill label="Período A" range={rangeA} color={NAVY} />
-          <div className="w-px h-4 bg-slate-200" />
-          <PeriodPill label="Período B" range={rangeB} color="#64748b" />
+        {/* ── PERIOD LEGEND ── */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 32, marginTop: 18, padding: '0 8px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+            <Dot color={NAVY} size={10} />
+            <span style={{ fontWeight: 800, color: NAVY, fontSize: 14, letterSpacing: '.04em' }}>PERÍODO A</span>
+            <span style={{ color: GREY, fontSize: 14 }}>{rangeA}</span>
+          </div>
+          <span style={{ width: 1, height: 22, background: '#D5DCEA' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+            <Dot color={FLAT} size={10} />
+            <span style={{ fontWeight: 800, color: GREY, fontSize: 14, letterSpacing: '.04em' }}>PERÍODO B</span>
+            <span style={{ color: GREY, fontSize: 14 }}>{rangeB}</span>
+          </div>
         </div>
-      </div>
 
-      {/* ── MAIN CONTENT ── */}
-      <div className="max-w-7xl mx-auto px-6 pb-12 pt-4 space-y-6 print:px-4 print:pt-2 print:pb-0 print:space-y-4">
+        {/* ── LIQUID GLASS SEGMENTED NAV (sticky) ── */}
+        <div data-pdf-ignore="true" style={{ position: 'sticky', top: 16, zIndex: 50, display: 'flex', justifyContent: 'center', marginTop: 22 }}>
+          <div style={{
+            display: 'flex', gap: 4, padding: 6, borderRadius: 999,
+            background: 'rgba(255,255,255,0.38)',
+            backdropFilter: 'blur(20px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            border: '1px solid rgba(255,255,255,0.65)',
+            boxShadow: '0 8px 30px rgba(33,39,78,0.16), inset 0 1px 1px rgba(255,255,255,0.85), inset 0 -1px 2px rgba(33,39,78,0.06)',
+            flexWrap: 'wrap', justifyContent: 'center',
+          }}>
+            {SEGMENTS.map(s => {
+              const on = active === s.id
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => goTo(s.id)}
+                  onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(1.04)')}
+                  onMouseLeave={e => (e.currentTarget.style.filter = 'none')}
+                  style={{
+                    fontFamily: SANS, fontSize: 13.5, fontWeight: 700, letterSpacing: '.01em',
+                    padding: '9px 20px', border: 'none', borderRadius: 999, cursor: 'pointer',
+                    transition: 'all .25s ease', whiteSpace: 'nowrap',
+                    color: on ? '#fff' : '#3A4156',
+                    background: on ? 'linear-gradient(180deg, #2A56C4 0%, #1D429B 100%)' : 'transparent',
+                    boxShadow: on ? '0 4px 14px rgba(29,66,155,0.45), inset 0 1px 1px rgba(255,255,255,0.4)' : 'none',
+                  }}
+                >{s.label}</button>
+              )
+            })}
+          </div>
+        </div>
 
+        {/* ── LOADING / ERROR ── */}
         {loading && (
           <div className="flex items-center justify-center py-24">
             <div className="flex flex-col items-center gap-3">
-              <div className="w-10 h-10 border-4 border-slate-200 border-t-[#21274E] rounded-full animate-spin" />
-              <span className="text-sm text-slate-500">Cargando datos…</span>
+              <div className="w-10 h-10 border-4 border-slate-200 rounded-full animate-spin" style={{ borderTopColor: NAVY }} />
+              <span className="text-sm" style={{ color: GREY }}>Cargando datos…</span>
             </div>
           </div>
         )}
-
         {error && (
-          <div className="rounded-xl bg-red-50 border border-red-200 px-5 py-4 text-red-700 text-sm">
+          <div className="rounded-xl bg-red-50 border border-red-200 px-5 py-4 text-red-700 text-sm" style={{ marginTop: 22 }}>
             Error: {error}
           </div>
         )}
 
         {!loading && !error && data && (
           <>
-            {/* ── KPI STRIP ── */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 print:grid-cols-5">
-              <KpiCard
-                label="Ventas Totales"
-                primary={fmt(totalA)} sub={colA}
-                secondary={fmt(totalB)} secondaryLabel={colB}
-              />
-              <KpiCard
-                label="Variación"
-                primary={totalB === 0 ? '—' : `${totalA - totalB > 0 ? '+' : ''}${totalA - totalB}`}
-                sub={totalB === 0 ? undefined : `${(((totalA - totalB) / totalB) * 100).toFixed(1)}% vs ${colB}`}
-              />
-              <KpiCard
-                label="Asalariados"
-                primary={fmt(salA)} sub={colA}
-                secondary={fmt(salB)} secondaryLabel={colB}
-              />
-              <KpiCard
-                label="% Asalariados"
-                primary={pct(salA, totalA)} sub={colA}
-                secondary={pct(salB, totalB)} secondaryLabel={colB}
-              />
-              <KpiCard
-                label="Full Commission"
-                primary={fmt(fcA)} sub={colA}
-                secondary={fmt(fcB)} secondaryLabel={colB}
-              />
-            </div>
-
-            {/* ── FUERZA DE VENTAS — vendedores activos + pie ── */}
-            <div style={{ background: '#fff', borderRadius: 22, boxShadow: '0 8px 24px rgba(33,39,78,.10)' }} className="print:border print:border-slate-200 print:shadow-none">
-              <div className="px-6 py-4 flex flex-wrap items-center gap-6 lg:gap-10">
-                {/* Stat block */}
-                <div className="flex flex-col gap-0.5 min-w-[130px]">
-                  <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#94a3b8' }}>
-                    Vendedores Activos
-                  </span>
-                  <span className="text-4xl font-bold leading-tight" style={{ color: NAVY, fontFamily: 'Bebas Neue, sans-serif' }}>
-                    {sellTotal}
-                  </span>
-                  <span className="text-xs italic" style={{ color: '#94a3b8' }}>Status "Activo" en Sales Teams</span>
-                </div>
-
-                {/* Divider */}
-                <div className="hidden lg:block w-px self-stretch bg-slate-100" />
-
-                {/* Breakdown numbers */}
-                <div className="flex gap-6">
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: PALETTE[0] }}>Asalariados</span>
-                    <span className="text-2xl font-bold" style={{ color: NAVY, fontFamily: 'Bebas Neue, sans-serif' }}>{sellAsl}</span>
-                    <span className="text-xs text-slate-400">{sellTotal > 0 ? pct(sellAsl, sellTotal) : '—'} del equipo</span>
-                  </div>
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: PALETTE[1] }}>Full Commission</span>
-                    <span className="text-2xl font-bold" style={{ color: NAVY, fontFamily: 'Bebas Neue, sans-serif' }}>{sellFc}</span>
-                    <span className="text-xs text-slate-400">{sellTotal > 0 ? pct(sellFc, sellTotal) : '—'} del equipo</span>
-                  </div>
-                </div>
-
-                {/* Divider */}
-                <div className="hidden lg:block w-px self-stretch bg-slate-100" />
-
-                {/* Mini donut — hand-drawn SVG, zero clipping risk */}
-                {sellTotal > 0 && (
-                  <div className="flex-shrink-0">
-                    <p className="text-xs font-semibold uppercase tracking-wider mb-2 text-slate-400">Mix de Vendedores</p>
-                    <div className="flex items-center gap-5">
-                      <DonutMini data={pieSellerData} colors={[PALETTE[0], PALETTE[1]]} size={110} />
-                      <div className="flex flex-col gap-2.5">
-                        {pieSellerData.map((d, i) => (
-                          <div key={i} className="flex items-center gap-2">
-                            <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: PALETTE[i] }} />
-                            <span className="text-xs text-slate-600">
-                              <span className="font-semibold" style={{ color: PALETTE[i] }}>{d.name}:</span>{' '}
-                              <strong style={{ color: NAVY }}>{fmt(d.value)}</strong>{' '}
-                              <span className="text-slate-400">({pct(d.value, sellTotal)})</span>
-                            </span>
-                          </div>
-                        ))}
-                      </div>
+            {/* ── KPI CARDS ── */}
+            <div id="sec-kpi" style={{ scrollMarginTop: 96, marginTop: 22 }} className="pdf-break">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 18 }} className="max-md:!grid-cols-2">
+                {kpis.map(k => (
+                  <div key={k.label} style={{
+                    background: '#fff', borderRadius: 18, boxShadow: SHADOW_MD,
+                    padding: '22px 22px 20px', borderTop: `4px solid ${k.accent}`,
+                    display: 'flex', flexDirection: 'column',
+                  }}>
+                    <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '.07em', textTransform: 'uppercase', color: GREY }}>{k.label}</div>
+                    <div style={{ fontSize: 46, fontWeight: 900, lineHeight: 1, letterSpacing: '-.02em', color: NAVY, margin: '14px 0 8px' }}>{k.value}</div>
+                    <div style={{ fontSize: 13, color: FLAT, fontWeight: 500 }}>{k.sub}</div>
+                    <div style={{ borderTop: `1px solid ${ROWLINE}`, marginTop: 16, paddingTop: 12, fontSize: 13, color: GREY }}>
+                      {colB}: <span style={{ fontWeight: 800, color: NAVY }}>{k.prev}</span>
                     </div>
                   </div>
-                )}
+                ))}
+              </div>
+
+              {/* ── VENDEDORES ACTIVOS + MIX ── */}
+              <div style={{
+                background: CARD_GRAD, border: `1px solid ${BORDER}`, borderRadius: 20, boxShadow: SHADOW_MD,
+                padding: '30px 34px', marginTop: 18, display: 'grid', gridTemplateColumns: '1fr 1fr 1.1fr',
+                gap: 36, alignItems: 'center',
+              }} className="max-lg:!grid-cols-1">
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '.07em', textTransform: 'uppercase', color: GREY }}>Vendedores Activos</div>
+                  <div style={{ fontSize: 58, fontWeight: 900, lineHeight: 1, color: NAVY, margin: '10px 0 6px' }}>{fmt(sellTotal)}</div>
+                  <div style={{ fontSize: 14, fontStyle: 'italic', color: FLAT }}>Status &quot;Activo&quot; en Sales Teams</div>
+                </div>
+                <div style={{ display: 'flex', gap: 28, borderLeft: `1px solid ${ROWLINE}`, paddingLeft: 32 }} className="max-lg:!border-l-0 max-lg:!pl-0">
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '.07em', textTransform: 'uppercase', color: NAVY }}>Asalariados</div>
+                    <div style={{ fontSize: 40, fontWeight: 900, color: NAVY, margin: '8px 0 4px' }}>{fmt(sellAsl)}</div>
+                    <div style={{ fontSize: 13, color: FLAT }}>{pct(sellAsl, sellTotal)} del equipo</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '.07em', textTransform: 'uppercase', color: ORANGE600 }}>Full Commission</div>
+                    <div style={{ fontSize: 40, fontWeight: 900, color: ORANGE, margin: '8px 0 4px' }}>{fmt(sellFc)}</div>
+                    <div style={{ fontSize: 13, color: FLAT }}>{pct(sellFc, sellTotal)} del equipo</div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 26, borderLeft: `1px solid ${ROWLINE}`, paddingLeft: 32 }} className="max-lg:!border-l-0 max-lg:!pl-0">
+                  <ConicDonut size={130} hole={74} data={[{ value: sellAsl }, { value: sellFc }]} colors={[NAVY, ORANGE]} />
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '.07em', textTransform: 'uppercase', color: FLAT, marginBottom: 12 }}>Mix de Vendedores</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                      <Dot color={NAVY} /><span style={{ fontWeight: 700, color: NAVY, fontSize: 14 }}>Asalariados: {fmt(sellAsl)}</span><span style={{ color: FLAT, fontSize: 14 }}>({pct(sellAsl, sellTotal)})</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <Dot color={ORANGE} /><span style={{ fontWeight: 700, color: ORANGE600, fontSize: 14 }}>Full Commission: {fmt(sellFc)}</span><span style={{ color: FLAT, fontSize: 14 }}>({pct(sellFc, sellTotal)})</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="pdf-break h-0" />
             {/* ── PROGRAMA ASALARIADO ── */}
-            <SectionCard title="Programa Asalariado" badge={`${colA} vs ${colB}`} accent={NAVY}>
-              <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
-                <div className="lg:col-span-3 overflow-x-auto">
-                  <table className="w-full border-collapse text-sm">
+            <SectionCard id="sec-asalariado" title="Programa Asalariado">
+              <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 40, alignItems: 'center' }} className="max-lg:!grid-cols-1">
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
                       <tr>
-                        <Th>Rol</Th>
-                        <Th className="text-right">{colA}</Th>
-                        <Th className="text-right">%</Th>
-                        <Th className="text-right" bg="#334155">{colB}</Th>
-                        <Th className="text-right" bg="#334155">%</Th>
-                        <Th className="text-right">Var.</Th>
+                        <Th align="left" radius="l">Rol</Th>
+                        <Th>{colA}</Th>
+                        <Th>%</Th>
+                        <Th bg={HEADERB}>{colB}</Th>
+                        <Th bg={HEADERB}>%</Th>
+                        <Th radius="r">Var.</Th>
                       </tr>
                     </thead>
                     <tbody>
                       {EMPLEADO_ROLES.map((role, i) => {
                         const va = byRole(data.salesA ?? [], role)
                         const vb = byRole(data.salesB ?? [], role)
-                        const v  = varLabel(va, vb)
+                        const v  = varOf(va - vb)
                         return (
-                          <tr key={role} className={i % 2 === 0 ? 'bg-white/60' : 'bg-slate-50/40'}>
-                            <Td className="font-medium">{role}</Td>
-                            <Td
-                              className={`text-right font-bold ${va > 0 ? 'cursor-pointer hover:underline' : ''}`}
-                              style={{ color: NAVY }}
-                              onClick={() => va > 0 && openSaleModal(`${role} — ${colA}`, [role], applied.fromA, applied.toA)}
-                            >{fmt(va)}</Td>
-                            <Td className="text-right text-xs text-slate-400">{pct(va, totalA)}</Td>
-                            <Td
-                              className={`text-right ${vb > 0 ? 'cursor-pointer hover:underline' : ''}`}
-                              onClick={() => vb > 0 && openSaleModal(`${role} — ${colB}`, [role], applied.fromB, applied.toB)}
-                            >{fmt(vb)}</Td>
-                            <Td className="text-right text-xs text-slate-400">{pct(vb, totalB)}</Td>
-                            <Td className="text-right font-semibold" style={{ color: v.color }}>{v.text}</Td>
+                          <tr key={role} style={bodyRowStyle(i)}>
+                            <Td align="left">{role}</Td>
+                            <Td bold onClick={va > 0 ? () => openSaleModal(`${role} — ${colA}`, [role], applied.fromA, applied.toA) : undefined}>{fmt(va)}</Td>
+                            <Td muted>{pct(va, totalA)}</Td>
+                            <Td onClick={vb > 0 ? () => openSaleModal(`${role} — ${colB}`, [role], applied.fromB, applied.toB) : undefined}>{fmt(vb)}</Td>
+                            <Td muted>{pct(vb, totalB)}</Td>
+                            <Td bold color={v.color}>{v.text}</Td>
                           </tr>
                         )
                       })}
-                      <TotalRow>
-                        <Td>TOTAL Asalariados</Td>
-                        <Td
-                          className={`text-right ${salA > 0 ? 'cursor-pointer hover:underline' : ''}`}
-                          onClick={() => salA > 0 && openSaleModal(`Asalariados — ${colA}`, [...EMPLEADO_ROLES], applied.fromA, applied.toA)}
-                        >{fmt(salA)}</Td>
-                        <Td className="text-right text-xs">{pct(salA, totalA)}</Td>
-                        <Td
-                          className={`text-right ${salB > 0 ? 'cursor-pointer hover:underline' : ''}`}
-                          onClick={() => salB > 0 && openSaleModal(`Asalariados — ${colB}`, [...EMPLEADO_ROLES], applied.fromB, applied.toB)}
-                        >{fmt(salB)}</Td>
-                        <Td className="text-right text-xs">{pct(salB, totalB)}</Td>
-                        <Td className="text-right" style={{ color: varLabel(salA, salB).color }}>{varLabel(salA, salB).text}</Td>
-                      </TotalRow>
-                      <TotalRow>
-                        <Td>Full Commission</Td>
-                        <Td
-                          className={`text-right ${fcA > 0 ? 'cursor-pointer hover:underline' : ''}`}
-                          onClick={() => fcA > 0 && openSaleModal(`Full Commission — ${colA}`, [...EMPLEADO_ROLES], applied.fromA, applied.toA, true)}
-                        >{fmt(fcA)}</Td>
-                        <Td className="text-right text-xs">{pct(fcA, totalA)}</Td>
-                        <Td
-                          className={`text-right ${fcB > 0 ? 'cursor-pointer hover:underline' : ''}`}
-                          onClick={() => fcB > 0 && openSaleModal(`Full Commission — ${colB}`, [...EMPLEADO_ROLES], applied.fromB, applied.toB, true)}
-                        >{fmt(fcB)}</Td>
-                        <Td className="text-right text-xs">{pct(fcB, totalB)}</Td>
-                        <Td className="text-right" style={{ color: varLabel(fcA, fcB).color }}>{varLabel(fcA, fcB).text}</Td>
-                      </TotalRow>
+                      <tr style={{ background: TOTALROW }}>
+                        <Td align="left" bold>TOTAL Asalariados</Td>
+                        <Td bold onClick={salA > 0 ? () => openSaleModal(`Asalariados — ${colA}`, [...EMPLEADO_ROLES], applied.fromA, applied.toA) : undefined}>{fmt(salA)}</Td>
+                        <Td bold>{pct(salA, totalA)}</Td>
+                        <Td onClick={salB > 0 ? () => openSaleModal(`Asalariados — ${colB}`, [...EMPLEADO_ROLES], applied.fromB, applied.toB) : undefined}>{fmt(salB)}</Td>
+                        <Td>{pct(salB, totalB)}</Td>
+                        <Td bold color={varOf(salA - salB).color}>{varOf(salA - salB).text}</Td>
+                      </tr>
+                      <tr style={totalRowStyle}>
+                        <Td align="left" bold color={ORANGE600}>Full Commission</Td>
+                        <Td bold onClick={fcA > 0 ? () => openSaleModal(`Full Commission — ${colA}`, [...EMPLEADO_ROLES], applied.fromA, applied.toA, true) : undefined}>{fmt(fcA)}</Td>
+                        <Td bold>{pct(fcA, totalA)}</Td>
+                        <Td onClick={fcB > 0 ? () => openSaleModal(`Full Commission — ${colB}`, [...EMPLEADO_ROLES], applied.fromB, applied.toB, true) : undefined}>{fmt(fcB)}</Td>
+                        <Td>{pct(fcB, totalB)}</Td>
+                        <Td bold color={varOf(fcA - fcB).color}>{varOf(fcA - fcB).text}</Td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>
-                {/* Donut — no inline labels, Legend only */}
-                <div className="lg:col-span-2 flex flex-col items-center">
-                  <p className="text-xs font-semibold uppercase tracking-wider mb-2 text-slate-400">
-                    Mix de Ventas — {colA}
-                  </p>
-                  <ResponsiveContainer width="100%" height={220}>
-                    <PieChart>
-                      <Pie
-                        data={pieSalData}
-                        cx="50%"
-                        cy="45%"
-                        innerRadius={55}
-                        outerRadius={85}
-                        dataKey="value"
-                        isAnimationActive={false}
-                        label={false}
-                      >
-                        {pieSalData.map((_, idx) => <Cell key={idx} fill={PALETTE[idx]} />)}
-                      </Pie>
-                      <Tooltip formatter={(v: any) => [fmt(Number(v)), 'Ventas']} />
-                      <Legend
-                        iconType="circle"
-                        iconSize={10}
-                        formatter={(value: string, entry: any) =>
-                          `${value}: ${fmt(entry.payload?.value ?? 0)} (${pct(entry.payload?.value ?? 0, totalA)})`
-                        }
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '.07em', textTransform: 'uppercase', color: FLAT, marginBottom: 18 }}>Mix de Ventas — {colA}</div>
+                  <ConicDonut size={168} hole={92} data={[{ value: salA }, { value: fcA }]} colors={[NAVY, ORANGE]} />
+                  <div style={{ display: 'flex', gap: 22, marginTop: 22, flexWrap: 'wrap', justifyContent: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <Dot color={NAVY} /><span style={{ fontWeight: 700, color: NAVY, fontSize: 14 }}>Asalariados: {fmt(salA)} ({pct(salA, totalA)})</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <Dot color={ORANGE} /><span style={{ fontWeight: 700, color: ORANGE600, fontSize: 14 }}>Full Commission: {fmt(fcA)} ({pct(fcA, totalA)})</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </SectionCard>
 
-            <div className="pdf-break h-0" />
             {/* ── VENTAS POR LEAD SOURCE ── */}
-            <SectionCard title="Ventas por Lead Source" badge={`${colA} vs ${colB}`} accent={BLUE}>
-              <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
-                {/* Donut */}
-                <div className="lg:col-span-2 flex flex-col items-center">
-                  <p className="text-xs font-semibold uppercase tracking-wider mb-2 text-slate-400">
-                    Top Sources — {colA}
-                  </p>
-                  <ResponsiveContainer width="100%" height={280}>
-                    <PieChart>
-                      <Pie
-                        data={pieSrcData}
-                        cx="50%"
-                        cy="42%"
-                        innerRadius={52}
-                        outerRadius={82}
-                        dataKey="value"
-                        isAnimationActive={false}
-                        label={false}
-                      >
-                        {pieSrcData.map((_, idx) => <Cell key={idx} fill={PALETTE[idx % PALETTE.length]} />)}
-                      </Pie>
-                      <Tooltip formatter={(v: any) => [fmt(Number(v)), 'Ventas']} />
-                      <Legend iconType="circle" iconSize={10} />
-                    </PieChart>
-                  </ResponsiveContainer>
+            <SectionCard id="sec-lead" title="Ventas por Lead Source">
+              <div style={{ display: 'grid', gridTemplateColumns: '.85fr 1.4fr', gap: 40, alignItems: 'start' }} className="max-lg:!grid-cols-1">
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '.07em', textTransform: 'uppercase', color: FLAT, marginBottom: 18 }}>Top Sources — {colA}</div>
+                  <ConicDonut size={178} hole={96} data={pieSrcData} colors={LEAD_COLORS} />
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 16px', marginTop: 22 }}>
+                    {pieSrcData.map((l, i) => (
+                      <div key={l.name} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                        <Dot color={LEAD_COLORS[i % LEAD_COLORS.length]} size={10} />
+                        <span style={{ fontSize: 13, color: '#4B4B4E' }} title={l.name}>{l.name}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                {/* Table */}
-                <div className="lg:col-span-3 overflow-x-auto max-h-72 overflow-y-auto">
-                  <table className="w-full border-collapse text-sm">
-                    <thead className="sticky top-0">
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
                       <tr>
-                        <Th bg={BLUE}>Lead Source</Th>
-                        <Th bg={BLUE} className="text-right">{colA}</Th>
-                        <Th bg={BLUE} className="text-right">%</Th>
-                        <Th bg="#334155" className="text-right">{colB}</Th>
-                        <Th bg={BLUE} className="text-right">Var.</Th>
+                        <Th align="left" bg={BLUE} radius="l">Lead Source</Th>
+                        <Th bg={BLUE}>{colA}</Th>
+                        <Th bg={BLUE}>%</Th>
+                        <Th bg={HEADERB}>{colB}</Th>
+                        <Th bg={BLUE} radius="r">Var.</Th>
                       </tr>
                     </thead>
                     <tbody>
                       {allSrcA.map(([source, va], i) => {
                         const vb = leadMapB.get(source) ?? 0
-                        const v  = varLabel(va, vb)
+                        const v  = varOf(va - vb)
                         return (
-                          <tr key={source} className={i % 2 === 0 ? 'bg-white/60' : 'bg-slate-50/40'}>
-                            <Td className="max-w-[180px] truncate" title={source}>{source}</Td>
-                            <Td className="text-right font-bold" style={{ color: NAVY }}>{fmt(va)}</Td>
-                            <Td className="text-right text-xs text-slate-400">{pct(va, totalSrcA)}</Td>
-                            <Td className="text-right">{fmt(vb)}</Td>
-                            <Td className="text-right font-semibold" style={{ color: v.color }}>{v.text}</Td>
+                          <tr key={source} style={bodyRowStyle(i)}>
+                            <Td align="left" title={source}>{source}</Td>
+                            <Td bold>{fmt(va)}</Td>
+                            <Td muted>{pct(va, totalSrcA)}</Td>
+                            <Td>{fmt(vb)}</Td>
+                            <Td bold color={v.color}>{v.text}</Td>
                           </tr>
                         )
                       })}
-                      <TotalRow>
-                        <Td>TOTAL</Td>
-                        <Td className="text-right">{fmt(totalSrcA)}</Td>
-                        <Td className="text-right">100%</Td>
-                        <Td className="text-right">{fmt(Array.from(leadMapB.values()).reduce((s, v) => s + v, 0))}</Td>
-                        <Td>{''}</Td>
-                      </TotalRow>
+                      <tr style={totalRowStyle}>
+                        <Td align="left" bold>TOTAL</Td>
+                        <Td bold>{fmt(totalSrcA)}</Td>
+                        <Td bold>100%</Td>
+                        <Td>{fmt(totalSrcB)}</Td>
+                        <Td bold color={varOf(totalSrcA - totalSrcB).color}>{varOf(totalSrcA - totalSrcB).text}</Td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>
               </div>
             </SectionCard>
 
-            <div className="pdf-break h-0" />
             {/* ── BOOTHS — MALL & HOME DEPOT ── */}
-            <SectionCard title="Booths — Mall &amp; Home Depot" badge={`${colA} vs ${colB}`} accent={NAVY}>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <SectionCard id="sec-booths" title="Booths — Mall & Home Depot">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 36, alignItems: 'start' }} className="max-lg:!grid-cols-1">
                 {/* Home Depot */}
                 <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-xs font-bold uppercase tracking-wider" style={{ color: BLUE }}>Home Depot</span>
-                    <span className="text-xs text-slate-400">({hdLocs.length} ubicaciones)</span>
+                  <div style={{ marginBottom: 12 }}>
+                    <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase', color: BLUE }}>Home Depot</span>{' '}
+                    <span style={{ fontSize: 13, color: FLAT }}>({hdLocs.length} ubicaciones)</span>
                   </div>
-                  <table className="w-full border-collapse text-sm">
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
                       <tr>
-                        <Th>Ubicación</Th>
-                        <Th className="text-right">{colA}</Th>
-                        <Th className="text-right" bg="#334155">{colB}</Th>
-                        <Th className="text-right">Var.</Th>
+                        <Th align="left" radius="l">Ubicación</Th>
+                        <Th>{colA}</Th>
+                        <Th bg={HEADERB}>{colB}</Th>
+                        <Th radius="r">Var.</Th>
                       </tr>
                     </thead>
                     <tbody>
                       {hdLocs.map((loc, i) => {
                         const va = boothVentas(data.boothA ?? [], loc)
                         const vb = boothVentas(data.boothB ?? [], loc)
-                        const v  = varLabel(va, vb)
+                        const v  = varOf(va - vb)
                         return (
-                          <tr key={loc} className={i % 2 === 0 ? 'bg-white/60' : 'bg-slate-50/40'}>
-                            <Td>{loc.replace('Home Depot - ', '')}</Td>
-                            <Td className="text-right font-bold" style={{ color: NAVY }}>{fmt(va)}</Td>
-                            <Td className="text-right">{fmt(vb)}</Td>
-                            <Td className="text-right font-semibold" style={{ color: v.color }}>{v.text}</Td>
+                          <tr key={loc} style={bodyRowStyle(i)}>
+                            <Td align="left">{loc.replace('Home Depot - ', '')}</Td>
+                            <Td bold>{fmt(va)}</Td>
+                            <Td>{fmt(vb)}</Td>
+                            <Td bold color={v.color}>{v.text}</Td>
                           </tr>
                         )
                       })}
-                      <TotalRow>
-                        <Td>TOTAL HD</Td>
-                        <Td className="text-right">{fmt(hdTotalA)}</Td>
-                        <Td className="text-right">{fmt(hdTotalB)}</Td>
-                        <Td className="text-right" style={{ color: varLabel(hdTotalA, hdTotalB).color }}>{varLabel(hdTotalA, hdTotalB).text}</Td>
-                      </TotalRow>
+                      <tr style={totalRowStyle}>
+                        <Td align="left" bold>TOTAL HD</Td>
+                        <Td bold>{fmt(hdTotalA)}</Td>
+                        <Td>{fmt(hdTotalB)}</Td>
+                        <Td bold color={varOf(hdTotalA - hdTotalB).color}>{varOf(hdTotalA - hdTotalB).text}</Td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>
                 {/* Malls */}
                 <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-xs font-bold uppercase tracking-wider" style={{ color: BLUE }}>Malls</span>
-                    <span className="text-xs text-slate-400">({mallLocs.length} ubicaciones)</span>
+                  <div style={{ marginBottom: 12 }}>
+                    <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase', color: BLUE }}>Malls</span>{' '}
+                    <span style={{ fontSize: 13, color: FLAT }}>({mallLocs.length} ubicaciones)</span>
                   </div>
-                  <table className="w-full border-collapse text-sm">
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
                       <tr>
-                        <Th>Ubicación</Th>
-                        <Th className="text-right">{colA}</Th>
-                        <Th className="text-right" bg="#334155">{colB}</Th>
-                        <Th className="text-right">Var.</Th>
+                        <Th align="left" radius="l">Ubicación</Th>
+                        <Th>{colA}</Th>
+                        <Th bg={HEADERB}>{colB}</Th>
+                        <Th radius="r">Var.</Th>
                       </tr>
                     </thead>
                     <tbody>
                       {mallLocs.map((loc, i) => {
                         const va = boothVentas(data.boothA ?? [], loc)
                         const vb = boothVentas(data.boothB ?? [], loc)
-                        const v  = varLabel(va, vb)
+                        const v  = varOf(va - vb)
                         return (
-                          <tr key={loc} className={i % 2 === 0 ? 'bg-white/60' : 'bg-slate-50/40'}>
-                            <Td>{loc.replace('Malls - ', '')}</Td>
-                            <Td className="text-right font-bold" style={{ color: NAVY }}>{fmt(va)}</Td>
-                            <Td className="text-right">{fmt(vb)}</Td>
-                            <Td className="text-right font-semibold" style={{ color: v.color }}>{v.text}</Td>
+                          <tr key={loc} style={bodyRowStyle(i)}>
+                            <Td align="left">{loc.replace('Malls - ', '')}</Td>
+                            <Td bold>{fmt(va)}</Td>
+                            <Td>{fmt(vb)}</Td>
+                            <Td bold color={v.color}>{v.text}</Td>
                           </tr>
                         )
                       })}
-                      <TotalRow>
-                        <Td>TOTAL Malls</Td>
-                        <Td className="text-right">{fmt(mallTotalA)}</Td>
-                        <Td className="text-right">{fmt(mallTotalB)}</Td>
-                        <Td className="text-right" style={{ color: varLabel(mallTotalA, mallTotalB).color }}>{varLabel(mallTotalA, mallTotalB).text}</Td>
-                      </TotalRow>
+                      <tr style={totalRowStyle}>
+                        <Td align="left" bold>TOTAL Malls</Td>
+                        <Td bold>{fmt(mallTotalA)}</Td>
+                        <Td>{fmt(mallTotalB)}</Td>
+                        <Td bold color={varOf(mallTotalA - mallTotalB).color}>{varOf(mallTotalA - mallTotalB).text}</Td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>
               </div>
             </SectionCard>
 
-            <div className="pdf-break h-0" />
             {/* ── CAMBACEO ── */}
-            <SectionCard title="Cambaceo — Coordinadores" badge={`${colA} vs ${colB}`} accent="#16537E">
+            <SectionCard id="sec-cambaceo" title="Cambaceo — Coordinadores">
               {coordList.length === 0 ? (
-                <p className="text-sm text-slate-400">Sin datos de coordinadores para este período.</p>
+                <p style={{ fontSize: 14, color: FLAT }}>Sin datos de coordinadores para este período.</p>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse text-sm">
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
                       <tr>
-                        <Th bg="#16537E">Coordinador</Th>
-                        <Th bg="#16537E" className="text-right">Leads {colA}</Th>
-                        <Th bg="#16537E" className="text-right">Ventas {colA}</Th>
-                        <Th bg="#334155" className="text-right">Leads {colB}</Th>
-                        <Th bg="#334155" className="text-right">Ventas {colB}</Th>
-                        <Th bg="#16537E" className="text-right">Var. Vtas</Th>
+                        <Th align="left" bg={BLUE} radius="l">Coordinador</Th>
+                        <Th bg={BLUE}>Leads {colA}</Th>
+                        <Th bg={BLUE}>Ventas {colA}</Th>
+                        <Th bg={HEADERB}>Leads {colB}</Th>
+                        <Th bg={HEADERB}>Ventas {colB}</Th>
+                        <Th bg={BLUE} radius="r">Var. Vtas</Th>
                       </tr>
                     </thead>
                     <tbody>
@@ -940,55 +934,50 @@ export default function VentasDashboard({
                         const lb = rb?.leads  ?? 0
                         const va = ra?.ventas ?? 0
                         const vb = rb?.ventas ?? 0
-                        const vv = varLabel(va, vb)
+                        const vv = varOf(va - vb)
                         return (
-                          <tr key={coord} className={i % 2 === 0 ? 'bg-white/60' : 'bg-slate-50/40'}>
-                            <Td className="font-medium">{coord}</Td>
-                            <Td className="text-right">{fmt(la)}</Td>
-                            <Td className="text-right font-bold" style={{ color: NAVY }}>{fmt(va)}</Td>
-                            <Td className="text-right">{fmt(lb)}</Td>
-                            <Td className="text-right">{fmt(vb)}</Td>
-                            <Td className="text-right font-semibold" style={{ color: vv.color }}>{vv.text}</Td>
+                          <tr key={coord} style={bodyRowStyle(i)}>
+                            <Td align="left">{coord}</Td>
+                            <Td>{fmt(la)}</Td>
+                            <Td bold>{fmt(va)}</Td>
+                            <Td>{fmt(lb)}</Td>
+                            <Td>{fmt(vb)}</Td>
+                            <Td bold color={vv.color}>{vv.text}</Td>
                           </tr>
                         )
                       })}
-                      <TotalRow>
-                        <Td>TOTAL</Td>
-                        <Td className="text-right">{fmt(coordList.reduce((s, c) => s + (coordMapA.get(c)?.leads ?? 0), 0))}</Td>
-                        <Td className="text-right">{fmt(coordList.reduce((s, c) => s + (coordMapA.get(c)?.ventas ?? 0), 0))}</Td>
-                        <Td className="text-right">{fmt(coordList.reduce((s, c) => s + (coordMapB.get(c)?.leads ?? 0), 0))}</Td>
-                        <Td className="text-right">{fmt(coordList.reduce((s, c) => s + (coordMapB.get(c)?.ventas ?? 0), 0))}</Td>
+                      <tr style={totalRowStyle}>
+                        <Td align="left" bold>TOTAL</Td>
+                        <Td bold>{fmt(coordList.reduce((s, c) => s + (coordMapA.get(c)?.leads ?? 0), 0))}</Td>
+                        <Td bold>{fmt(coordList.reduce((s, c) => s + (coordMapA.get(c)?.ventas ?? 0), 0))}</Td>
+                        <Td>{fmt(coordList.reduce((s, c) => s + (coordMapB.get(c)?.leads ?? 0), 0))}</Td>
+                        <Td>{fmt(coordList.reduce((s, c) => s + (coordMapB.get(c)?.ventas ?? 0), 0))}</Td>
                         <Td>{''}</Td>
-                      </TotalRow>
+                      </tr>
                     </tbody>
                   </table>
                 </div>
               )}
             </SectionCard>
 
-            <div className="pdf-break h-0" />
-            {/* ── BOOTHS INDEPENDIENTES ── */}
-            <SectionCard title="Booths Independientes &amp; Eventos" badge={`${colA} vs ${colB}`} accent={NAVY}>
-              <div className="mb-4">
-                <span
-                  style={{ background: ORANGE }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-white"
-                >
-                  {activeIndepA} fuentes activas · {colA}
-                </span>
-              </div>
+            {/* ── BOOTHS INDEPENDIENTES & EVENTOS ── */}
+            <SectionCard title="Booths Independientes & Eventos">
+              <div style={{
+                display: 'inline-block', background: ORANGE, color: '#fff', fontSize: 12, fontWeight: 700,
+                letterSpacing: '.04em', padding: '7px 16px', borderRadius: 999, marginBottom: 18,
+              }}>{activeIndepA} fuentes activas · {colA}</div>
               {indepList.length === 0 ? (
-                <p className="text-sm text-slate-400">Sin datos para este período.</p>
+                <p style={{ fontSize: 14, color: FLAT }}>Sin datos para este período.</p>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse text-sm">
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
                       <tr>
-                        <Th>Booth / Fuente</Th>
-                        <Th className="text-right">{colA}</Th>
-                        <Th className="text-right">%</Th>
-                        <Th className="text-right" bg="#334155">{colB}</Th>
-                        <Th className="text-right">Var.</Th>
+                        <Th align="left" radius="l">Booth / Fuente</Th>
+                        <Th>{colA}</Th>
+                        <Th>%</Th>
+                        <Th bg={HEADERB}>{colB}</Th>
+                        <Th radius="r">Var.</Th>
                       </tr>
                     </thead>
                     <tbody>
@@ -997,26 +986,25 @@ export default function VentasDashboard({
                         const rowB = indepMapB.get(key)
                         const va   = rowA?.ventas ?? 0
                         const vb   = rowB?.ventas ?? 0
-                        const v    = varLabel(va, vb)
-                        const src  = rowA ?? rowB!
-                        const name = indepDisplay(src)
+                        const v    = varOf(va - vb)
+                        const name = indepDisplay((rowA ?? rowB)!)
                         return (
-                          <tr key={key} className={i % 2 === 0 ? 'bg-white/60' : 'bg-slate-50/40'}>
-                            <Td className="max-w-[260px] truncate" title={name}>{name}</Td>
-                            <Td className="text-right font-bold" style={{ color: NAVY }}>{fmt(va)}</Td>
-                            <Td className="text-right text-xs text-slate-400">{pct(va, indepTotalA)}</Td>
-                            <Td className="text-right">{fmt(vb)}</Td>
-                            <Td className="text-right font-semibold" style={{ color: v.color }}>{v.text}</Td>
+                          <tr key={key} style={bodyRowStyle(i)}>
+                            <Td align="left" title={name}>{name}</Td>
+                            <Td bold>{fmt(va)}</Td>
+                            <Td muted>{pct(va, indepTotalA)}</Td>
+                            <Td>{fmt(vb)}</Td>
+                            <Td bold color={v.color}>{v.text}</Td>
                           </tr>
                         )
                       })}
-                      <TotalRow>
-                        <Td>TOTAL</Td>
-                        <Td className="text-right">{fmt(indepTotalA)}</Td>
-                        <Td className="text-right">100%</Td>
-                        <Td className="text-right">{fmt(indepTotalB)}</Td>
-                        <Td>{''}</Td>
-                      </TotalRow>
+                      <tr style={totalRowStyle}>
+                        <Td align="left" bold>TOTAL</Td>
+                        <Td bold>{fmt(indepTotalA)}</Td>
+                        <Td bold>100%</Td>
+                        <Td>{fmt(indepTotalB)}</Td>
+                        <Td bold color={varOf(indepTotalA - indepTotalB).color}>{varOf(indepTotalA - indepTotalB).text}</Td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>
@@ -1024,22 +1012,17 @@ export default function VentasDashboard({
             </SectionCard>
 
             {/* ── FOOTER ── */}
-            <div className="text-center text-xs text-slate-400 py-2 print:py-1">
+            <div style={{ textAlign: 'center', fontSize: 12, color: FLAT, padding: '18px 0 0' }}>
               Windmar Home · Dashboard Ejecutivo · {reportLabel}
             </div>
           </>
         )}
       </div>
-
-      {/* ── PRINT STYLES ── */}
-      <style>{`
-        @media print {
-          header, nav { display: none !important; }
-          body { background: white !important; }
-          .print\\:hidden { display: none !important; }
-          @page { margin: 1.5cm; size: A4 landscape; }
-        }
-      `}</style>
     </div>
   )
+}
+
+const dateInputStyle: React.CSSProperties = {
+  fontFamily: SANS, fontSize: 15, fontWeight: 600, color: '#21274E',
+  border: '1.5px solid #DDE3EE', borderRadius: 12, padding: '10px 14px',
 }

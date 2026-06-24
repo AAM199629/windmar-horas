@@ -19,33 +19,5 @@ function defaultDates() {
 
 export default function VentasPage() {
   const dates = defaultDates()
-  return (
-    <div>
-      <div style={{
-        marginBottom: 26,
-        fontFamily: "'Montserrat', sans-serif",
-      }}>
-        <p style={{
-          fontSize: 12,
-          fontWeight: 700,
-          textTransform: 'uppercase',
-          letterSpacing: '0.16em',
-          color: '#1D429B',
-          marginBottom: 6,
-        }}>
-          FUERZA DE VENTA Y CANALES · REPORTE EJECUTIVO · ZOHO CRM
-        </p>
-        <h1 style={{
-          fontFamily: "'Bebas Neue', sans-serif",
-          fontSize: 'clamp(40px, 5vw, 60px)',
-          lineHeight: 0.9,
-          margin: 0,
-        }}>
-          <span style={{ color: '#21274E' }}>Dashboard </span>
-          <span style={{ color: '#F89B24' }}>de Ventas</span>
-        </h1>
-      </div>
-      <VentasDashboard {...dates} />
-    </div>
-  )
+  return <VentasDashboard {...dates} />
 }
