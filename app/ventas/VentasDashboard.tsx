@@ -74,11 +74,12 @@ const DISPLAY = "'Bebas Neue', sans-serif"
 const LEAD_COLORS = [NAVY, ORANGE, BLUE, GREY, GREEN, VIBRANT, ORANGE300, RED]
 
 const SEGMENTS = [
-  { id: 'sec-kpi',        label: 'Resumen'     },
-  { id: 'sec-asalariado', label: 'Asalariado'  },
-  { id: 'sec-lead',       label: 'Lead Source' },
-  { id: 'sec-booths',     label: 'Booths'      },
-  { id: 'sec-cambaceo',   label: 'Cambaceo'    },
+  { id: 'sec-kpi',            label: 'Resumen'        },
+  { id: 'sec-asalariado',     label: 'Asalariado'     },
+  { id: 'sec-lead',           label: 'Lead Source'    },
+  { id: 'sec-booths',         label: 'Booths'         },
+  { id: 'sec-cambaceo',       label: 'Cambaceo'       },
+  { id: 'sec-financiamientos', label: 'Financiamientos' },
 ]
 
 // ── Date helpers ──────────────────────────────────────────────────────────────
@@ -343,7 +344,19 @@ export default function VentasDashboard({
   const [pdfLoading, setPdfLoading] = useState(false)
   const [saleModal,  setSaleModal]  = useState<SaleModalState | null>(null)
   const [active,     setActive]     = useState('sec-kpi')
+  const [finHeight,  setFinHeight]  = useState(2400) // alto del iframe de Financiamientos
   const contentRef = useRef<HTMLDivElement>(null)
+
+  // Auto-resize del iframe de Financiamientos (postMessage desde el embed)
+  useEffect(() => {
+    const onMsg = (e: MessageEvent) => {
+      if (e.data && e.data.type === 'finheight' && typeof e.data.h === 'number') {
+        setFinHeight(Math.max(800, Math.ceil(e.data.h)))
+      }
+    }
+    window.addEventListener('message', onMsg)
+    return () => window.removeEventListener('message', onMsg)
+  }, [])
 
   const fetchData = useCallback(async (fa: string, ta: string, fb: string, tb: string) => {
     setLoading(true); setError(null)
@@ -1037,6 +1050,23 @@ export default function VentasDashboard({
                 </div>
               )}
             </SectionCard>
+
+            {/* ── FINANCIAMIENTOS (excluido del PDF) ── */}
+            <div
+              id="sec-financiamientos"
+              data-pdf-ignore="true"
+              style={{ scrollMarginTop: 96, marginTop: 22 }}
+            >
+              <iframe
+                title="Dashboard de Financiamientos"
+                src="/financiamientos.html"
+                scrolling="no"
+                style={{
+                  width: '100%', height: finHeight, border: 'none',
+                  borderRadius: 18, background: 'transparent', display: 'block',
+                }}
+              />
+            </div>
 
             {/* ── FOOTER ── */}
             <div style={{ textAlign: 'center', fontSize: 12, color: FLAT, padding: '18px 0 0' }}>

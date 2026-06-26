@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WindMar · Dashboard de Financiamientos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF1F7; --card:#FFFFFF; --ink:#1B2138; --muted:#7A8194; --line:#E7EAF2;
+    --blue:#1D429B; --blue2:#2E5BD7; --deep:#21274E; --orange:#F89B24; --green:#1E9E63; --red:#D7443A;
+    --c-contado:#2E5BD7; --c-fin:#F89B24; --c-doe:#1E9E63; --c-otros:#9AA3B2;
+    --shadow:0 1px 2px rgba(16,24,64,.04), 0 8px 24px rgba(16,24,64,.06);
+    --radius:18px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Montserrat',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.4}
+  .wrap{max-width:1320px;margin:0 auto;padding:0 24px 80px}
+
+  /* Hero */
+  .hero{background:linear-gradient(120deg,#1D429B 0%,#21274E 70%);color:#fff;padding:30px 0 96px;position:relative;overflow:hidden}
+  .hero::after{content:"";position:absolute;right:-120px;top:-120px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(248,155,36,.35),transparent 60%)}
+  .hero .wrap{padding-bottom:0}
+  .brand{display:flex;align-items:center;gap:12px;font-weight:900;letter-spacing:.5px;font-size:15px}
+  .brand .dot{width:10px;height:10px;border-radius:50%;background:var(--orange);box-shadow:0 0 0 4px rgba(248,155,36,.25)}
+  .brand span{opacity:.7;font-weight:600}
+  .hero h1{font-size:34px;font-weight:900;margin-top:18px;letter-spacing:-.5px}
+  .hero .sub{opacity:.75;margin-top:6px;font-weight:600;font-size:14px}
+
+  /* Filter bar */
+  .filterbar{display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px;margin-top:20px;position:relative;z-index:3}
+  .fld{display:flex;flex-direction:column;gap:5px}
+  .fld label{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;opacity:.7}
+  .fld input{font-family:inherit;font-weight:700;font-size:13px;color:var(--ink);background:#fff;border:1px solid rgba(255,255,255,.4);border-radius:11px;padding:9px 12px;outline:none}
+  .presets{display:flex;gap:7px;flex-wrap:wrap}
+  .presets button{font-family:inherit;font-weight:700;font-size:12px;color:#fff;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.22);padding:9px 14px;border-radius:999px;cursor:pointer;transition:.15s}
+  .presets button:hover{background:rgba(255,255,255,.24)}
+  .presets button.on{background:var(--orange);border-color:var(--orange);color:#1B2138}
+  .rangepill{margin-left:auto;align-self:flex-end;font-size:12.5px;font-weight:800;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);padding:9px 15px;border-radius:999px}
+
+  /* KPI */
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:18px;margin-top:-64px;position:relative;z-index:2}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  .kpi .lab{font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
+  .kpi .val{font-size:30px;font-weight:900;margin-top:10px;letter-spacing:-1px;line-height:1}
+  .kpi .meta{font-size:12px;color:var(--muted);margin-top:8px;font-weight:600}
+  .kpi .bar{position:absolute;left:0;bottom:0;height:4px;width:100%;background:var(--blue2)}
+  .kpi.k2 .bar{background:var(--orange)} .kpi.k3 .bar{background:var(--green)} .kpi.k4 .bar{background:var(--deep)} .kpi.k5 .bar{background:var(--red)}
+
+  /* Grid */
+  .grid{display:grid;gap:18px;margin-top:18px}
+  .g-2{grid-template-columns:1.6fr 1fr}
+  .g-1{grid-template-columns:1fr}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow)}
+  .ph{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:18px}
+  .ph .t{font-size:16px;font-weight:800}
+  .ph .d{font-size:12px;color:var(--muted);font-weight:600;margin-top:3px}
+  .ph-total{text-align:right;flex:none;white-space:nowrap}
+  .ph-total .l{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+  .ph-total .v{font-size:21px;font-weight:900;letter-spacing:-.5px;color:var(--ink);margin-top:2px}
+  .toggle{display:inline-flex;background:#F0F2F8;border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
+  .toggle button{border:none;background:transparent;font-family:inherit;font-weight:700;font-size:12px;color:var(--muted);padding:6px 12px;border-radius:8px;cursor:pointer;transition:.15s}
+  .toggle button.on{background:#fff;color:var(--blue);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .pselect{font-family:inherit;font-weight:700;font-size:12px;color:var(--ink);background:#F0F2F8;border:1px solid var(--line);border-radius:10px;padding:8px 10px;cursor:pointer;outline:none;max-width:180px}
+  .pipe-foot{margin-top:18px;padding-top:16px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:11px}
+  .pipe-foot .row{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+  .pipe-foot .row .l{font-size:13px;font-weight:700;color:#4B5266}
+  .pipe-foot .row .v{font-size:18px;font-weight:900;color:var(--ink);white-space:nowrap}
+  .pipe-foot .row.gross .v{font-size:22px}
+  .pipe-foot .row.hold .l,.pipe-foot .row.hold .v{color:var(--red)}
+
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:14px}
+  .legend .it{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:#4B5266}
+  .legend .sw{width:12px;height:12px;border-radius:4px}
+
+  /* donut */
+  .donut-wrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  .donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+  .donut-center .v{font-size:24px;font-weight:900;letter-spacing:-.5px}
+  .donut-center .l{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+  .dleg{display:flex;flex-direction:column;gap:11px;flex:1;min-width:180px}
+  .dleg .row{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700}
+  .dleg .row .sw{width:11px;height:11px;border-radius:3px;flex:none}
+  .dleg .row .nm{flex:1}
+  .dleg .row .pc{color:var(--muted);font-weight:800}
+
+  /* ranking */
+  .rank{display:flex;flex-direction:column;gap:13px}
+  .rrow{display:grid;grid-template-columns:160px 1fr auto;align-items:center;gap:14px}
+  .rrow .nm{font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  .tag{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;padding:2px 7px;border-radius:6px;flex:none}
+  .tag.cash{background:rgba(46,91,215,.12);color:#2E5BD7}
+  .tag.cashcom{background:rgba(13,148,136,.14);color:#0D9488}
+  .tag.financiado{background:rgba(248,155,36,.16);color:#C5740A}
+  .tag.otros{background:#EEF0F5;color:#7A8194}
+  .track{background:#F0F2F8;border-radius:8px;height:26px;position:relative;overflow:hidden}
+  .fill{height:100%;border-radius:8px;display:flex;align-items:center;justify-content:flex-end;padding-right:9px;color:#fff;font-size:11.5px;font-weight:800;min-width:30px;transition:width .8s cubic-bezier(.2,.7,.2,1)}
+  .rrow .amt{font-size:13px;font-weight:800;text-align:right;min-width:110px}
+  .rrow .amt small{display:block;color:var(--muted);font-weight:600;font-size:10.5px}
+  .empty{color:var(--muted);font-size:13px;font-weight:600;padding:14px 2px}
+
+  /* chips filter */
+  .fchips{display:flex;gap:8px;flex-wrap:wrap}
+  .fchips button{font-family:inherit;border:1px solid var(--line);background:#F7F8FB;color:#4B5266;font-weight:700;font-size:12px;padding:7px 13px;border-radius:999px;cursor:pointer;transition:.15s}
+  .fchips button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+  /* heatmap */
+  .heat{width:100%;border-collapse:separate;border-spacing:4px}
+  .heat th{font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;padding:4px;text-align:center;vertical-align:bottom}
+  .heat th.row{text-align:right;width:130px}
+  .heat td{text-align:center;font-size:11.5px;font-weight:800;border-radius:7px;padding:10px 4px;color:#1B2138;cursor:default;transition:transform .1s}
+  .heat td:hover{transform:scale(1.08)}
+  .heat td.zero{color:#C2C8D4}
+
+  /* table */
+  table.tbl{width:100%;border-collapse:collapse;font-size:13px}
+  table.tbl th{text-align:left;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:10px 12px;border-bottom:2px solid var(--line);cursor:pointer;user-select:none;white-space:nowrap}
+  table.tbl th.num,table.tbl td.num{text-align:right}
+  table.tbl td{padding:11px 12px;border-bottom:1px solid #F1F3F8;font-weight:600}
+  table.tbl tr:hover td{background:#FAFBFD}
+  table.tbl td.nm{font-weight:800}
+  .minibar{height:6px;border-radius:4px;background:#EEF0F5;overflow:hidden;margin-top:5px}
+  .minibar i{display:block;height:100%;border-radius:4px}
+
+  /* on hold */
+  .onhold-panel{border-color:#F6D9B0;background:linear-gradient(180deg,#FFFBF4 0%,#FFFFFF 120px)}
+  .risk-pill{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;background:rgba(215,68,58,.12);color:var(--red);padding:3px 9px;border-radius:999px;margin-left:8px;vertical-align:middle}
+  .oh-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px}
+  .oh-stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+  .oh-stat .l{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
+  .oh-stat .v{font-size:26px;font-weight:900;letter-spacing:-.5px;margin-top:7px;color:var(--red)}
+  .oh-stat .s{font-size:11.5px;font-weight:600;color:var(--muted);margin-top:5px}
+  .oh-sub{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:13px}
+  @media(max-width:900px){.oh-stats{grid-template-columns:1fr}}
+  /* promos */
+  .promo-panel{border-color:#CBE0FF;background:linear-gradient(180deg,#F4F8FF 0%,#FFFFFF 130px)}
+  .stat4{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:900px){.stat4{grid-template-columns:1fr 1fr}}
+
+  /* tooltip */
+  #tip{position:fixed;pointer-events:none;background:var(--deep);color:#fff;font-size:12px;font-weight:700;padding:8px 11px;border-radius:9px;opacity:0;transition:opacity .12s;z-index:99;box-shadow:0 8px 24px rgba(0,0,0,.25);white-space:nowrap}
+  #tip b{color:var(--orange)}
+
+  .foot{margin-top:26px;text-align:center;font-size:11.5px;color:var(--muted);font-weight:600}
+  svg{display:block;width:100%;height:auto;overflow:visible}
+  @media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}.g-2{grid-template-columns:1fr}.rrow{grid-template-columns:120px 1fr}.rrow .amt{display:none}}
+</style>
+</head>
+<body>
+  <div class="hero">
+    <div class="wrap">
+      <div class="brand"><span class="dot"></span>WINDMAR <span>HOME · Puerto Rico</span></div>
+      <h1>Dashboard de Financiamientos</h1>
+      <div class="sub">Revenue por pipeline y por financiera · Redshift <span id="updated" style="opacity:.8;margin-left:6px"></span></div>
+      <div class="filterbar">
+        <div class="fld"><label>Desde</label><input type="date" id="fFrom"></div>
+        <div class="fld"><label>Hasta</label><input type="date" id="fTo"></div>
+        <div class="presets" id="presets">
+          <button data-p="month">Este mes</button>
+          <button data-p="3">3 meses</button>
+          <button data-p="6">6 meses</button>
+          <button data-p="12" class="on">12 meses</button>
+          <button data-p="ytd">Este año</button>
+          <button data-p="all">Todo</button>
+        </div>
+        <div class="rangepill" id="rangePill"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="kpis" id="kpis"></div>
+
+    <div class="grid g-2">
+      <div class="panel">
+        <div class="ph">
+          <div><div class="t">Tendencia mensual de revenue por tipo</div><div class="d">Revenue de ventas cerradas (no canceladas) en el rango</div></div>
+          <div class="toggle" id="tgl">
+            <button data-m="amount" class="on">$ Monto</button>
+            <button data-m="deals">Deals</button>
+          </div>
+        </div>
+        <div id="trend"></div>
+        <div class="legend" id="trendLeg"></div>
+      </div>
+
+      <div class="panel">
+        <div class="ph"><div><div class="t">Mezcla por financiera</div><div class="d">% del revenue total · pasa el cursor para ver detalle</div></div>
+          <select class="pselect" id="donutPipe" title="Filtrar por producto/pipeline"></select></div>
+        <div class="donut-wrap">
+          <div style="position:relative;width:188px;height:188px;flex:none">
+            <div id="donut"></div>
+            <div class="donut-center"><div class="v" id="dCenterV"></div><div class="l">Ventas rango</div></div>
+          </div>
+          <div class="dleg" id="dleg"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid g-2">
+      <div class="panel">
+        <div class="ph"><div><div class="t">Ranking de financieras</div><div class="d">Por revenue · clic en categoría para filtrar</div></div><div class="ph-total"><div class="l">Cantidad de ventas</div><div class="v" id="rankTotal"></div></div></div>
+        <div class="fchips" id="fchips" style="margin-bottom:16px"></div>
+        <div class="rank" id="rank"></div>
+      </div>
+      <div class="panel">
+        <div class="ph"><div><div class="t">Revenue por pipeline</div><div class="d">Revenue por línea de negocio (15% / 10%)</div></div><div class="ph-total"><div class="l">Cantidad de ventas</div><div class="v" id="pipeTotal"></div></div></div>
+        <div class="rank" id="pipes"></div>
+        <div class="pipe-foot" id="pipeFoot"></div>
+      </div>
+    </div>
+
+    <div class="grid g-1">
+      <div class="panel">
+        <div class="ph"><div><div class="t">Pipeline × Financiera</div><div class="d">Revenue — intensidad = mayor volumen</div></div></div>
+        <div style="overflow-x:auto"><div id="heat"></div></div>
+      </div>
+    </div>
+
+    <div class="grid g-1">
+      <div class="panel onhold-panel">
+        <div class="ph"><div><div class="t">⏸ Ventas en On Hold <span class="risk-pill">En riesgo</span></div><div class="d">Deals pausados (no cancelados) — separados del total activo</div></div></div>
+        <div class="oh-stats" id="ohStats"></div>
+        <div class="grid g-2" style="margin-top:4px">
+          <div>
+            <div class="oh-sub">Por razón de On Hold</div><div class="rank" id="ohReason"></div>
+            <div class="oh-sub" style="margin-top:20px">Por mes</div><div id="ohMonth"></div>
+          </div>
+          <div>
+            <div class="oh-sub">Por financiera</div><div class="rank" id="ohFinance"></div>
+            <div class="oh-sub" style="margin-top:20px">Por pipeline</div><div class="rank" id="ohPipe"></div>
+          </div>
+        </div>
+        <div class="oh-sub" style="margin-top:26px">Cruce · razón de On Hold × financiera</div>
+        <div class="d" style="margin:-8px 0 14px;font-size:12px;color:var(--muted);font-weight:600">¿Concentra alguna financiera los problemas? Intensidad = monto en riesgo.</div>
+        <div style="overflow-x:auto"><div id="ohHeat"></div></div>
+      </div>
+    </div>
+
+    <div class="grid g-1">
+      <div class="panel promo-panel">
+        <div class="ph"><div><div class="t">🎁 Bonos de promoción · Firma y Gana / Instala y Gana</div><div class="d">Casos que se benefician de cada promo y qué pipeline las usa</div></div>
+          <div class="ph-total"><div class="l">Casos con promo</div><div class="v" id="promoTotal"></div></div></div>
+        <div class="oh-stats stat4" id="promoStats"></div>
+        <div class="grid g-2" style="margin-top:4px">
+          <div><div class="oh-sub">✍️ Firma y Gana · por pipeline</div><div class="rank" id="promoFirma"></div></div>
+          <div><div class="oh-sub">🔧 Instala y Gana · por pipeline</div><div class="rank" id="promoInstala"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="foot">Fuente: Redshift <code>dwh.fact_deals</code> + <code>dim_finance_legal</code> · excluye cancelados · filtrado por fecha de cierre</div>
+  </div>
+
+  <div id="tip"></div>
+
+<script>
+(async function(){
+const DATA = await fetch("/api/finance/financiamientos").then(r=>r.json());
+
+// ---------- helpers ----------
+const $=(s,e=document)=>e.querySelector(s);
+const el=(t,c,h)=>{const n=document.createElement(t);if(c)n.className=c;if(h!=null)n.innerHTML=h;return n;};
+const money=v=>{const a=Math.abs(v);if(a>=1e6)return '$'+(v/1e6).toFixed(a>=1e7?0:1)+'M';if(a>=1e3)return '$'+Math.round(v/1e3)+'K';return '$'+Math.round(v);};
+const moneyFull=v=>'$'+Math.round(v).toLocaleString('en-US');
+const intf=v=>Math.round(v).toLocaleString('en-US');
+const MES=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const mLabel=ym=>{const [y,m]=ym.split('-');return MES[+m-1]+" '"+y.slice(2);};
+const dLabel=d=>{const[y,m,dd]=d.split('-');return +dd+' '+MES[+m-1]+' '+y;};
+const tip=$('#tip');
+const showTip=(e,html)=>{tip.innerHTML=html;tip.style.opacity=1;moveTip(e);};
+const moveTip=e=>{tip.style.left=Math.min(e.clientX+14,window.innerWidth-tip.offsetWidth-10)+'px';tip.style.top=(e.clientY-40)+'px';};
+const hideTip=()=>tip.style.opacity=0;
+document.addEventListener('scroll',hideTip,true);
+
+const CAT_ORDER=['Cash','Financiado','Otros / Sin asignar'];
+const CAT_HEX={'Cash':'#2E5BD7','Cash Comercial':'#0D9488','Financiado':'#F89B24','Otros / Sin asignar':'#9AA3B2'};
+const CAT_TAG={'Cash':'cash','Cash Comercial':'cashcom','Financiado':'financiado','Otros / Sin asignar':'otros'};
+const catShort=c=>c==='Cash Comercial'?'Comercial':c==='Otros / Sin asignar'?'Otros':c;
+const PIPE_COL=['#1D429B','#2E5BD7','#F89B24','#1E9E63','#9B5DE5','#E76F51','#06B6D4'];
+const FIN_PALETTE=['#1D429B','#F89B24','#2E5BD7','#0D9488','#9B5DE5','#E76F51','#1E9E63','#EF476F','#06B6D4','#FFC43D','#7C3AED'];
+
+// fact columns: [date, pipeIdx, finIdx, reasonIdx(-1=activo), deals, amount]
+const {pipes,fins,finCat,reasons,facts}=DATA;
+// DOE eliminado como categoría: Generac-DOE / Sunnova-DOE / CDBG pasan a "Financiado"
+for(let i=0;i<finCat.length;i++) if(finCat[i]==='DOE / Programa') finCat[i]='Financiado';
+// Cash se divide por pipeline: comercial vs regular. Donación/Fundación se excluyen del todo.
+const EXCLUDE_FIN=new Set([fins.indexOf('Cash (Donación)'),fins.indexOf('Fundación Windmar')].filter(i=>i>=0));
+// Solo estos pipelines en TODO el dashboard (se excluye Commercial Solar y 3rd Party OM Commercial)
+const ALLOWED_PIPES=new Set(['Residential Solar','Roofing','Water Products','PPS']);
+// Revenue = % del EPC: 15% Solar/Roofing, 10% Water/Anker(PPS)
+const REVENUE_RATE={'Residential Solar':0.15,'Commercial Solar':0.15,'Roofing':0.15,'Water Products':0.10,'PPS':0.10};
+
+// ---------- aggregation by date range ----------
+function aggregate(from,to){
+  const F=facts.filter(f=>f[0]>=from && f[0]<=to);
+  const months=[...new Set(F.map(f=>f[0].slice(0,7)))].sort();
+  const finMap={},pipeMap={},mat={},catAgg={};
+  CAT_ORDER.forEach(c=>catAgg[c]={amount:0,deals:0});
+  const oh={total:{deals:0,amount:0},reasonM:{},finM:{},pipeM:{},monthM:{},rxf:{}};
+  reasons.forEach(r=>oh.reasonM[r]={name:r,deals:0,amount:0});
+  for(const f of F){
+    const [d,pi,fi,ri,n,rawA]=f; const ym=d.slice(0,7);
+    if(EXCLUDE_FIN.has(fi)) continue; // fuera: Cash (Donación) / Fundación Windmar
+    const pipe=pipes[pi];
+    if(!ALLOWED_PIPES.has(pipe)) continue; // solo pipelines permitidos
+    const a=rawA*(REVENUE_RATE[pipe]??0.15); // Revenue = % del EPC (15% solar/roofing, 10% water/Anker)
+    let finName,cat;
+    if(fins[fi]==='Cash'){ cat='Cash'; finName='Cash'; }
+    else { finName=fins[fi]; cat=(finCat[fi]==='Contado')?'Otros / Sin asignar':finCat[fi]; }
+    if(ri<0){ // ACTIVO
+      const fm=finMap[finName]||(finMap[finName]={name:finName,cat,deals:0,amount:0,months:{}});
+      fm.deals+=n; fm.amount+=a; fm.months[ym]=(fm.months[ym]||0)+a;
+      const pm=pipeMap[pipe]||(pipeMap[pipe]={name:pipe,deals:0,amount:0,months:{}});
+      pm.deals+=n; pm.amount+=a; pm.months[ym]=(pm.months[ym]||0)+a;
+      catAgg[cat].amount+=a; catAgg[cat].deals+=n;
+      const mk=pipe+'|'+finName; const mm=mat[mk]||(mat[mk]={pipeline:pipe,finance:finName,deals:0,amount:0}); mm.deals+=n; mm.amount+=a;
+    } else { // ON HOLD
+      const rs=reasons[ri];
+      oh.total.deals+=n; oh.total.amount+=a;
+      oh.reasonM[rs].deals+=n; oh.reasonM[rs].amount+=a;
+      const of=oh.finM[finName]||(oh.finM[finName]={name:finName,cat,deals:0,amount:0}); of.deals+=n; of.amount+=a;
+      const op=oh.pipeM[pipe]||(oh.pipeM[pipe]={name:pipe,deals:0,amount:0}); op.deals+=n; op.amount+=a;
+      (oh.monthM[ym]||(oh.monthM[ym]={deals:0,amount:0}));oh.monthM[ym].deals+=n;oh.monthM[ym].amount+=a;
+      const xk=rs+'|'+finName; const x=oh.rxf[xk]||(oh.rxf[xk]={reason:rs,finance:finName,cat,deals:0,amount:0}); x.deals+=n; x.amount+=a;
+    }
+  }
+  const finance=Object.values(finMap).sort((a,b)=>b.amount-a.amount);
+  const pipelines=Object.values(pipeMap).sort((a,b)=>b.amount-a.amount);
+  const totalAmount=finance.reduce((s,f)=>s+f.amount,0);
+  const totalDeals=finance.reduce((s,f)=>s+f.deals,0);
+  return {
+    from,to,months,finance,pipelines,catAgg,totalAmount,totalDeals,
+    matrix:Object.values(mat),
+    onhold:{
+      total:oh.total,
+      byReason:Object.values(oh.reasonM).filter(r=>r.deals>0).sort((a,b)=>b.amount-a.amount),
+      byFinance:Object.values(oh.finM).sort((a,b)=>b.amount-a.amount),
+      byPipeline:Object.values(oh.pipeM).sort((a,b)=>b.amount-a.amount),
+      byMonth:months.map(ym=>({ym,deals:(oh.monthM[ym]||{}).deals||0,amount:(oh.monthM[ym]||{}).amount||0})),
+      reasonByFinance:Object.values(oh.rxf),
+    },
+  };
+}
+
+// ---------- draw fns (consume A = current aggregate) ----------
+let A, trendMode='amount', catFilter='Todas', donutPipe='Todos', sortKey='amount', sortDir=-1;
+
+function drawKPIs(){
+  const {totalAmount,totalDeals,catAgg,finance,onhold}=A;
+  const avgDen=finance.filter(f=>f.amount>0).reduce((s,f)=>s+f.deals,0);
+  const avgTicket=avgDen?totalAmount/avgDen:0;
+  const financedShare=totalAmount?catAgg['Financiado'].amount/totalAmount:0;
+  const activeCos=finance.filter(f=>f.deals>=5 && f.cat!=='Otros / Sin asignar').length;
+  const kpi=[
+    {l:'Revenue total',v:money(totalAmount),m:'15% solar/roofing · 10% water/Anker'},
+    {l:'Deals cerrados',v:intf(totalDeals),m:'Activos · sin cancelar ni On Hold'},
+    {l:'Revenue / deal',v:money(avgTicket),m:'Promedio sobre deals con monto'},
+    {l:'% Financiado',v:Math.round(financedShare*100)+'%',m:'vs '+Math.round((1-financedShare)*100)+'% cash/otros'},
+    {l:'Revenue en On Hold',v:money(onhold.total.amount),m:intf(onhold.total.deals)+' deals en riesgo'},
+  ];
+  $('#kpis').innerHTML=kpi.map((k,i)=>`<div class="kpi k${i+1}"><div class="lab">${k.l}</div><div class="val">${k.v}</div><div class="meta">${k.m}</div><div class="bar"></div></div>`).join('');
+}
+
+function drawTrend(){
+  const {months,finance}=A;
+  const catMonthly={};CAT_ORDER.forEach(c=>catMonthly[c]=months.map(()=>({amount:0,deals:0})));
+  finance.forEach(f=>{const tot=Object.values(f.months||{}).reduce((s,v)=>s+v,0)||1;months.forEach((ym,i)=>{const a=(f.months&&f.months[ym])||0;catMonthly[f.cat][i].amount+=a;catMonthly[f.cat][i].deals+=f.deals*(a/tot);});});
+  const W=1000,H=320,padL=54,padR=14,padT=14,padB=46;
+  const n=Math.max(months.length,1),cw=(W-padL-padR)/n,bw=Math.min(46,cw*0.62);
+  const stacks=months.map((ym,i)=>{let tot=0;const segs=CAT_ORDER.map(c=>{const v=catMonthly[c][i][trendMode];tot+=v;return{c,v};});return{ym,segs,tot};});
+  const max=Math.max(...stacks.map(s=>s.tot),1)*1.12;
+  const y=v=>padT+(H-padT-padB)*(1-v/max);
+  let g='';
+  for(let t=0;t<=4;t++){const gv=max*t/4,yy=y(gv);g+=`<line x1="${padL}" y1="${yy}" x2="${W-padR}" y2="${yy}" stroke="#EEF0F5"/>`;g+=`<text x="${padL-8}" y="${yy+4}" text-anchor="end" font-size="11" font-weight="700" fill="#9AA3B2">${trendMode==='amount'?money(gv):intf(gv)}</text>`;}
+  stacks.forEach((s,i)=>{const x=padL+cw*i+(cw-bw)/2;let acc=0;
+    s.segs.forEach(seg=>{if(seg.v<=0)return;const h=(H-padT-padB)*(seg.v/max),yy=y(acc+seg.v);acc+=seg.v;g+=`<rect x="${x}" y="${yy}" width="${bw}" height="${h}" rx="3" fill="${CAT_HEX[seg.c]}"/>`;});
+    g+=`<text x="${x+bw/2}" y="${H-padB+18}" text-anchor="middle" font-size="11" font-weight="800" fill="#7A8194">${MES[+s.ym.slice(5,7)-1]}</text>`;
+    g+=`<text x="${x+bw/2}" y="${H-padB+31}" text-anchor="middle" font-size="9" font-weight="700" fill="#B7BECC">'${s.ym.slice(2,4)}</text>`;
+    g+=`<rect x="${padL+cw*i}" y="${padT}" width="${cw}" height="${H-padT-padB}" fill="transparent" data-h="${i}"/>`;});
+  $('#trend').innerHTML=`<svg viewBox="0 0 ${W} ${H}">${g}</svg>`;
+  $('#trend').querySelectorAll('[data-h]').forEach(z=>{const i=+z.dataset.h,s=stacks[i];
+    z.addEventListener('mousemove',e=>{const rows=CAT_ORDER.filter(c=>catMonthly[c][i][trendMode]>0).map(c=>`<div style="display:flex;gap:8px;align-items:center"><span style="width:8px;height:8px;border-radius:2px;background:${CAT_HEX[c]};display:inline-block"></span>${c}: <b>${trendMode==='amount'?money(catMonthly[c][i][trendMode]):intf(catMonthly[c][i][trendMode])}</b></div>`).join('');
+      showTip(e,`<div style="margin-bottom:5px">${mLabel(s.ym)} · Total ${trendMode==='amount'?money(s.tot):intf(s.tot)}</div>${rows}`);});
+    z.addEventListener('mouseleave',hideTip);});
+  $('#trendLeg').innerHTML=CAT_ORDER.map(c=>`<div class="it"><span class="sw" style="background:${CAT_HEX[c]}"></span>${c}</div>`).join('');
+}
+
+// lista de financieras para el donut, filtrable por pipeline
+function donutFinanceList(){
+  if(donutPipe==='Todos') return A.finance.filter(f=>f.amount>0);
+  const by={};
+  A.matrix.filter(x=>x.pipeline===donutPipe).forEach(x=>{const f=by[x.finance]||(by[x.finance]={name:x.finance,amount:0,deals:0});f.amount+=x.amount;f.deals+=x.deals;});
+  return Object.values(by).filter(f=>f.amount>0);
+}
+function fillDonutPipeOptions(){
+  const opts=['Todos',...A.pipelines.filter(p=>p.amount>0).map(p=>p.name)];
+  if(!opts.includes(donutPipe))donutPipe='Todos';
+  $('#donutPipe').innerHTML=opts.map(o=>`<option value="${o}"${o===donutPipe?' selected':''}>${o==='Todos'?'Todos los productos':o}</option>`).join('');
+}
+function drawDonut(){
+  // Mezcla POR FINANCIERA (cada financiera es un segmento), opcionalmente filtrada por pipeline
+  const list=donutFinanceList().sort((a,b)=>b.amount-a.amount);
+  const tot=list.reduce((s,f)=>s+f.amount,0);
+  if(!tot){$('#donut').innerHTML='';$('#dCenterV').textContent='$0';$('#dleg').innerHTML='<div class="empty">Sin datos en el rango</div>';return;}
+  const TOPN=11;
+  let segs=list.slice(0,TOPN).map(f=>({name:f.name,amount:f.amount,deals:f.deals}));
+  if(list.length>TOPN){const rest=list.slice(TOPN);segs.push({name:'Otras',amount:rest.reduce((s,f)=>s+f.amount,0),deals:rest.reduce((s,f)=>s+f.deals,0),otras:true});}
+  segs.forEach((s,i)=>s.color=s.otras?'#B7BECC':FIN_PALETTE[i%FIN_PALETTE.length]);
+  const detail=s=>`<div style="margin-bottom:4px;font-size:13px">${s.name}</div><div>Revenue: <b>${moneyFull(s.amount)}</b></div><div>${intf(s.deals)} ventas · ${(s.amount/tot*100).toFixed(1)}%</div><div>Revenue/deal: <b>${money(s.amount/s.deals)}</b></div>`;
+  const R=84,r=54,cx=94,cy=94;let a0=-Math.PI/2,g='';
+  segs.forEach((s,i)=>{const frac=s.amount/tot,a1=a0+frac*Math.PI*2,large=frac>0.5?1:0;
+    const x0=cx+R*Math.cos(a0),y0=cy+R*Math.sin(a0),x1=cx+R*Math.cos(a1),y1=cy+R*Math.sin(a1);
+    const xi1=cx+r*Math.cos(a1),yi1=cy+r*Math.sin(a1),xi0=cx+r*Math.cos(a0),yi0=cy+r*Math.sin(a0);
+    g+=`<path d="M${x0} ${y0} A${R} ${R} 0 ${large} 1 ${x1} ${y1} L${xi1} ${yi1} A${r} ${r} 0 ${large} 0 ${xi0} ${yi0} Z" fill="${s.color}" data-i="${i}" style="cursor:pointer"></path>`;a0=a1;});
+  $('#donut').innerHTML=`<svg viewBox="0 0 188 188">${g}</svg>`;
+  $('#dCenterV').textContent=money(tot);
+  $('#dleg').innerHTML=segs.map((s,i)=>`<div class="row" data-i="${i}" style="cursor:pointer"><span class="sw" style="background:${s.color}"></span><span class="nm">${s.name}</span><span class="pc">${(s.amount/tot*100).toFixed(1)}%</span></div>`).join('');
+  // hover en segmentos y en leyenda
+  const bind=node=>{const i=+node.dataset.i;node.addEventListener('mousemove',e=>showTip(e,detail(segs[i])));node.addEventListener('mouseleave',hideTip);};
+  $('#donut').querySelectorAll('path[data-i]').forEach(bind);
+  $('#dleg').querySelectorAll('.row[data-i]').forEach(bind);
+}
+
+function bars(sel,items,colorFn,subFn,tagFn){
+  if(!items.length){$(sel).innerHTML='<div class="empty">Sin datos en el rango</div>';return;}
+  const max=Math.max(...items.map(i=>i.amount),1);
+  $(sel).innerHTML=items.map(it=>{const w=Math.max(8,it.amount/max*100);
+    return `<div class="rrow"><div class="nm" title="${it.name}">${tagFn?tagFn(it):''}${it.name}</div>
+    <div class="track"><div class="fill" style="width:0;background:${colorFn(it)}" data-w="${w}">${money(it.amount)}</div></div>
+    <div class="amt">${intf(it.deals)} deals<small>${subFn?subFn(it):money(it.amount/it.deals)+' ticket'}</small></div></div>`;}).join('');
+  requestAnimationFrame(()=>$(sel).querySelectorAll('.fill').forEach(f=>f.style.width=f.dataset.w+'%'));
+}
+
+function drawRank(){
+  // Total = cantidad de deals de TODAS las financieras (no solo el top 10 visible)
+  $('#rankTotal').textContent=intf(A.finance.reduce((s,f)=>s+f.deals,0))+' deals';
+  let list=A.finance.filter(f=>f.amount>0 && (catFilter==='Todas'||f.cat===catFilter)).slice(0,10);
+  bars('#rank',list,f=>CAT_HEX[f.cat],null,f=>`<span class="tag ${CAT_TAG[f.cat]}">${catShort(f.cat)}</span>`);
+}
+function drawPipes(){
+  const list=A.pipelines.filter(p=>p.amount>0);
+  const activeDeals=A.pipelines.reduce((s,p)=>s+p.deals,0);
+  $('#pipeTotal').textContent=intf(activeDeals)+' deals';
+  bars('#pipes',list.map((p,i)=>({...p,_i:i})),p=>PIPE_COL[p._i%PIPE_COL.length],null,null);
+  // footer: ventas gross (activas + On Hold) y cantidad en On Hold
+  const holdDeals=A.onhold.total.deals;
+  const gross=activeDeals+holdDeals;
+  $('#pipeFoot').innerHTML=`
+    <div class="row gross"><span class="l">Ventas gross <small style="font-weight:600;color:var(--muted)">(incl. On Hold)</small></span><span class="v">${intf(gross)} deals</span></div>
+    <div class="row hold"><span class="l">⏸ En On Hold</span><span class="v">${intf(holdDeals)} deals</span></div>`;
+}
+
+function heatmap(sel,rowsArr,colsArr,cellMap,maxV,baseRGB){
+  const [R,G,B]=baseRGB;
+  const shade=v=>{if(v<=0)return sel==='#ohHeat'?'#FBF1F0':'#F4F6FB';const t=Math.pow(v/maxV,sel==='#ohHeat'?0.5:0.45);const r=Math.round(R+(255-R)*(1-t)),g=Math.round(G+(255-G)*(1-t)),b=Math.round(B+(255-B)*(1-t));return `rgb(${r},${g},${b})`;};
+  if(!rowsArr.length||!colsArr.length){$(sel).innerHTML='<div class="empty">Sin datos en el rango</div>';return;}
+  let html='<table class="heat"><thead><tr><th class="row"></th>'+colsArr.map(c=>`<th>${c.length>11?c.slice(0,11)+'…':c}</th>`).join('')+'</tr></thead><tbody>';
+  rowsArr.forEach(rs=>{html+=`<tr><th class="row">${rs.length>26?rs.slice(0,26)+'…':rs}</th>`;colsArr.forEach(c=>{const cell=cellMap[rs+'|'+c]||{amount:0,deals:0};const t=cell.amount/maxV;const txt=t>0.5?'#fff':'#1B2138';
+    html+=`<td class="${cell.amount<=0?'zero':''}" style="background:${shade(cell.amount)};color:${txt}" data-tip="${rs} · ${c}|${moneyFull(cell.amount)} · ${intf(cell.deals)} deals">${cell.amount>0?money(cell.amount):'·'}</td>`;});html+='</tr>';});
+  html+='</tbody></table>';
+  $(sel).innerHTML=html;
+  $(sel).querySelectorAll('td[data-tip]').forEach(td=>{const[a,b]=td.dataset.tip.split('|');
+    td.addEventListener('mousemove',e=>showTip(e,`<div style="margin-bottom:3px">${a}</div><b>${b}</b>`));
+    td.addEventListener('mouseleave',hideTip);});
+}
+
+function drawHeat(){
+  const topFin=A.finance.filter(f=>f.amount>0).slice(0,7).map(f=>f.name);
+  const pipeNames=A.pipelines.filter(p=>p.amount>0).map(p=>p.name);
+  const m={};A.matrix.forEach(x=>m[x.pipeline+'|'+x.finance]={amount:x.amount,deals:x.deals});
+  let max=0;pipeNames.forEach(p=>topFin.forEach(f=>{const v=(m[p+'|'+f]||{}).amount||0;if(v>max)max=v;}));
+  heatmap('#heat',pipeNames,topFin,m,max||1,[29,66,155]);
+}
+
+function drawOnHold(){
+  const oh=A.onhold;
+  const pctRisk=(A.totalAmount+oh.total.amount)?oh.total.amount/(A.totalAmount+oh.total.amount):0;
+  const pctDeals=(A.totalDeals+oh.total.deals)?oh.total.deals/(A.totalDeals+oh.total.deals):0;
+  $('#ohStats').innerHTML=`
+    <div class="oh-stat"><div class="l">Deals en On Hold</div><div class="v">${intf(oh.total.deals)}</div><div class="s">${(pctDeals*100).toFixed(1)}% de los deals del rango</div></div>
+    <div class="oh-stat"><div class="l">Revenue en riesgo</div><div class="v">${money(oh.total.amount)}</div><div class="s">${(pctRisk*100).toFixed(1)}% del revenue total</div></div>
+    <div class="oh-stat"><div class="l">Ticket promedio</div><div class="v">${oh.total.deals?money(oh.total.amount/oh.total.deals):'$0'}</div><div class="s">por deal pausado</div></div>`;
+  const RED=['#D7443A','#E0695F','#E88A82','#EFACA6'];
+  bars('#ohReason',oh.byReason.map((r,i)=>({...r,_i:i})),r=>RED[r._i%RED.length],r=>(r.deals/(oh.total.deals||1)*100).toFixed(0)+'% del hold',null);
+  bars('#ohFinance',oh.byFinance.filter(f=>f.amount>0).slice(0,7),f=>CAT_HEX[f.cat],null,f=>`<span class="tag ${CAT_TAG[f.cat]}">${catShort(f.cat)}</span>`);
+  bars('#ohPipe',oh.byPipeline.filter(p=>p.amount>0),()=>'#21274E',null,null);
+  // monthly mini bars
+  const ms=oh.byMonth;
+  if(!ms.length){$('#ohMonth').innerHTML='<div class="empty">Sin datos</div>';}
+  else{const W=480,H=130,padL=8,padR=8,padB=24;const cw=(W-padL-padR)/ms.length,bw=Math.min(26,cw*0.6);const max=Math.max(...ms.map(m=>m.amount),1)*1.15;let g='';
+    ms.forEach((m,i)=>{const h=(H-10-padB)*(m.amount/max),x=padL+cw*i+(cw-bw)/2,yy=H-padB-h;
+      g+=`<rect x="${x}" y="${yy}" width="${bw}" height="${Math.max(h,1)}" rx="3" fill="#D7443A" opacity="${m.amount>0?0.9:0.18}"><title>${mLabel(m.ym)}: ${money(m.amount)} · ${m.deals} deals</title></rect>`;
+      g+=`<text x="${x+bw/2}" y="${H-8}" text-anchor="middle" font-size="9" font-weight="700" fill="#9AA3B2">${MES[+m.ym.slice(5,7)-1]}</text>`;});
+    $('#ohMonth').innerHTML=`<svg viewBox="0 0 ${W} ${H}">${g}</svg>`;}
+  // reason × finance heatmap
+  const reasonsR=oh.byReason.map(r=>r.name);
+  const finsC=oh.byFinance.filter(f=>f.amount>0).slice(0,7).map(f=>f.name);
+  const cell={};oh.reasonByFinance.forEach(x=>cell[x.reason+'|'+x.finance]={amount:x.amount,deals:x.deals});
+  let max=0;reasonsR.forEach(r=>finsC.forEach(f=>{const v=(cell[r+'|'+f]||{}).amount||0;if(v>max)max=v;}));
+  heatmap('#ohHeat',reasonsR,finsC,cell,max||1,[215,68,58]);
+}
+
+
+function drawCatChips(){
+  const cats=['Todas',...CAT_ORDER.filter(c=>A.catAgg[c].amount>0)];
+  if(!cats.includes(catFilter))catFilter='Todas';
+  $('#fchips').innerHTML=cats.map(c=>`<button data-c="${c}" class="${c===catFilter?'on':''}">${c}</button>`).join('');
+}
+
+// barras por conteo (no $) — value=casos
+function countBars(sel,items,color){
+  if(!items.length){$(sel).innerHTML='<div class="empty">Sin datos en el rango</div>';return;}
+  const max=Math.max(...items.map(i=>i.value),1);
+  $(sel).innerHTML=items.map(it=>{const w=Math.max(8,it.value/max*100);
+    return `<div class="rrow"><div class="nm" title="${it.name}">${it.name}</div>
+    <div class="track"><div class="fill" style="width:0;background:${color}" data-w="${w}">${intf(it.value)}</div></div>
+    <div class="amt">${it.pct}%<small>de la promo</small></div></div>`;}).join('');
+  requestAnimationFrame(()=>$(sel).querySelectorAll('.fill').forEach(f=>f.style.width=f.dataset.w+'%'));
+}
+
+function drawPromo(){
+  const pf=DATA.promoFacts||[];
+  let firma=0,inst=0,both=0,promo=0; const byF={},byI={};
+  for(const [d,pi,fa,ia,n] of pf){
+    if(d<A.from||d>A.to)continue;
+    const pipe=pipes[pi];
+    if(!ALLOWED_PIPES.has(pipe))continue; // solo pipelines permitidos
+    if(fa){firma+=n;byF[pipe]=(byF[pipe]||0)+n;}
+    if(ia){inst+=n;byI[pipe]=(byI[pipe]||0)+n;}
+    if(fa&&ia)both+=n;
+    promo+=n; // cada fila tiene firma||instala → promo = casos únicos con promo
+  }
+  const tot=A.totalDeals||0;
+  const pc=v=>tot?(v/tot*100).toFixed(1)+'% del total':'—';
+  $('#promoTotal').textContent=intf(promo)+' deals';
+  $('#promoStats').innerHTML=`
+    <div class="oh-stat"><div class="l">Casos con promo</div><div class="v" style="color:var(--orange)">${intf(promo)}</div><div class="s">${pc(promo)}</div></div>
+    <div class="oh-stat"><div class="l">✍️ Firma y Gana</div><div class="v" style="color:#2E5BD7">${intf(firma)}</div><div class="s">${pc(firma)}</div></div>
+    <div class="oh-stat"><div class="l">🔧 Instala y Gana</div><div class="v" style="color:#1E9E63">${intf(inst)}</div><div class="s">${pc(inst)}</div></div>
+    <div class="oh-stat"><div class="l">Ambas promos</div><div class="v" style="color:#9B5DE5">${intf(both)}</div><div class="s">${pc(both)}</div></div>`;
+  const mk=(obj,den)=>Object.entries(obj).map(([name,v])=>({name,value:v,pct:den?Math.round(v/den*100):0})).sort((a,b)=>b.value-a.value);
+  countBars('#promoFirma',mk(byF,firma),'#2E5BD7');
+  countBars('#promoInstala',mk(byI,inst),'#1E9E63');
+}
+
+// ---------- render ----------
+function render(){
+  const from=$('#fFrom').value, to=$('#fTo').value;
+  if(!from||!to||from>to)return;
+  A=aggregate(from,to);
+  $('#rangePill').textContent=dLabel(from)+'  →  '+dLabel(to);
+  fillDonutPipeOptions();
+  drawKPIs();drawTrend();drawDonut();drawCatChips();drawRank();drawPipes();drawHeat();drawOnHold();drawPromo();
+}
+
+// ---------- controls ----------
+$('#tgl').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;$('#tgl').querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');trendMode=b.dataset.m;drawTrend();});
+$('#fchips').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;catFilter=b.dataset.c;drawCatChips();drawRank();});
+
+function setPreset(p,btn){
+  $('#presets').querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+  if(btn)btn.classList.add('on');
+  const max=DATA.maxDate, min=DATA.minDate;
+  let from=min;
+  if(p==='all')from=min;
+  else if(p==='ytd')from=max.slice(0,4)+'-01-01';
+  else if(p==='month')from=max.slice(0,7)+'-01'; // mes actual (del último cierre)
+  else{const d=new Date(max+'T00:00:00');d.setMonth(d.getMonth()-(+p)+1);d.setDate(1);from=d.toISOString().slice(0,10);if(from<min)from=min;}
+  if(from<min)from=min;
+  $('#fFrom').value=from;$('#fTo').value=max;
+  render();
+}
+$('#presets').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;setPreset(b.dataset.p,b);});
+['#fFrom','#fTo'].forEach(s=>$(s).addEventListener('change',()=>{$('#presets').querySelectorAll('button').forEach(x=>x.classList.remove('on'));render();}));
+$('#donutPipe').addEventListener('change',e=>{donutPipe=e.target.value;drawDonut();});
+
+// init
+$('#fFrom').min=DATA.minDate;$('#fFrom').max=DATA.maxDate;$('#fTo').min=DATA.minDate;$('#fTo').max=DATA.maxDate;
+// timestamp de última actualización de la data
+if(DATA.generatedAt){const dt=new Date(DATA.generatedAt);$('#updated').textContent='· Actualizado '+dt.toLocaleString('es-PR',{day:'numeric',month:'short',year:'numeric',hour:'numeric',minute:'2-digit'});}
+setPreset('12',$('#presets').querySelector('[data-p="12"]'));
+function __postH(){try{parent.postMessage({type:"finheight",h:document.documentElement.scrollHeight},"*")}catch(e){}}
+window.addEventListener("resize",__postH);new ResizeObserver(__postH).observe(document.body);setTimeout(__postH,400);setTimeout(__postH,1200);
+})();
+</script>
+</body>
+</html>
