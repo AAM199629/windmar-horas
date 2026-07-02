@@ -26,7 +26,11 @@ export interface HomeDepotTienda {
   amount: number
   paneles: number | null   // null si System Size aún no está en el warehouse
   baterias: number | null  // null si Battery Qty aún no está en el warehouse
-  ingreso: number | null   // paneles*50 + baterias*200 (null si faltan unidades)
+  ingreso: number | null   // método actual: paneles*50 + baterias*200
+  // Método alterno (igual que malls): % del EPC según pipeline, para comparar.
+  epcSolarRoofing: number   // ventas solar/roofing (amount)
+  ventasWaterAnker: number  // ventas water/Anker (amount)
+  gananciaPipeline: number  // 0.15*solar + 0.10*water
 }
 export interface MallFinance {
   nombre: string
@@ -129,6 +133,9 @@ export async function getHomeDepotFinance(from: string, to: string): Promise<Hom
     for (const r of u) unitsByBooth.set(r.booth, { systemSizeW: Number(r.system_size_w), batteryQty: Number(r.battery_qty) })
   }
 
+  const solarSet = new Set(SOLAR_ROOFING_PIPELINES.map(normalize))
+  const waterSet = new Set(WATER_ANKER_PIPELINES.map(normalize))
+
   return HD_STORES.map(store => {
     const booth = rows.filter(r => r.booth === store)
     const deals = booth.reduce((s, r) => s + r.deals, 0)
@@ -139,7 +146,11 @@ export async function getHomeDepotFinance(from: string, to: string): Promise<Hom
     const ingreso  = paneles != null && baterias != null
       ? paneles * HD_PRECIO_PANEL + baterias * HD_PRECIO_BATERIA
       : null
-    return { nombre: store, deals, amount, paneles, baterias, ingreso }
+    // Método malls: % del EPC según pipeline (para comparar contra el de placas/baterías).
+    const epcSolarRoofing  = booth.filter(r => solarSet.has(normalize(r.pipeline))).reduce((s, r) => s + r.amount, 0)
+    const ventasWaterAnker = booth.filter(r => waterSet.has(normalize(r.pipeline))).reduce((s, r) => s + r.amount, 0)
+    const gananciaPipeline = epcSolarRoofing * MALL_RATE_SOLAR_ROOFING + ventasWaterAnker * MALL_RATE_WATER_ANKER
+    return { nombre: store, deals, amount, paneles, baterias, ingreso, epcSolarRoofing, ventasWaterAnker, gananciaPipeline }
   })
 }
 

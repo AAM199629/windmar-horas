@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 // ── Tipos (espejo de /api/finance/summary) ──────────────────────────────────────
-interface HomeDepotTienda { nombre: string; deals: number; amount: number; paneles: number | null; baterias: number | null; ingreso: number | null }
+interface HomeDepotTienda { nombre: string; deals: number; amount: number; paneles: number | null; baterias: number | null; ingreso: number | null; epcSolarRoofing: number; ventasWaterAnker: number; gananciaPipeline: number }
 interface MallFinance     { nombre: string; costoMensual: number; mesesActivos: number; costoPeriodo: number; epcSolarRoofing: number; ventasWaterAnker: number; ganancia: number; pctMeta: number }
 interface BoothEvent      { nombre: string; fechaInicio: string; fechaFin: string; dias: number; mesesActivos: number; costo: number; ingreso: number; gananciaNeta: number }
 interface Coordinador     { nombre: string; ventas: number; amount: number; comision: number; guagua: number; salario: number; costoTotal: number; gananciaCompania: number; gananciaNeta: number }
@@ -488,6 +488,65 @@ export default function FinanceDashboard({ initMonth }: { initMonth: string }) {
                       </tbody>
                     </table>
                   </div>
+
+                  {/* Comparación de métodos de ingreso */}
+                  {(() => {
+                    const totalPipeline = stores.reduce((s, t) => s + t.gananciaPipeline, 0)
+                    const coberturaPipe = metaTotal > 0 ? totalPipeline / metaTotal : 0
+                    const sortedCmp = [...stores].sort((a, b) => b.gananciaPipeline - a.gananciaPipeline)
+                    return (
+                      <div style={{ marginTop: 34 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6, flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: 16, fontWeight: 800, color: NAVY }}>Comparación de métodos de ingreso</span>
+                        </div>
+                        <p style={{ fontSize: 13, color: GREY, marginBottom: 18, maxWidth: 760 }}>
+                          Dos formas de medir lo que genera Home Depot, ambas contra la meta de <strong>{money(metaTotal)}</strong> semestral:
+                          el <strong>método actual</strong> ($50/placa + $200/batería) y el <strong>método de malls</strong> (15% del EPC solar/roofing + 10% water/Anker).
+                        </p>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 18, marginBottom: 22 }} className="max-md:!grid-cols-2">
+                          <Kpi label="Placas / Baterías" value={money(data.hdUnitsReady ? totalIngreso : null)} sub={`Cobertura ${data.hdUnitsReady ? pct1(cobertura) : '—'}`} accent={BLUE} valueColor={data.hdUnitsReady ? semaforo(cobertura).color : undefined} />
+                          <Kpi label="% del EPC (método malls)" value={money(totalPipeline)} sub={`Cobertura ${pct1(coberturaPipe)}`} accent={VIBRANT} valueColor={semaforo(coberturaPipe).color} />
+                          <Kpi label="Diferencia" value={money(data.hdUnitsReady ? totalPipeline - totalIngreso : null)} sub="EPC − Placas/Bat" accent={ORANGE} />
+                          <Kpi label="Meta Semestral" value={money(metaTotal)} sub="Pago a Home Depot" accent={NAVY} />
+                        </div>
+                        <div style={{ overflowX: 'auto' }}>
+                          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                            <thead><tr>
+                              <Th align="left" bg={VIBRANT} radius="l">Tienda</Th>
+                              <Th bg={VIBRANT}>Placas/Bat ($)</Th>
+                              <Th bg={HEADERB}>EPC Solar/Roofing</Th>
+                              <Th bg={HEADERB}>Water/Anker</Th>
+                              <Th bg={VIBRANT}>% EPC (malls)</Th>
+                              <Th bg={VIBRANT} radius="r">Δ vs Placas/Bat</Th>
+                            </tr></thead>
+                            <tbody>
+                              {sortedCmp.map((t, i) => {
+                                const diff = (t.gananciaPipeline) - (t.ingreso ?? 0)
+                                return (
+                                  <tr key={t.nombre} style={bodyRowStyle(i)}>
+                                    <Td align="left">{t.nombre.replace('Home Depot - ', '')}</Td>
+                                    <Td bold>{money(t.ingreso)}</Td>
+                                    <Td muted>{money(t.epcSolarRoofing)}</Td>
+                                    <Td muted>{money(t.ventasWaterAnker)}</Td>
+                                    <Td bold>{money(t.gananciaPipeline)}</Td>
+                                    <Td bold color={data.hdUnitsReady ? (diff >= 0 ? GREEN : RED) : FLAT}>{data.hdUnitsReady ? `${diff >= 0 ? '+' : ''}${money(diff)}` : '—'}</Td>
+                                  </tr>
+                                )
+                              })}
+                              <tr style={totalRowStyle}>
+                                <Td align="left" bold>TOTAL</Td>
+                                <Td bold>{money(data.hdUnitsReady ? totalIngreso : null)}</Td>
+                                <Td bold>{money(stores.reduce((s, t) => s + t.epcSolarRoofing, 0))}</Td>
+                                <Td bold>{money(stores.reduce((s, t) => s + t.ventasWaterAnker, 0))}</Td>
+                                <Td bold>{money(totalPipeline)}</Td>
+                                <Td bold color={data.hdUnitsReady ? (totalPipeline - totalIngreso >= 0 ? GREEN : RED) : FLAT}>{data.hdUnitsReady ? `${totalPipeline - totalIngreso >= 0 ? '+' : ''}${money(totalPipeline - totalIngreso)}` : '—'}</Td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )
+                  })()}
                 </SectionCard>
               )
             })()}
