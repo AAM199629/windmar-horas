@@ -53,6 +53,7 @@ export default function Navbar() {
     ...links,
     ...(canSeeAsalariados ? [
       { href: '/ventas',      label: 'Dashboard Ventas' },
+      { href: '/finance',     label: 'Finanzas & ROI' },
       { href: '/asalariados', label: 'Asalariados' },
       { href: '/promotores',  label: 'Promotores'  },
       { href: '/bingo',       label: 'Bingo'        },
