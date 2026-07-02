@@ -30,18 +30,21 @@ export interface HomeDepotTienda {
 }
 export interface MallFinance {
   nombre: string
-  costoMensual: number
+  costoMensual: number   // renta por mes (tarifa)
+  mesesActivos: number   // meses del rango en que el mall estuvo activo
+  costoPeriodo: number   // costoMensual * mesesActivos
   epcSolarRoofing: number
   ventasWaterAnker: number
   ganancia: number
-  pctMeta: number
+  pctMeta: number        // ganancia / costoPeriodo
 }
 export interface BoothEvent {
   nombre: string
   fechaInicio: string
   fechaFin: string
-  dias: number          // días activos dentro del mes seleccionado
-  costo: number         // inversión fija tal cual
+  dias: number          // días activos dentro del rango seleccionado
+  mesesActivos: number  // meses del rango en que el evento estuvo activo
+  costo: number         // inversión fija * mesesActivos (no se prorratea)
   ingreso: number
   gananciaNeta: number
 }
@@ -144,6 +147,7 @@ export async function getHomeDepotFinance(from: string, to: string): Promise<Hom
 export async function getMallFinance(from: string, to: string): Promise<MallFinance[]> {
   // Solo malls activos en el período (traslape con su ventana del Channel Info).
   // fechaFin null = indefinido. El costo mensual se imputa completo si está activo.
+  const meses = monthsInRange(from, to)
   const active = MALLS.filter(m => overlapDays(m.fechaInicio, m.fechaFin ?? FAR_FUTURE, from, to) > 0)
   if (!active.length) return []
 
@@ -156,8 +160,10 @@ export async function getMallFinance(from: string, to: string): Promise<MallFina
     const epcSolarRoofing  = booth.filter(r => solarSet.has(normalize(r.pipeline))).reduce((s, r) => s + r.amount, 0)
     const ventasWaterAnker = booth.filter(r => waterSet.has(normalize(r.pipeline))).reduce((s, r) => s + r.amount, 0)
     const ganancia    = epcSolarRoofing * MALL_RATE_SOLAR_ROOFING + ventasWaterAnker * MALL_RATE_WATER_ANKER
-    const pctMeta     = mall.costoMensual > 0 ? ganancia / mall.costoMensual : 0
-    return { nombre: mall.nombre, costoMensual: mall.costoMensual, epcSolarRoofing, ventasWaterAnker, ganancia, pctMeta }
+    const mesesActivos = meses.filter(mm => overlapDays(mall.fechaInicio, mall.fechaFin ?? FAR_FUTURE, mm.start, mm.end) > 0).length
+    const costoPeriodo = mall.costoMensual * mesesActivos
+    const pctMeta     = costoPeriodo > 0 ? ganancia / costoPeriodo : 0
+    return { nombre: mall.nombre, costoMensual: mall.costoMensual, mesesActivos, costoPeriodo, epcSolarRoofing, ventasWaterAnker, ganancia, pctMeta }
   })
 }
 
@@ -167,6 +173,25 @@ function overlapDays(aStart: string, aEnd: string, bStart: string, bEnd: string)
   const e = aEnd   < bEnd   ? aEnd   : bEnd
   if (e < s) return 0
   return Math.round((Date.parse(e) - Date.parse(s)) / 86_400_000) + 1
+}
+
+// Meses calendario tocados por [from,to], cada uno recortado al rango. Se usa para
+// escalar costos fijos MENSUALES (renta malls, salario cambaseo, inversión fija de
+// eventos) por cada mes activo → P&L acumulado real en rangos multi-mes.
+export interface MonthSpan { year: number; month: number; start: string; end: string }
+export function monthsInRange(from: string, to: string): MonthSpan[] {
+  const out: MonthSpan[] = []
+  let y = Number(from.slice(0, 4)), m = Number(from.slice(5, 7))
+  const endY = Number(to.slice(0, 4)), endM = Number(to.slice(5, 7))
+  while (y < endY || (y === endY && m <= endM)) {
+    const mm = String(m).padStart(2, '0')
+    const lastDay = new Date(y, m, 0).getDate()
+    const mStart = `${y}-${mm}-01`
+    const mEnd   = `${y}-${mm}-${String(lastDay).padStart(2, '0')}`
+    out.push({ year: y, month: m, start: mStart > from ? mStart : from, end: mEnd < to ? mEnd : to })
+    m++; if (m > 12) { m = 1; y++ }
+  }
+  return out
 }
 
 // Ventas (excluye canceladas) por channel_info + pipeline. El ingreso de un evento
@@ -203,6 +228,7 @@ async function getEventPipelineRows(from: string, to: string, ids: string[]): Pr
 const FAR_FUTURE = '9999-12-31'
 export async function getBoothEventFinance(from: string, to: string): Promise<BoothEvent[]> {
   if (!EVENTS.length) return []
+  const meses = monthsInRange(from, to)
   const active = EVENTS.filter(ev => overlapDays(ev.fechaInicio, ev.fechaFin ?? FAR_FUTURE, from, to) > 0)
   if (!active.length) return []
 
@@ -215,26 +241,32 @@ export async function getBoothEventFinance(from: string, to: string): Promise<Bo
     const solar = r.filter(x => solarSet.has(normalize(x.pipeline))).reduce((s, x) => s + x.amount, 0)
     const water = r.filter(x => waterSet.has(normalize(x.pipeline))).reduce((s, x) => s + x.amount, 0)
     const ingreso = solar * MALL_RATE_SOLAR_ROOFING + water * MALL_RATE_WATER_ANKER
+    // Inversión fija se imputa completa por cada mes activo (no se prorratea).
+    const mesesActivos = meses.filter(mm => overlapDays(ev.fechaInicio, ev.fechaFin ?? FAR_FUTURE, mm.start, mm.end) > 0).length
+    const costo = ev.inversionFija * mesesActivos
     return {
       nombre: ev.nombre,
       fechaInicio: ev.fechaInicio,
       fechaFin: ev.fechaFin ?? 'Indefinido',
       dias: overlapDays(ev.fechaInicio, ev.fechaFin ?? FAR_FUTURE, from, to),
-      costo: ev.inversionFija,
+      mesesActivos,
+      costo,
       ingreso,
-      gananciaNeta: ingreso - ev.inversionFija,
+      gananciaNeta: ingreso - costo,
     }
   })
 }
 
 // ── Cambaseo (por coordinador) ──────────────────────────────────────────────────
-export async function getCambaseoFinance(from: string, to: string, month1to12: number): Promise<Coordinador[]> {
+export async function getCambaseoFinance(from: string, to: string, mesesCount: number): Promise<Coordinador[]> {
   const pool = getRedshiftPool()
-  // Traemos solar/roofing + water/PPS y separamos por pipeline: cada grupo tiene su
-  // propia comisión (solar/roofing por mes; water/PPS $10 fijo todo el año).
+  // Traemos solar/roofing + water/PPS agrupado por MES: la comisión de solar/roofing
+  // cambia según el mes ($50 abr-sep / $100 oct-mar), así que se calcula por mes.
+  // water/PPS = $10 fijo todo el año. guagua+salario = mensual × meses del rango.
   const allPipelines = [...SOLAR_ROOFING_PIPELINES, ...WATER_ANKER_PIPELINES]
   const { rows } = await pool.query(`
     SELECT de.coordinador_de_canvaseo AS coordinador, dp.pipeline AS pipeline,
+           EXTRACT(MONTH FROM fd.closing_date)::int AS mes,
            COUNT(*)::int AS ventas, COALESCE(SUM(fd.amount), 0)::float8 AS amount
     FROM dwh.fact_deals fd
     JOIN dwh.dim_staff ds          ON ds.id_staff          = fd.id_staff        AND ds.is_current = true
@@ -249,33 +281,37 @@ export async function getCambaseoFinance(from: string, to: string, month1to12: n
       AND dp.pipeline = ANY($3)
       AND de.coordinador_de_canvaseo IS NOT NULL
       AND LOWER(de.coordinador_de_canvaseo) NOT LIKE 'oficina%'
-    GROUP BY de.coordinador_de_canvaseo, dp.pipeline
+    GROUP BY de.coordinador_de_canvaseo, dp.pipeline, EXTRACT(MONTH FROM fd.closing_date)
   `, [from, to, allPipelines])
 
   const solarSet = new Set(SOLAR_ROOFING_PIPELINES.map(normalize))
+  const meses = Math.max(1, mesesCount)
 
-  // Merge de duplicados por acentos/espacios (ej. "Pena" vs "Peña"), separando
-  // ventas/monto de solar-roofing vs water-pps.
-  interface Acc { nombre: string; ventasSolar: number; amountSolar: number; ventasWater: number; amountWater: number }
+  // Merge de duplicados por acentos/espacios (ej. "Pena" vs "Peña"), acumulando la
+  // comisión solar por mes (tarifa según el mes) y separando water/PPS.
+  interface Acc { nombre: string; ventasSolar: number; amountSolar: number; ventasWater: number; amountWater: number; comisionSolar: number }
   const merged = new Map<string, Acc>()
   for (const r of rows) {
     const key = normalize(r.coordinador)
     if (CAMBASEO_EXCLUDE.includes(key)) continue
-    const acc = merged.get(key) ?? { nombre: r.coordinador, ventasSolar: 0, amountSolar: 0, ventasWater: 0, amountWater: 0 }
-    if (solarSet.has(normalize(r.pipeline))) { acc.ventasSolar += Number(r.ventas); acc.amountSolar += Number(r.amount) }
-    else                                     { acc.ventasWater += Number(r.ventas); acc.amountWater += Number(r.amount) }
+    const acc = merged.get(key) ?? { nombre: r.coordinador, ventasSolar: 0, amountSolar: 0, ventasWater: 0, amountWater: 0, comisionSolar: 0 }
+    const ventas = Number(r.ventas), amount = Number(r.amount)
+    if (solarSet.has(normalize(r.pipeline))) {
+      acc.ventasSolar += ventas; acc.amountSolar += amount
+      acc.comisionSolar += ventas * cambaseoComisionPorMes(Number(r.mes))
+    } else {
+      acc.ventasWater += ventas; acc.amountWater += amount
+    }
     merged.set(key, acc)
   }
 
-  const comisionSolarUnit = cambaseoComisionPorMes(month1to12)
-
   return Array.from(merged.values()).map(c => {
     const ov = CAMBASEO_COST_OVERRIDES[normalize(c.nombre)] ?? {}
-    const guagua  = ov.guagua ?? CAMBASEO_GUAGUA_MENSUAL
-    const salario = ov.salarioMensual ?? CAMBASEO_SALARIO_MENSUAL
-    const comision = c.ventasSolar * comisionSolarUnit + c.ventasWater * CAMBASEO_COMISION_WATER_PPS
+    const guagua  = (ov.guagua ?? CAMBASEO_GUAGUA_MENSUAL) * meses
+    const salario = (ov.salarioMensual ?? CAMBASEO_SALARIO_MENSUAL) * meses
+    const comision = c.comisionSolar + c.ventasWater * CAMBASEO_COMISION_WATER_PPS
     const costoTotal = guagua + salario + comision
-    // Ganancia compañía = 15% del EPC de solar/roofing (TODO: confirmar modelo real).
+    // Ganancia compañía = 15% del EPC de solar/roofing (confirmado, jul 2026).
     const gananciaCompania = c.amountSolar * CAMBASEO_COMPANY_MARGIN_RATE
     return {
       nombre: c.nombre, ventas: c.ventasSolar, amount: c.amountSolar,
