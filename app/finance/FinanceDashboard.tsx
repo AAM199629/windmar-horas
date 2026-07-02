@@ -501,11 +501,11 @@ export default function FinanceDashboard({ initMonth }: { initMonth: string }) {
                         </div>
                         <p style={{ fontSize: 13, color: GREY, marginBottom: 18, maxWidth: 760 }}>
                           Dos formas de medir lo que genera Home Depot, ambas contra la meta de <strong>{money(metaTotal)}</strong> semestral:
-                          el <strong>método actual</strong> ($50/placa + $200/batería) y el <strong>método de malls</strong> (15% del EPC solar/roofing + 10% water/Anker).
+                          el <strong>método actual</strong> ($50/placa + $200/batería) y el <strong>método por % del EPC</strong> (15% del EPC solar/roofing + 10% water/Anker).
                         </p>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 18, marginBottom: 22 }} className="max-md:!grid-cols-2">
                           <Kpi label="Placas / Baterías" value={money(data.hdUnitsReady ? totalIngreso : null)} sub={`Cobertura ${data.hdUnitsReady ? pct1(cobertura) : '—'}`} accent={BLUE} valueColor={data.hdUnitsReady ? semaforo(cobertura).color : undefined} />
-                          <Kpi label="% del EPC (método malls)" value={money(totalPipeline)} sub={`Cobertura ${pct1(coberturaPipe)}`} accent={VIBRANT} valueColor={semaforo(coberturaPipe).color} />
+                          <Kpi label="% del EPC" value={money(totalPipeline)} sub={`Cobertura ${pct1(coberturaPipe)}`} accent={VIBRANT} valueColor={semaforo(coberturaPipe).color} />
                           <Kpi label="Diferencia" value={money(data.hdUnitsReady ? totalPipeline - totalIngreso : null)} sub="EPC − Placas/Bat" accent={ORANGE} />
                           <Kpi label="Meta Semestral" value={money(metaTotal)} sub="Pago a Home Depot" accent={NAVY} />
                         </div>
@@ -516,7 +516,7 @@ export default function FinanceDashboard({ initMonth }: { initMonth: string }) {
                               <Th bg={VIBRANT}>Placas/Bat ($)</Th>
                               <Th bg={HEADERB}>EPC Solar/Roofing</Th>
                               <Th bg={HEADERB}>Water/Anker</Th>
-                              <Th bg={VIBRANT}>% EPC (malls)</Th>
+                              <Th bg={VIBRANT}>% del EPC</Th>
                               <Th bg={VIBRANT} radius="r">Δ vs Placas/Bat</Th>
                             </tr></thead>
                             <tbody>
