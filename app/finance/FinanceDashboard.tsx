@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 // ── Tipos (espejo de /api/finance/summary) ──────────────────────────────────────
 interface HomeDepotTienda { nombre: string; deals: number; amount: number; paneles: number | null; baterias: number | null; ingreso: number | null; epcSolarRoofing: number; ventasWaterAnker: number; gananciaPipeline: number }
 interface MallFinance     { nombre: string; costoMensual: number; mesesActivos: number; costoPeriodo: number; epcSolarRoofing: number; ventasWaterAnker: number; ganancia: number; pctMeta: number }
-interface BoothEvent      { nombre: string; fechaInicio: string; fechaFin: string; dias: number; mesesActivos: number; costo: number; ingreso: number; gananciaNeta: number }
+interface BoothEvent      { nombre: string; fechaInicio: string; fechaFin: string; dias: number; mesesActivos: number; ventas: number; costo: number; ingreso: number; gananciaNeta: number }
 interface Coordinador     { nombre: string; ventas: number; amount: number; comision: number; guagua: number; salario: number; costoTotal: number; gananciaCompania: number; gananciaNeta: number }
 interface Canal           { nombre: string; ingreso: number; costo: number; neto: number }
 
@@ -583,25 +583,27 @@ export default function FinanceDashboard({ initMonth }: { initMonth: string }) {
               ) : (() => {
                 const totNet = data.booths.reduce((s, b) => s + b.gananciaNeta, 0)
                 const totCost = data.booths.reduce((s, b) => s + b.costo, 0)
-                const totDias = data.booths.reduce((s, b) => s + (b.dias ?? 0), 0)
+                const totIngreso = data.booths.reduce((s, b) => s + b.ingreso, 0)
+                const totVentas = data.booths.reduce((s, b) => s + (b.ventas ?? 0), 0)
                 return (
                   <>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 18, marginBottom: 24 }} className="max-md:!grid-cols-2">
-                      <Kpi label="Ganancia Neta Total" value={money(totNet)} accent={totNet >= 0 ? GREEN : RED} valueColor={totNet >= 0 ? GREEN : RED} />
+                      <Kpi label="Ventas Totales" value={num(totVentas)} sub="Deals atribuidos por Channel Info" accent={BLUE} />
+                      <Kpi label="Ingreso Total" value={money(totIngreso)} sub="15% EPC + 10% water/Anker" accent={VIBRANT} />
                       <Kpi label="Costo Total" value={money(totCost)} accent={NAVY} />
-                      <Kpi label="Días Activos" value={num(totDias)} accent={ORANGE} />
-                      <Kpi label="Ganancia / Día" value={money(totDias > 0 ? totNet / totDias : 0)} accent={VIBRANT} />
+                      <Kpi label="Ganancia Neta Total" value={money(totNet)} accent={totNet >= 0 ? GREEN : RED} valueColor={totNet >= 0 ? GREEN : RED} />
                     </div>
                     <div style={{ overflowX: 'auto' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead><tr>
-                          <Th align="left" radius="l">Booth / Evento</Th><Th align="left">Período</Th><Th>Días</Th><Th>Ingreso</Th><Th>Costo</Th><Th>Ganancia/Día</Th><Th radius="r">Ganancia Neta</Th>
+                          <Th align="left" radius="l">Booth / Evento</Th><Th align="left">Período</Th><Th>Ventas</Th><Th>Días</Th><Th>Ingreso</Th><Th>Costo</Th><Th>Ganancia/Día</Th><Th radius="r">Ganancia Neta</Th>
                         </tr></thead>
                         <tbody>
                           {data.booths.map((b, i) => (
                             <tr key={b.nombre} style={bodyRowStyle(i)}>
                               <Td align="left">{b.nombre}</Td>
                               <Td align="left" muted>{b.fechaInicio} → {b.fechaFin}</Td>
+                              <Td bold>{num(b.ventas)}</Td>
                               <Td>{num(b.dias)}</Td>
                               <Td>{money(b.ingreso)}</Td>
                               <Td>{money(b.costo)}</Td>
@@ -609,9 +611,20 @@ export default function FinanceDashboard({ initMonth }: { initMonth: string }) {
                               <Td bold color={b.gananciaNeta >= 0 ? GREEN : RED}>{money(b.gananciaNeta)}</Td>
                             </tr>
                           ))}
+                          <tr style={totalRowStyle}>
+                            <Td align="left" bold>TOTAL</Td>
+                            <Td align="left" muted>—</Td>
+                            <Td bold>{num(totVentas)}</Td>
+                            <Td bold>{num(data.booths.reduce((s, b) => s + b.dias, 0))}</Td>
+                            <Td bold>{money(totIngreso)}</Td>
+                            <Td bold>{money(totCost)}</Td>
+                            <Td bold>—</Td>
+                            <Td bold color={totNet >= 0 ? GREEN : RED}>{money(totNet)}</Td>
+                          </tr>
                         </tbody>
                       </table>
                     </div>
+                    <p style={{ fontSize: 12, color: GREY, marginTop: 14 }}>“Ventas” = deals cerrados atribuidos al lugar por su Record ID de Channel Info (todas las líneas de negocio). El ingreso solo cuenta solar/roofing (15%) y water/Anker (10%).</p>
                   </>
                 )
               })()}
@@ -665,7 +678,7 @@ export default function FinanceDashboard({ initMonth }: { initMonth: string }) {
                         </table>
                       </div>
                     )}
-                    <p style={{ fontSize: 12, color: GREY, marginTop: 16 }}>Ganancia compañía = 15% del EPC por venta de solar/roofing. Comisión: solar/roofing $50 (abr–sep) / $100 (oct–mar) + water/PPS $10/venta. Guagua $500/mes + salario $600/sem × {data.meses} {data.meses === 1 ? 'mes' : 'meses'} del rango.</p>
+                    <p style={{ fontSize: 12, color: GREY, marginTop: 16 }}>Ganancia compañía = 15% del EPC por venta de solar/roofing. Comisión: solar/roofing $50 (abr–sep) / $100 (oct–mar) + water/PPS $10/venta. Guagua $1,500/mes + salario $600/sem × {data.meses} {data.meses === 1 ? 'mes' : 'meses'} del rango.</p>
                   </>
                 )
               })()}

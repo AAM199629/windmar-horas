@@ -52,7 +52,7 @@ export const MALLS: MallConfig[] = [
 
 // ── Cambaseo (canvassing) ──────────────────────────────────────────────────────
 // Costos por coordinador. Se aplican a todos por defecto; usa OVERRIDES si varían.
-export const CAMBASEO_GUAGUA_MENSUAL  = 500            // renta guagua ~$500/mes
+export const CAMBASEO_GUAGUA_MENSUAL  = 1_500          // renta guagua $1,500/mes
 export const CAMBASEO_SALARIO_SEMANAL = 600            // $600/semana
 export const CAMBASEO_WEEKS_PER_MONTH = 4.33
 export const CAMBASEO_SALARIO_MENSUAL = CAMBASEO_SALARIO_SEMANAL * CAMBASEO_WEEKS_PER_MONTH // ≈$2,598

@@ -48,6 +48,7 @@ export interface BoothEvent {
   fechaFin: string
   dias: number          // días activos dentro del rango seleccionado
   mesesActivos: number  // meses del rango en que el evento estuvo activo
+  ventas: number        // # de ventas (deals) atribuidas al lugar por channel_info
   costo: number         // inversión fija * mesesActivos (no se prorratea)
   ingreso: number
   gananciaNeta: number
@@ -208,13 +209,13 @@ export function monthsInRange(from: string, to: string): MonthSpan[] {
 // Ventas (excluye canceladas) por channel_info + pipeline. El ingreso de un evento
 // se atribuye por el Record ID del Channel Info (dim_lead_source.channel_info), que
 // identifica el evento EXACTO — el deal se enlaza vía associated_lead → fact_leads.
-interface EventPipelineRow { channelInfoId: string; pipeline: string; amount: number }
+interface EventPipelineRow { channelInfoId: string; pipeline: string; deals: number; amount: number }
 async function getEventPipelineRows(from: string, to: string, ids: string[]): Promise<EventPipelineRow[]> {
   if (!ids.length) return []
   const pool = getRedshiftPool()
   const { rows } = await pool.query(`
     SELECT dls.channel_info AS channel_info, dp.pipeline AS pipeline,
-           COALESCE(SUM(fd.amount), 0)::float8 AS amount
+           COUNT(*)::int AS deals, COALESCE(SUM(fd.amount), 0)::float8 AS amount
     FROM dwh.fact_deals fd
     JOIN dwh.fact_leads fl              ON fl.zoho_lead_id     = fd.associated_lead
     JOIN dwh.dim_lead_source dls        ON dls.id_lead_source  = fl.id_lead_source
@@ -227,7 +228,7 @@ async function getEventPipelineRows(from: string, to: string, ids: string[]): Pr
       AND dls.channel_info = ANY($3)
     GROUP BY dls.channel_info, dp.pipeline
   `, [from, to, ids])
-  return rows.map((r: any) => ({ channelInfoId: String(r.channel_info), pipeline: r.pipeline, amount: Number(r.amount) }))
+  return rows.map((r: any) => ({ channelInfoId: String(r.channel_info), pipeline: r.pipeline, deals: Number(r.deals), amount: Number(r.amount) }))
 }
 
 // ── Booths & Eventos independientes ─────────────────────────────────────────────
@@ -249,6 +250,7 @@ export async function getBoothEventFinance(from: string, to: string): Promise<Bo
 
   return active.map(ev => {
     const r = rows.filter(x => x.channelInfoId === ev.channelInfoId)
+    const ventas = r.reduce((s, x) => s + x.deals, 0)   // # de ventas atribuidas al lugar
     const solar = r.filter(x => solarSet.has(normalize(x.pipeline))).reduce((s, x) => s + x.amount, 0)
     const water = r.filter(x => waterSet.has(normalize(x.pipeline))).reduce((s, x) => s + x.amount, 0)
     const ingreso = solar * MALL_RATE_SOLAR_ROOFING + water * MALL_RATE_WATER_ANKER
@@ -261,6 +263,7 @@ export async function getBoothEventFinance(from: string, to: string): Promise<Bo
       fechaFin: ev.fechaFin ?? 'Indefinido',
       dias: overlapDays(ev.fechaInicio, ev.fechaFin ?? FAR_FUTURE, from, to),
       mesesActivos,
+      ventas,
       costo,
       ingreso,
       gananciaNeta: ingreso - costo,
