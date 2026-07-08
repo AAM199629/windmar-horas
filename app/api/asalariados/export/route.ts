@@ -8,7 +8,7 @@ import {
   calcMonthMetrics,
   getRecentMonths,
   calcConsecutiveMisses,
-  pendingComunicado,
+  computeComunicadoStatus,
 } from '@/lib/ventas'
 import ExcelJS from 'exceljs'
 
@@ -18,13 +18,6 @@ const MONTHS_ES = [
   'ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO',
   'JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE',
 ]
-
-function memoLevelToStatus(level: number | null): string {
-  if (!level || level <= 0) return 'none'
-  if (level >= 3) return 'terminacion'
-  if (level >= 2) return 'comunicado2'
-  return 'comunicado1'
-}
 
 const NAVY   = 'FF0D1654'
 const GREEN  = 'FF00A651'
@@ -85,12 +78,12 @@ export async function GET() {
     )
 
     const consecutive = calcConsecutiveMisses(months)
-    const { status } = pendingComunicado(consecutive)
     const approved = comunicadoMap.get(emp.fullName.toLowerCase()) ?? null
-    const redshiftStatus = memoLevelToStatus(emp.memoLevel)
+    const memo1 = emp.memo1Date ?? approved?.memo1 ?? null
+    const memo2 = emp.memo2Date ?? approved?.memo2 ?? null
+    const computed = computeComunicadoStatus(memo1, memo2, months)
     const displayStatus =
-      redshiftStatus !== 'none' ? redshiftStatus :
-      (approved?.status && approved.status !== 'none' ? approved.status : status)
+      (approved?.status && approved.status !== 'none') ? approved.status : computed
 
     const fu = followUpMap.get(emp.email) ?? followUpMap.get(emp.fullName.toLowerCase()) ?? null
 

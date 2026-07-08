@@ -259,14 +259,14 @@ export function calcMonthMetrics(
   const gross = solar + roofing + cdbg + water * 0.5 + anker * 0.5
   const total = solar + roofing + cdbg + water * 0.5 + anker * 0.5 + asistidas * 0.5
 
-  // Cancellations: own or assisted deals that are on-hold/cancelled in this month.
-  // Use cancellationDate first (most accurate); fall back to closingDate for on-hold deals.
+  // Cancellations: OWN deals that are on-hold/cancelled (matches the own-only
+  // detail modal getAsalariadoCancelledDeals). Use cancellationDate when present
+  // (CSV path); otherwise fall back to closingDate so the Redshift path buckets
+  // by closing month like the modal does.
   let cancellations = 0
   for (const row of rows) {
     if (isActive(row)) continue
-    const isOwn    = row.salesTeamName.toLowerCase() === nameLower
-    const isAssist = row.salesRepAssistTrainee.toLowerCase() === nameLower
-    if (!isOwn && !isAssist) continue
+    if (row.salesTeamName.toLowerCase() !== nameLower) continue
     const dateStr = (row.cancellationDate && row.cancellationDate.trim()) ? row.cancellationDate : row.closingDate
     const cd = parseDate(dateStr)
     if (!cd || cd.getFullYear() !== year || cd.getMonth() + 1 !== month) continue
@@ -306,6 +306,44 @@ export function pendingComunicado(consecutive: number): ComunicadoPending {
     consecutive === 2 ? 'comunicado2' :
     consecutive === 1 ? 'comunicado1' : 'none'
   return { status, consecutive }
+}
+
+// ── Status oficial del comunicado (fuente de verdad: nuestro cálculo) ──────────
+//
+// Reglas confirmadas con el negocio:
+//  1. Solo se evalúan MESES CERRADOS — el mes en curso (último de `months`) no
+//     cuenta hasta que cierre.
+//  2. Cumplir la meta (o estar en gracia) el último mes cerrado REINICIA la racha:
+//     el empleado queda "al día" aunque tenga comunicados viejos en sistema.
+//  3. Un comunicado enviado en el mes X evalúa el mes X-1. Por eso las fechas de
+//     memo se usan solo como referencia para saber en qué escalón está el
+//     empleado: si el comunicado más reciente se envió el mismo mes evaluado
+//     (≤1 mes atrás) la racha sigue activa y escala; si es más viejo se considera
+//     inactivo y la nueva falla arranca en Comunicado 1.
+export type ComunicadoStatus = 'none' | 'comunicado1' | 'comunicado2' | 'terminacion'
+
+export function computeComunicadoStatus(
+  memo1Date: string | null,
+  memo2Date: string | null,
+  months: MonthMetrics[],
+): ComunicadoStatus {
+  if (months.length < 2) return 'none'
+
+  // Último mes CERRADO (el mes en curso es el último elemento y no se evalúa).
+  const evalMonth = months[months.length - 2]
+
+  // Cumplió la meta o está en gracia → racha reiniciada, sin comunicado.
+  if (evalMonth.isGrace || evalMonth.met) return 'none'
+
+  // Falló el último mes cerrado → corresponde un comunicado. El nivel depende
+  // del último comunicado ACTIVO (enviado el mismo mes evaluado).
+  const evalStr = `${evalMonth.year}-${String(evalMonth.month).padStart(2, '0')}`
+  const memo2Active = Boolean(memo2Date && memo2Date.slice(0, 7) === evalStr)
+  const memo1Active = Boolean(memo1Date && memo1Date.slice(0, 7) === evalStr)
+
+  if (memo2Active) return 'terminacion'   // tenía Comunicado 2 activo y volvió a fallar
+  if (memo1Active) return 'comunicado2'    // tenía Comunicado 1 activo y volvió a fallar
+  return 'comunicado1'                      // sin comunicado activo → arranca de nuevo
 }
 
 export function monthsAsAsalariado(hireDate: string | null): number | null {

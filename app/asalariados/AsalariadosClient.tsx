@@ -16,6 +16,33 @@ interface SaleDeal {
   cancellationReason?: string | null
 }
 
+// ── Status del comunicado ─────────────────────────────────────────────────────
+// Fuente de verdad = nuestro cálculo (emp.pendingStatus). Una aprobación manual
+// en KV (emp.approved) puede sobrescribirlo; el memo de Zoho ya NO manda el badge.
+type ComStatus = 'none' | 'comunicado1' | 'comunicado2' | 'terminacion'
+
+function effStatus(e: AsalariadoData): ComStatus {
+  if (e.approved?.status && e.approved.status !== 'none') return e.approved.status as ComStatus
+  return e.pendingStatus
+}
+
+// ¿El comunicado que corresponde ya fue enviado este ciclo? (memo del nivel
+// registrado en el mes de envío = el mes en curso). Si no, queda "pendiente".
+function comunicadoSent(e: AsalariadoData, status: ComStatus): boolean {
+  const current = e.months[e.months.length - 1]
+  const sendStr = `${current.year}-${String(current.month).padStart(2, '0')}`
+  const inMonth = (d?: string | null) => Boolean(d && d.slice(0, 7) === sendStr)
+  if (status === 'comunicado1') return inMonth(e.memo1Date) || inMonth(e.approved?.memo1)
+  if (status === 'comunicado2') return inMonth(e.memo2Date) || inMonth(e.approved?.memo2)
+  if (status === 'terminacion') return inMonth(e.terminacionDate) || inMonth(e.approved?.memo3)
+  return false
+}
+
+function isPendingStatus(e: AsalariadoData): boolean {
+  const s = effStatus(e)
+  return s !== 'none' && !comunicadoSent(e, s)
+}
+
 type DealFilter = 'all' | 'solar' | 'roofing' | 'water' | 'anker' | 'asistidas' | 'gross'
 
 function filterDeals(deals: SaleDeal[], f: DealFilter): SaleDeal[] {
@@ -221,11 +248,8 @@ function ApprovalModal({
   onClose: () => void
   onApprove: (nombre: string, status: string, memos: { memo1?: string; memo2?: string; memo3?: string }) => void
 }) {
-  const effectiveStatus =
-    emp.redshiftStatus !== 'none' ? emp.redshiftStatus :
-    (emp.approved?.status && emp.approved.status !== 'none' ? emp.approved.status : emp.pendingStatus)
   const [status, setStatus] = useState<'none' | 'comunicado1' | 'comunicado2' | 'terminacion'>(
-    effectiveStatus as 'none' | 'comunicado1' | 'comunicado2' | 'terminacion'
+    effStatus(emp)
   )
   const [memo1, setMemo1] = useState(emp.approved?.memo1 ?? emp.memo1Date ?? '')
   const [memo2, setMemo2] = useState(emp.approved?.memo2 ?? emp.memo2Date ?? '')
@@ -378,10 +402,8 @@ function AsalariadoCard({
     }
   }
 
-  const displayStatus =
-    emp.redshiftStatus !== 'none' ? emp.redshiftStatus :
-    (emp.approved?.status && emp.approved.status !== 'none' ? emp.approved.status : emp.pendingStatus)
-  const isPending = emp.pendingStatus !== 'none' && emp.redshiftStatus === 'none' && !emp.approved
+  const displayStatus = effStatus(emp)
+  const isPending = isPendingStatus(emp)
 
   const lastMonth = emp.months[emp.months.length - 1]
 
@@ -592,7 +614,7 @@ function AsalariadoCard({
           )}
 
           {/* Admin approve button */}
-          {isAdmin && emp.pendingStatus !== 'none' && (
+          {isAdmin && effStatus(emp) !== 'none' && (
             <div className="mt-3">
               <button
                 onClick={() => onEditComunicado(emp)}
@@ -633,9 +655,7 @@ export default function AsalariadosClient({
     if (roleFilter && e.salesRole !== roleFilter) return false
     if (regionFilter && (e.supervisorRegional ?? '__sin__') !== regionFilter) return false
     if (statusFilter) {
-      const eff = localOverrides[e.nombre] ??
-        (e.redshiftStatus !== 'none' ? e.redshiftStatus :
-        (e.approved?.status && e.approved.status !== 'none' ? e.approved.status : e.pendingStatus))
+      const eff = localOverrides[e.nombre] ?? effStatus(e)
       if (eff !== statusFilter) return false
     }
     if (search) {
@@ -662,9 +682,7 @@ export default function AsalariadosClient({
     return keys
   }, [grouped])
 
-  const totalPending = asalariados.filter(e =>
-    e.pendingStatus !== 'none' && e.redshiftStatus === 'none' && !e.approved
-  ).length
+  const totalPending = asalariados.filter(isPendingStatus).length
 
   async function handleApprove(
     nombre: string,
@@ -704,11 +722,8 @@ export default function AsalariadosClient({
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
         <Stat label="Empleados" value={filtered.length} />
         <Stat label="Cumplen meta" value={filtered.filter(e => e.months[e.months.length - 1].met).length} green />
-        <Stat label="Comunicados pendientes" value={filtered.filter(e => e.pendingStatus !== 'none' && e.redshiftStatus === 'none' && !e.approved).length} warn />
-        <Stat label="Con comunicado activo" value={filtered.filter(e => {
-          const eff = e.redshiftStatus !== 'none' ? e.redshiftStatus : (e.approved?.status ?? 'none')
-          return eff !== 'none'
-        }).length} />
+        <Stat label="Comunicados pendientes" value={filtered.filter(isPendingStatus).length} warn />
+        <Stat label="Con comunicado activo" value={filtered.filter(e => effStatus(e) !== 'none').length} />
       </div>
 
       {/* Filters */}
@@ -781,11 +796,7 @@ export default function AsalariadosClient({
                   {group.length} empleado{group.length !== 1 ? 's' : ''}
                 </span>
                 <span className="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full ml-1">
-                  {group.filter(e => {
-                    const eff = e.redshiftStatus !== 'none' ? e.redshiftStatus :
-                      (e.approved?.status && e.approved.status !== 'none' ? e.approved.status : e.pendingStatus)
-                    return eff !== 'none'
-                  }).length} con comunicado
+                  {group.filter(e => effStatus(e) !== 'none').length} con comunicado
                 </span>
               </div>
               <div className="space-y-2">

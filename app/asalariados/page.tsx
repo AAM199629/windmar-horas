@@ -7,6 +7,7 @@ import {
   isActiveSupervisor,
   calcMonthMetrics, getRecentMonths,
   calcConsecutiveMisses, monthsAsAsalariado,
+  computeComunicadoStatus,
 } from '@/lib/ventas'
 import AsalariadosClient from './AsalariadosClient'
 import type { ComunicadoRecord } from '@/lib/asalariados-kv'
@@ -53,27 +54,6 @@ function maxStatus(
   return STATUS_ORDER[a] >= STATUS_ORDER[b] ? a : b
 }
 
-function memoImpliedStatus(
-  memo1Date: string | null,
-  memo2Date: string | null,
-  months: MonthMetrics[],
-): AsalariadoData['pendingStatus'] {
-  if (months.length < 2) return 'none'
-  const current  = months[months.length - 1]  // mes actual (en curso)
-  const previous = months[months.length - 2]  // mes anterior (completo)
-  const prevStr  = `${previous.year}-${String(previous.month).padStart(2, '0')}`
-
-  const memo2LastMonth = Boolean(memo2Date && memo2Date.slice(0, 7) === prevStr)
-  const memo1LastMonth = Boolean(memo1Date && memo1Date.slice(0, 7) === prevStr)
-
-  if (memo2LastMonth) return !current.met ? 'terminacion' : 'none'
-  if (memo1LastMonth) return !current.met ? 'comunicado2' : 'none'
-
-  // Sin memo el mes pasado: comunicado1 si el mes anterior (ya completo) no fue cumplido
-  if (!previous.isGrace && !previous.met) return 'comunicado1'
-  return 'none'
-}
-
 export default async function AsalariadosPage() {
   const session = await auth()
   const role = (session?.user as any)?.role
@@ -111,8 +91,12 @@ export default async function AsalariadosPage() {
     )
 
     const consecutive = calcConsecutiveMisses(months)
-    const implied     = memoImpliedStatus(emp.memo1Date, emp.memo2Date, months)
     const approved    = comunicadoMap.get(emp.fullName.toLowerCase()) ?? null
+    // Fechas de comunicado: Zoho primero, KV (aprobación manual) como respaldo,
+    // para que un comunicado registrado a mano también alimente la escalada.
+    const memo1     = emp.memo1Date ?? approved?.memo1 ?? null
+    const memo2     = emp.memo2Date ?? approved?.memo2 ?? null
+    const implied   = computeComunicadoStatus(memo1, memo2, months)
 
     const fu = followUpMap.get(emp.email) ?? followUpMap.get(emp.fullName.toLowerCase()) ?? null
 

@@ -84,7 +84,9 @@ export async function getVentasFromRedshift(): Promise<VentaRow[]> {
       TO_CHAR(fd.closing_date, 'YYYY-MM-DD')                  AS closing_date,
       CASE WHEN dfl.cdbg_number IS NOT NULL THEN 'CDBG' ELSE '' END AS finance_company,
       COALESCE(TO_CHAR(dt.installation_completion_date, 'YYYY-MM-DD'), '') AS installation_completion_date,
-      dp.pipeline
+      dp.pipeline,
+      dsr.cancellation_reason,
+      dsr.on_hold_status
     FROM dwh.fact_deals fd
     JOIN dwh.dim_staff ds
       ON ds.id_staff = fd.id_staff AND ds.is_current = true
@@ -101,8 +103,6 @@ export async function getVentasFromRedshift(): Promise<VentaRow[]> {
     LEFT JOIN dwh.dim_timeline dt
       ON dt.zoho_deal_id = fd.zoho_deal_id AND dt.is_current = true
     WHERE ds.sale_rep_email IS NOT NULL
-      AND dsr.cancellation_reason IS NULL
-      AND dsr.on_hold_status IS NULL
       AND fd.closing_date >= $1
   `, [lookback])
 
@@ -111,7 +111,10 @@ export async function getVentasFromRedshift(): Promise<VentaRow[]> {
     salesRole:                  '',
     closingDate:                r.closing_date ?? '',
     cancellationDate:           '',
-    onHoldStatus:               '',
+    // Redshift no expone fecha de cancelación; usamos on_hold_status/cancellation_reason
+    // solo como bandera de "no activa". calcMonthMetrics agrupa las cancelaciones por
+    // fecha de cierre (igual que el modal getAsalariadoCancelledDeals).
+    onHoldStatus:               r.on_hold_status ?? r.cancellation_reason ?? '',
     financeCompany:             r.finance_company ?? '',
     installationCompletionDate: r.installation_completion_date ?? '',
     pipeline:                   r.pipeline ?? '',
