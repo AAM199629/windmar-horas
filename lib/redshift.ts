@@ -85,8 +85,8 @@ export async function getVentasFromRedshift(): Promise<VentaRow[]> {
       CASE WHEN dfl.cdbg_number IS NOT NULL THEN 'CDBG' ELSE '' END AS finance_company,
       COALESCE(TO_CHAR(dt.installation_completion_date, 'YYYY-MM-DD'), '') AS installation_completion_date,
       dp.pipeline,
-      dsr.cancellation_reason,
-      dsr.on_hold_status
+      dsr.on_hold_status,
+      dsr.stage
     FROM dwh.fact_deals fd
     JOIN dwh.dim_staff ds
       ON ds.id_staff = fd.id_staff AND ds.is_current = true
@@ -111,10 +111,11 @@ export async function getVentasFromRedshift(): Promise<VentaRow[]> {
     salesRole:                  '',
     closingDate:                r.closing_date ?? '',
     cancellationDate:           '',
-    // Redshift no expone fecha de cancelación; usamos on_hold_status/cancellation_reason
-    // solo como bandera de "no activa". calcMonthMetrics agrupa las cancelaciones por
-    // fecha de cierre (igual que el modal getAsalariadoCancelledDeals).
-    onHoldStatus:               r.on_hold_status ?? r.cancellation_reason ?? '',
+    // No activa = tiene On Hold Status o el Stage dice "Cancelled". Se IGNORA
+    // cancellation_reason a propósito: puede quedar seteado en deals ya corregidos.
+    // Redshift no expone fecha de cancelación, así que esto es solo bandera de
+    // "no activa"; calcMonthMetrics agrupa las cancelaciones por fecha de cierre.
+    onHoldStatus:               r.on_hold_status ?? (r.stage === 'Cancelled' ? 'Cancelled' : ''),
     financeCompany:             r.finance_company ?? '',
     installationCompletionDate: r.installation_completion_date ?? '',
     pipeline:                   r.pipeline ?? '',
@@ -453,7 +454,7 @@ export async function getMallBoothDealDetails(year: number): Promise<MallBoothDe
       TO_CHAR(fd.closing_date, 'YYYY-MM-DD')                 AS closing_date,
       EXTRACT(MONTH FROM fd.closing_date)::int               AS month,
       dp.pipeline,
-      (dsr.on_hold_status IS NOT NULL)                       AS is_cancelled,
+      (dsr.on_hold_status IS NOT NULL OR dsr.stage = 'Cancelled') AS is_cancelled,
       COALESCE(stm.full_name, ds.sale_rep_email)             AS vendedor,
       fd.amount,
       dsr.on_hold_status,
@@ -564,7 +565,8 @@ export async function getMallBoothLeadDetails(year: number): Promise<MallBoothLe
       COALESCE(stm_emp.full_name, de.sales_rep_email)        AS registrado_por,
       stm_emp.ciudad                                         AS ciudad,
       (fd.zoho_deal_id IS NOT NULL
-        AND dsr.on_hold_status IS NULL)                      AS is_sold,
+        AND dsr.on_hold_status IS NULL
+        AND COALESCE(dsr.stage, '') <> 'Cancelled')          AS is_sold,
       dp.pipeline                                            AS deal_pipeline
     FROM booth_leads b
     JOIN de_current de
@@ -622,8 +624,8 @@ export async function getMallBoothSalesByPeriod(from: string, to: string): Promi
     LEFT JOIN dwh.dim_operations_details dod
       ON dod.id_operations_details = fd.id_operations_details
     WHERE fd.closing_date >= $1 AND fd.closing_date <= $2
-      AND dsr.cancellation_reason IS NULL
       AND dsr.on_hold_status IS NULL
+      AND COALESCE(dsr.stage, '') <> 'Cancelled'
       AND ds.sale_rep_email IS NOT NULL
       AND dod.booth = ANY($3)
     GROUP BY dod.booth
@@ -662,8 +664,8 @@ export async function getSalesGroupedByPeriod(
     LEFT JOIN dwh.dim_marketing_source dms
       ON dms.id_marketing_source = fd.id_marketing_source
     WHERE fd.closing_date >= $1 AND fd.closing_date <= $2
-      AND dsr.cancellation_reason IS NULL
       AND dsr.on_hold_status IS NULL
+      AND COALESCE(dsr.stage, '') <> 'Cancelled'
       AND ds.sale_rep_email IS NOT NULL
     GROUP BY stm.sales_role, dms.lead_source
   `, [from, to])
@@ -701,8 +703,8 @@ export async function getIndependienteBoothSummary(
     LEFT JOIN dwh.dim_operations_details dod
       ON dod.id_operations_details = fd.id_operations_details
     WHERE fd.closing_date >= $1 AND fd.closing_date <= $2
-      AND dsr.cancellation_reason IS NULL
       AND dsr.on_hold_status IS NULL
+      AND COALESCE(dsr.stage, '') <> 'Cancelled'
       AND ds.sale_rep_email IS NOT NULL
       AND dms.lead_source IS NOT NULL
       AND TRIM(dms.lead_source) <> ''
@@ -803,8 +805,8 @@ export async function getAsalariadoDealDetails(
         ON dl.zoho_lead_id = fd.associated_lead AND dl.is_current = true
       WHERE EXTRACT(YEAR  FROM fd.closing_date)::int = $1
         AND EXTRACT(MONTH FROM fd.closing_date)::int = $2
-        AND dsr.cancellation_reason IS NULL
         AND dsr.on_hold_status IS NULL
+        AND COALESCE(dsr.stage, '') <> 'Cancelled'
         AND LOWER(COALESCE(stm.full_name, ds.sale_rep_email)) = LOWER($3)
     ),
     assisted_deals AS (
@@ -832,8 +834,8 @@ export async function getAsalariadoDealDetails(
         ON dl.zoho_lead_id = fd.associated_lead AND dl.is_current = true
       WHERE EXTRACT(YEAR  FROM fd.closing_date)::int = $1
         AND EXTRACT(MONTH FROM fd.closing_date)::int = $2
-        AND dsr.cancellation_reason IS NULL
         AND dsr.on_hold_status IS NULL
+        AND COALESCE(dsr.stage, '') <> 'Cancelled'
         AND LOWER(ds.trainee_sales) IN ('1st sale','2nd sale','3rd sale','4th sale')
         AND LOWER(COALESCE(stm_mentor.full_name, stm.sponsor_name, '')) = LOWER($3)
     )
@@ -891,7 +893,7 @@ export async function getAsalariadoCancelledDeals(
       ON dl.zoho_lead_id = fd.associated_lead AND dl.is_current = true
     WHERE EXTRACT(YEAR  FROM fd.closing_date)::int = $1
       AND EXTRACT(MONTH FROM fd.closing_date)::int = $2
-      AND (dsr.cancellation_reason IS NOT NULL OR dsr.on_hold_status IS NOT NULL)
+      AND (dsr.on_hold_status IS NOT NULL OR dsr.stage = 'Cancelled')
       AND LOWER(COALESCE(stm.full_name, ds.sale_rep_email)) = LOWER($3)
     ORDER BY fd.closing_date DESC
   `, [year, month, employeeName])
@@ -942,8 +944,8 @@ export async function getSalesDealDetailsByRoles(
     LEFT JOIN dwh.dim_finance_legal dfl
       ON dfl.id_finance_legal = fd.id_finance_legal AND dfl.is_current = true
     WHERE fd.closing_date >= $1 AND fd.closing_date <= $2
-      AND dsr.cancellation_reason IS NULL
       AND dsr.on_hold_status IS NULL
+      AND COALESCE(dsr.stage, '') <> 'Cancelled'
       AND ds.sale_rep_email IS NOT NULL
       ${roleFilter}
     ORDER BY fd.closing_date DESC
@@ -972,7 +974,7 @@ export async function getIndepDealDetails(year: number): Promise<MallBoothDealDe
       TO_CHAR(fd.closing_date, 'YYYY-MM-DD')                AS closing_date,
       EXTRACT(MONTH FROM fd.closing_date)::int               AS month,
       dp.pipeline,
-      (dsr.on_hold_status IS NOT NULL)                       AS is_cancelled,
+      (dsr.on_hold_status IS NOT NULL OR dsr.stage = 'Cancelled') AS is_cancelled,
       COALESCE(stm.full_name, ds.sale_rep_email)             AS vendedor,
       fd.amount,
       dsr.on_hold_status,
@@ -1070,7 +1072,8 @@ export async function getIndepLeadDetails(year: number): Promise<MallBoothLeadDe
       EXTRACT(MONTH FROM b.created_time)::int                         AS month,
       COALESCE(stm_emp.full_name, de.sales_rep_email)                  AS registrado_por,
       stm_emp.ciudad                                                   AS ciudad,
-      (fd.zoho_deal_id IS NOT NULL AND dsr.on_hold_status IS NULL)     AS is_sold,
+      (fd.zoho_deal_id IS NOT NULL AND dsr.on_hold_status IS NULL
+        AND COALESCE(dsr.stage, '') <> 'Cancelled')                   AS is_sold,
       dp.pipeline                                                      AS deal_pipeline
     FROM booth_leads b
     JOIN de_current de
