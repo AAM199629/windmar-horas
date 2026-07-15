@@ -27,6 +27,25 @@ export const HD_PANELS_PER_KW = 2.49
 export const HD_STORES = (MALL_BOOTH_LOCATIONS as readonly string[])
   .filter(l => l.startsWith('Home Depot'))
 
+// ── Cobertura de turnos (Shifter) ────────────────────────────────────────────
+// El campo `location` de los turnos (Shifter) usa nombres cortos que NO coinciden
+// con los nombres canónicos de HD/Malls ni con los nombres de Zoho de los eventos.
+// Se mapea explícito. El canal se infiere por sección: HD/Malls → 'mall',
+// booths/eventos → 'independiente' (necesario porque, p. ej., "Hatillo" existe en
+// ambos canales: HD y el Econo de Hatillo).
+export const HD_SHIFT_LOCATIONS: Record<string, string[]> = {
+  'Home Depot - Caguas':        ['Caguas', 'Caguas Roofing'],
+  'Home Depot - Colobos':       ['Los Colobos', 'Colobos Roofing'],
+  'Home Depot - Escorial':      ['Escorial', 'Escorial Roofing'],
+  'Home Depot - Hatillo':       ['Hatillo', 'Hatillo Roofing'],
+  'Home Depot - Humacao':       ['Humacao', 'Humacao Roofing'],
+  'Home Depot - Mayaguez':      ['Mayagüez', 'Mayaguez Roofing'],
+  'Home Depot - Montehiedra':   ['Montehiedra', 'Montehiedra Roofing'],
+  'Home Depot - Plaza del Sol': ['Plaza del Sol', 'Plaza del Sol Roofing'],
+  'Home Depot - Ponce':         ['Ponce', 'Ponce Roofing'],
+  'Home Depot - Rexville':      ['Rexville', 'Rexville Roofing'],
+}
+
 // ── Centros Comerciales (malls) ─────────────────────────────────────────────────
 // Costo mensual fijo por mall (inversión fija del Channel Info, "Booths Malls").
 // Confirmado contra el reporte de Channel Info (jun 2026). Montehiedra es un 5.º
@@ -41,13 +60,14 @@ export interface MallConfig {
   costoMensual: number
   fechaInicio: string
   fechaFin: string | null
+  shiftLocations: string[]   // nombres del campo `location` en Shifter (canal 'mall')
 }
 export const MALLS: MallConfig[] = [
-  { nombre: 'Malls - Plaza las Americas', costoMensual: 6_800, fechaInicio: '2020-01-01', fechaFin: null },
-  { nombre: 'Malls - Montehiedra',        costoMensual: 5_000, fechaInicio: '2020-01-01', fechaFin: null },
-  { nombre: 'Malls - Plaza del Caribe',   costoMensual: 4_000, fechaInicio: '2020-01-01', fechaFin: null },
-  { nombre: 'Malls - Santa Rosa',         costoMensual: 2_000, fechaInicio: '2026-03-09', fechaFin: '2026-07-09' },
-  { nombre: 'Malls - Aguadilla Mall',     costoMensual: 1_750, fechaInicio: '2024-04-01', fechaFin: null },
+  { nombre: 'Malls - Plaza las Americas', costoMensual: 6_800, fechaInicio: '2020-01-01', fechaFin: null,         shiftLocations: ['Plaza las Américas'] },
+  { nombre: 'Malls - Montehiedra',        costoMensual: 5_000, fechaInicio: '2020-01-01', fechaFin: null,         shiftLocations: ['Montehiedra Mall'] },
+  { nombre: 'Malls - Plaza del Caribe',   costoMensual: 4_000, fechaInicio: '2020-01-01', fechaFin: null,         shiftLocations: ['Plaza del Caribe'] },
+  { nombre: 'Malls - Santa Rosa',         costoMensual: 2_000, fechaInicio: '2026-03-09', fechaFin: '2026-07-09', shiftLocations: ['Santa Rosa Mall'] },
+  { nombre: 'Malls - Aguadilla Mall',     costoMensual: 1_750, fechaInicio: '2024-04-01', fechaFin: null,         shiftLocations: ['Aguadilla Mall'] },
 ]
 
 // ── Cambaseo (canvassing) ──────────────────────────────────────────────────────
@@ -106,20 +126,24 @@ export interface EventConfig {
   inversionFija: number    // costo del booth para su período (se usa tal cual)
   fechaInicio: string      // YYYY-MM-DD
   fechaFin: string | null  // YYYY-MM-DD, o null si es indefinido
+  // Nombres del campo `location` en Shifter (canal 'independiente') para calcular
+  // la cobertura de turnos. Vacío = sin turnos rastreables (cobertura no aplica).
+  // ⚠ Los marcados con "// ?" son mapeos por confirmar (nombre en Shifter difiere).
+  shiftLocations: string[]
 }
 export const EVENTS: EventConfig[] = [
-  { channelInfoId: '4258103003238947219', nombre: 'BSI - Festival de las Flores - Aibonito', inversionFija: 4_500, fechaInicio: '2026-06-26', fechaFin: '2026-07-05' },
-  { channelInfoId: '4258103003236715021', nombre: 'Supermax - De Diego - San Juan',          inversionFija: 2_200, fechaInicio: '2026-06-22', fechaFin: '2026-07-19' },
-  { channelInfoId: '4258103003236715011', nombre: 'Supermax - Guaynabo',                     inversionFija: 1_100, fechaInicio: '2026-06-22', fechaFin: '2026-07-05' },
-  { channelInfoId: '4258103003236715001', nombre: 'Hospital San Lucas - Ponce',              inversionFija:   450, fechaInicio: '2026-06-22', fechaFin: '2026-09-22' },
-  { channelInfoId: '4258103003223893444', nombre: 'Amigo - Ceiba',                           inversionFija: 1_200, fechaInicio: '2026-06-15', fechaFin: '2026-07-14' },
-  { channelInfoId: '4258103003223893105', nombre: 'Supermax - Cidra',                        inversionFija: 1_900, fechaInicio: '2026-04-13', fechaFin: '2026-07-05' },
-  { channelInfoId: '4258103003223893010', nombre: 'Econo Los Colobos - Carolina',            inversionFija: 1_600, fechaInicio: '2026-06-01', fechaFin: '2026-07-30' },
-  { channelInfoId: '4258103003223031859', nombre: 'Econo - Florida',                         inversionFija:   600, fechaInicio: '2026-06-08', fechaFin: '2026-07-07' },
-  { channelInfoId: '4258103003221652173', nombre: 'National Ferretería - Manatí',            inversionFija: 1_000, fechaInicio: '2026-06-01', fechaFin: '2026-08-02' },
-  { channelInfoId: '4258103003221652172', nombre: 'Supermax - Dorado',                       inversionFija: 2_000, fechaInicio: '2026-06-08', fechaFin: '2026-07-05' },
-  { channelInfoId: '4258103003221652170', nombre: 'Cooperativa Floricoop - Florida',         inversionFija:     0, fechaInicio: '2026-04-27', fechaFin: null },
-  { channelInfoId: '4258103003221652169', nombre: 'Pueblo Las Cumbres - Guaynabo',           inversionFija: 1_500, fechaInicio: '2026-05-05', fechaFin: '2026-07-03' },
-  { channelInfoId: '4258103003221652164', nombre: 'Econo - Hatillo',                         inversionFija: 1_500, fechaInicio: '2023-10-01', fechaFin: null },
-  { channelInfoId: '4258103002341384844', nombre: 'Econo - Naranjito',                       inversionFija: 1_250, fechaInicio: '2025-01-16', fechaFin: '2026-07-01' },
+  { channelInfoId: '4258103003238947219', nombre: 'BSI - Festival de las Flores - Aibonito', inversionFija: 4_500, fechaInicio: '2026-06-26', fechaFin: '2026-07-05', shiftLocations: ['Evento - Festival de las Flores', 'Evento - Festival de las Flores (trailer)'] },
+  { channelInfoId: '4258103003236715021', nombre: 'Supermax - De Diego - San Juan',          inversionFija: 2_200, fechaInicio: '2026-06-22', fechaFin: '2026-07-19', shiftLocations: ['Supermax - De Diego'] },
+  { channelInfoId: '4258103003236715011', nombre: 'Supermax - Guaynabo',                     inversionFija: 1_100, fechaInicio: '2026-06-22', fechaFin: '2026-07-05', shiftLocations: ['Supermax Los Frailes - Guaynabo'] }, // ?
+  { channelInfoId: '4258103003236715001', nombre: 'Hospital San Lucas - Ponce',              inversionFija:   450, fechaInicio: '2026-06-22', fechaFin: '2026-09-22', shiftLocations: ['Hospital San Lucas'] },
+  { channelInfoId: '4258103003223893444', nombre: 'Amigo - Ceiba',                           inversionFija: 1_200, fechaInicio: '2026-06-15', fechaFin: '2026-07-14', shiftLocations: ['Supermercado Amigo Monte sol - Ceiba'] },
+  { channelInfoId: '4258103003223893105', nombre: 'Supermax - Cidra',                        inversionFija: 1_900, fechaInicio: '2026-04-13', fechaFin: '2026-07-05', shiftLocations: ['Supermax - Cidra'] },
+  { channelInfoId: '4258103003223893010', nombre: 'Econo Los Colobos - Carolina',            inversionFija: 1_600, fechaInicio: '2026-06-01', fechaFin: '2026-07-30', shiftLocations: ['Los Colobos - Carolina'] },
+  { channelInfoId: '4258103003223031859', nombre: 'Econo - Florida',                         inversionFija:   600, fechaInicio: '2026-06-08', fechaFin: '2026-07-07', shiftLocations: ['Florida'] },
+  { channelInfoId: '4258103003221652173', nombre: 'National Ferretería - Manatí',            inversionFija: 1_000, fechaInicio: '2026-06-01', fechaFin: '2026-08-02', shiftLocations: ['National - Manatí'] },
+  { channelInfoId: '4258103003221652172', nombre: 'Supermax - Dorado',                       inversionFija: 2_000, fechaInicio: '2026-06-08', fechaFin: '2026-07-05', shiftLocations: ['Supermax - Dorado'] },
+  { channelInfoId: '4258103003221652170', nombre: 'Cooperativa Floricoop - Florida',         inversionFija:     0, fechaInicio: '2026-04-27', fechaFin: null,         shiftLocations: ['Cooperativa - Floridacoop'] },
+  { channelInfoId: '4258103003221652169', nombre: 'Pueblo Las Cumbres - Guaynabo',           inversionFija: 1_500, fechaInicio: '2026-05-05', fechaFin: '2026-07-03', shiftLocations: ['Supermercado Pueblo - Las Cumbres'] },
+  { channelInfoId: '4258103003221652164', nombre: 'Econo - Hatillo',                         inversionFija: 1_500, fechaInicio: '2023-10-01', fechaFin: null,         shiftLocations: ['Hatillo'] }, // ?
+  { channelInfoId: '4258103002341384844', nombre: 'Econo - Naranjito',                       inversionFija: 1_250, fechaInicio: '2025-01-16', fechaFin: '2026-07-01', shiftLocations: ['Naranjito'] },
 ]

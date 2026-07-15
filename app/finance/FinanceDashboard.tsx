@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 // ── Tipos (espejo de /api/finance/summary) ──────────────────────────────────────
-interface HomeDepotTienda { nombre: string; deals: number; amount: number; paneles: number | null; baterias: number | null; ingreso: number | null; epcSolarRoofing: number; ventasWaterAnker: number; gananciaPipeline: number }
-interface MallFinance     { nombre: string; costoMensual: number; mesesActivos: number; costoPeriodo: number; epcSolarRoofing: number; ventasWaterAnker: number; ganancia: number; pctMeta: number }
-interface BoothEvent      { nombre: string; fechaInicio: string; fechaFin: string; dias: number; mesesActivos: number; ventas: number; costo: number; ingreso: number; gananciaNeta: number }
+interface Cobertura       { turnosCreados: number; turnosAsignados: number; turnosPonchados: number; coberturaTurnos: number | null; tasaPonche: number | null }
+interface HomeDepotTienda extends Cobertura { nombre: string; deals: number; amount: number; paneles: number | null; baterias: number | null; ingreso: number | null; epcSolarRoofing: number; ventasWaterAnker: number; gananciaPipeline: number }
+interface MallFinance     extends Cobertura { nombre: string; costoMensual: number; mesesActivos: number; costoPeriodo: number; epcSolarRoofing: number; ventasWaterAnker: number; ganancia: number; pctMeta: number }
+interface BoothEvent      extends Cobertura { nombre: string; fechaInicio: string; fechaFin: string; dias: number; mesesActivos: number; ventas: number; costo: number; ingreso: number; gananciaNeta: number }
 interface Coordinador     { nombre: string; ventas: number; amount: number; comision: number; guagua: number; salario: number; costoTotal: number; gananciaCompania: number; gananciaNeta: number }
 interface Canal           { nombre: string; ingreso: number; costo: number; neto: number }
 
@@ -62,6 +63,23 @@ function semaforo(p: number): { label: string; color: string } {
   if (p >= 1)    return { label: 'Productiva', color: GREEN }
   if (p >= 0.85) return { label: 'En meta',    color: ORANGE600 }
   return { label: 'Mejorar', color: RED }
+}
+
+// Color de la tasa de cumplimiento de turnos (ponchados ÷ creados).
+function coberturaColor(p: number): string {
+  if (p >= 0.9) return GREEN
+  if (p >= 0.7) return ORANGE600
+  return RED
+}
+// Celda de tasa de turnos: "% (num/den)" coloreado, o "—" si el denominador es 0.
+function RatioCell({ pct, num, den }: { pct: number | null; num: number; den: number }) {
+  if (pct == null || den === 0) return <Td muted>—</Td>
+  return (
+    <Td bold color={coberturaColor(pct)}>
+      {pct1(pct)}
+      <span style={{ fontSize: 11, fontWeight: 600, color: FLAT, marginLeft: 6 }}>{num}/{den}</span>
+    </Td>
+  )
 }
 
 // ── Donut (SVG arcs — válido en PDF) ────────────────────────────────────────────
@@ -363,6 +381,11 @@ export default function FinanceDashboard({ initMonth }: { initMonth: string }) {
               const totalPaneles = stores.reduce((s, t) => s + (t.paneles ?? 0), 0)
               const totalBaterias = stores.reduce((s, t) => s + (t.baterias ?? 0), 0)
               const cobertura = metaTotal > 0 ? totalIngreso / metaTotal : 0
+              const totCreadosHD = stores.reduce((s, t) => s + t.turnosCreados, 0)
+              const totAsignadosHD = stores.reduce((s, t) => s + t.turnosAsignados, 0)
+              const totPonchadosHD = stores.reduce((s, t) => s + t.turnosPonchados, 0)
+              const totCoberturaHD = totCreadosHD > 0 ? totPonchadosHD / totCreadosHD : null
+              const totPoncheHD = totAsignadosHD > 0 ? totPonchadosHD / totAsignadosHD : null
               const sorted = [...stores].sort((a, b) => {
                 const dir = hdSort.dir === 'asc' ? 1 : -1
                 const get = (t: HomeDepotTienda) => hdSort.key === 'nombre' ? t.nombre : (t as any)[hdSort.key] ?? 0
@@ -460,6 +483,8 @@ export default function FinanceDashboard({ initMonth }: { initMonth: string }) {
                         <Th onClick={() => setSort('paneles')}>Placas</Th>
                         <Th onClick={() => setSort('baterias')}>Baterías</Th>
                         <Th onClick={() => setSort('ingreso')}>Ingreso</Th>
+                        <Th onClick={() => setSort('tasaPonche')}>Tasa Ponche</Th>
+                        <Th onClick={() => setSort('coberturaTurnos')}>Cobertura</Th>
                         <Th radius="r">Estado</Th>
                       </tr></thead>
                       <tbody>
@@ -473,6 +498,8 @@ export default function FinanceDashboard({ initMonth }: { initMonth: string }) {
                               <Td>{num(t.paneles)}</Td>
                               <Td>{num(t.baterias)}</Td>
                               <Td bold>{money(t.ingreso)}</Td>
+                              <RatioCell pct={t.tasaPonche} num={t.turnosPonchados} den={t.turnosAsignados} />
+                              <RatioCell pct={t.coberturaTurnos} num={t.turnosPonchados} den={t.turnosCreados} />
                               <Td bold color={data.hdUnitsReady ? sem.color : FLAT}>{data.hdUnitsReady ? sem.label : '—'}</Td>
                             </tr>
                           )
@@ -483,6 +510,8 @@ export default function FinanceDashboard({ initMonth }: { initMonth: string }) {
                           <Td bold>{num(data.hdUnitsReady ? totalPaneles : null)}</Td>
                           <Td bold>{num(data.hdUnitsReady ? totalBaterias : null)}</Td>
                           <Td bold>{money(data.hdUnitsReady ? totalIngreso : null)}</Td>
+                          <RatioCell pct={totPoncheHD} num={totPonchadosHD} den={totAsignadosHD} />
+                          <RatioCell pct={totCoberturaHD} num={totPonchadosHD} den={totCreadosHD} />
                           <Td bold color={data.hdUnitsReady ? semaforo(cobertura).color : FLAT}>{data.hdUnitsReady ? pct1(cobertura) : '—'}</Td>
                         </tr>
                       </tbody>
@@ -560,7 +589,15 @@ export default function FinanceDashboard({ initMonth }: { initMonth: string }) {
                     <div key={m.nombre}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8, flexWrap: 'wrap', gap: 8 }}>
                         <span style={{ fontSize: 15, fontWeight: 800, color: NAVY }}>{m.nombre.replace('Malls - ', '')}</span>
-                        <span style={{ fontSize: 13, color: GREY }}>Ganancia <strong style={{ color: sem.color }}>{money(m.ganancia)}</strong> / Costo {money(m.costoPeriodo)} · <strong style={{ color: sem.color }}>{pct1(m.pctMeta)}</strong></span>
+                        <span style={{ fontSize: 13, color: GREY }}>
+                          Ganancia <strong style={{ color: sem.color }}>{money(m.ganancia)}</strong> / Costo {money(m.costoPeriodo)} · <strong style={{ color: sem.color }}>{pct1(m.pctMeta)}</strong>
+                          {' · '}Ponche {m.tasaPonche == null
+                            ? <strong style={{ color: FLAT }}>—</strong>
+                            : <strong style={{ color: coberturaColor(m.tasaPonche) }}>{pct1(m.tasaPonche)} <span style={{ fontWeight: 600, color: FLAT }}>({m.turnosPonchados}/{m.turnosAsignados})</span></strong>}
+                          {' · '}Cobertura {m.coberturaTurnos == null
+                            ? <strong style={{ color: FLAT }}>—</strong>
+                            : <strong style={{ color: coberturaColor(m.coberturaTurnos) }}>{pct1(m.coberturaTurnos)} <span style={{ fontWeight: 600, color: FLAT }}>({m.turnosPonchados}/{m.turnosCreados})</span></strong>}
+                        </span>
                       </div>
                       <ProgressBar pct={m.pctMeta} color={sem.color} />
                       <div style={{ fontSize: 12, color: FLAT, marginTop: 6 }}>
@@ -585,6 +622,11 @@ export default function FinanceDashboard({ initMonth }: { initMonth: string }) {
                 const totCost = data.booths.reduce((s, b) => s + b.costo, 0)
                 const totIngreso = data.booths.reduce((s, b) => s + b.ingreso, 0)
                 const totVentas = data.booths.reduce((s, b) => s + (b.ventas ?? 0), 0)
+                const totCreados = data.booths.reduce((s, b) => s + b.turnosCreados, 0)
+                const totAsignados = data.booths.reduce((s, b) => s + b.turnosAsignados, 0)
+                const totPonchados = data.booths.reduce((s, b) => s + b.turnosPonchados, 0)
+                const totCobertura = totCreados > 0 ? totPonchados / totCreados : null
+                const totPonche = totAsignados > 0 ? totPonchados / totAsignados : null
                 return (
                   <>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 18, marginBottom: 24 }} className="max-md:!grid-cols-2">
@@ -596,7 +638,7 @@ export default function FinanceDashboard({ initMonth }: { initMonth: string }) {
                     <div style={{ overflowX: 'auto' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead><tr>
-                          <Th align="left" radius="l">Booth / Evento</Th><Th align="left">Período</Th><Th>Ventas</Th><Th>Días</Th><Th>Ingreso</Th><Th>Costo</Th><Th>Ganancia/Día</Th><Th radius="r">Ganancia Neta</Th>
+                          <Th align="left" radius="l">Booth / Evento</Th><Th align="left">Período</Th><Th>Ventas</Th><Th>Días</Th><Th>Tasa Ponche</Th><Th>Cobertura</Th><Th>Ingreso</Th><Th>Costo</Th><Th>Ganancia/Día</Th><Th radius="r">Ganancia Neta</Th>
                         </tr></thead>
                         <tbody>
                           {data.booths.map((b, i) => (
@@ -605,6 +647,8 @@ export default function FinanceDashboard({ initMonth }: { initMonth: string }) {
                               <Td align="left" muted>{b.fechaInicio} → {b.fechaFin}</Td>
                               <Td bold>{num(b.ventas)}</Td>
                               <Td>{num(b.dias)}</Td>
+                              <RatioCell pct={b.tasaPonche} num={b.turnosPonchados} den={b.turnosAsignados} />
+                              <RatioCell pct={b.coberturaTurnos} num={b.turnosPonchados} den={b.turnosCreados} />
                               <Td>{money(b.ingreso)}</Td>
                               <Td>{money(b.costo)}</Td>
                               <Td>{money(b.dias > 0 ? b.gananciaNeta / b.dias : 0)}</Td>
@@ -616,6 +660,8 @@ export default function FinanceDashboard({ initMonth }: { initMonth: string }) {
                             <Td align="left" muted>—</Td>
                             <Td bold>{num(totVentas)}</Td>
                             <Td bold>{num(data.booths.reduce((s, b) => s + b.dias, 0))}</Td>
+                            <RatioCell pct={totPonche} num={totPonchados} den={totAsignados} />
+                            <RatioCell pct={totCobertura} num={totPonchados} den={totCreados} />
                             <Td bold>{money(totIngreso)}</Td>
                             <Td bold>{money(totCost)}</Td>
                             <Td bold>—</Td>
@@ -624,7 +670,7 @@ export default function FinanceDashboard({ initMonth }: { initMonth: string }) {
                         </tbody>
                       </table>
                     </div>
-                    <p style={{ fontSize: 12, color: GREY, marginTop: 14 }}>“Ventas” = deals cerrados atribuidos al lugar por su Record ID de Channel Info (todas las líneas de negocio). El ingreso solo cuenta solar/roofing (15%) y water/Anker (10%).</p>
+                    <p style={{ fontSize: 12, color: GREY, marginTop: 14 }}>“Ventas” = deals cerrados atribuidos al lugar por su Record ID de Channel Info (todas las líneas de negocio). El ingreso solo cuenta solar/roofing (15%) y water/Anker (10%). Turnos (Shifter): “Tasa Ponche” = ponchados ÷ asignados (igual que el tab de Turnos, ignora los sin asignar); “Cobertura” = ponchados ÷ creados (incluye los turnos sin asignar como no-cubiertos). El número pequeño es ponchados/denominador. “—” = sin turnos rastreados.</p>
                   </>
                 )
               })()}

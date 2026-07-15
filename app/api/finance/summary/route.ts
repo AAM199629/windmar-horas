@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireRole } from '@/lib/api-auth'
 import {
   getHomeDepotFinance, getMallFinance, getBoothEventFinance,
   getCambaseoFinance, homeDepotUnitsReady, monthsInRange,
+  getShiftCoverageByLocation,
 } from '@/lib/finance'
 import {
   HD_LUMP_SUM_SEMESTRAL, HD_META_POR_TIENDA, cambaseoComisionPorMes,
@@ -38,6 +40,8 @@ function rangeLabel(from: string, to: string): string {
 }
 
 export async function GET(req: NextRequest) {
+  const denied = await requireRole(['admin'])
+  if (denied) return denied
   const { searchParams } = req.nextUrl
   const now = new Date()
 
@@ -58,10 +62,14 @@ export async function GET(req: NextRequest) {
     const meses = monthsInRange(from, to)
     const mesesCount = meses.length
 
+    // Cobertura de turnos (Shifter) por (canal, location) — se calcula una vez y
+    // se reparte entre HD, malls y booths.
+    const cov = await getShiftCoverageByLocation(from, to)
+
     const [homeDepot, malls, booths, coordinadores, hdReady] = await Promise.all([
-      getHomeDepotFinance(from, to),
-      getMallFinance(from, to),
-      getBoothEventFinance(from, to),
+      getHomeDepotFinance(from, to, cov),
+      getMallFinance(from, to, cov),
+      getBoothEventFinance(from, to, cov),
       getCambaseoFinance(from, to, mesesCount),
       homeDepotUnitsReady(),
     ])
