@@ -4,10 +4,13 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { getRedshiftPool } from './redshift'
+import { listWeekKeys, getWeeklyReport } from './kv'
+import { getShiftRowsForRange } from './stip'
+import type { ShiftRow } from './types'
 import {
   SOLAR_ROOFING_PIPELINES, WATER_ANKER_PIPELINES,
   MALL_RATE_SOLAR_ROOFING, MALL_RATE_WATER_ANKER,
-  HD_PRECIO_PANEL, HD_PRECIO_BATERIA, HD_PANELS_PER_KW, HD_STORES,
+  HD_PRECIO_PANEL, HD_PRECIO_BATERIA, HD_PANELS_PER_KW, HD_STORES, HD_SHIFT_LOCATIONS,
   MALLS,
   CAMBASEO_GUAGUA_MENSUAL, CAMBASEO_SALARIO_MENSUAL, CAMBASEO_COST_OVERRIDES,
   CAMBASEO_COMPANY_MARGIN_RATE, cambaseoComisionPorMes, CAMBASEO_EXCLUDE,
@@ -31,6 +34,11 @@ export interface HomeDepotTienda {
   epcSolarRoofing: number   // ventas solar/roofing (amount)
   ventasWaterAnker: number  // ventas water/Anker (amount)
   gananciaPipeline: number  // 0.15*solar + 0.10*water
+  turnosCreados: number     // turnos (Shifter) creados en el rango para esta tienda
+  turnosAsignados: number   // de esos, cuántos tenían persona asignada
+  turnosPonchados: number   // de esos, cuántos se completaron (Completed)
+  coberturaTurnos: number | null  // ponchados / creados (null si no hubo turnos)
+  tasaPonche: number | null       // ponchados / asignados (null si no hubo asignados)
 }
 export interface MallFinance {
   nombre: string
@@ -41,6 +49,11 @@ export interface MallFinance {
   ventasWaterAnker: number
   ganancia: number
   pctMeta: number        // ganancia / costoPeriodo
+  turnosCreados: number
+  turnosAsignados: number
+  turnosPonchados: number
+  coberturaTurnos: number | null
+  tasaPonche: number | null
 }
 export interface BoothEvent {
   nombre: string
@@ -52,6 +65,11 @@ export interface BoothEvent {
   costo: number         // inversión fija * mesesActivos (no se prorratea)
   ingreso: number
   gananciaNeta: number
+  turnosCreados: number
+  turnosAsignados: number
+  turnosPonchados: number
+  coberturaTurnos: number | null
+  tasaPonche: number | null
 }
 export interface Coordinador {
   nombre: string
@@ -84,6 +102,64 @@ async function hdUnitsAvailable(): Promise<boolean> {
   return _hdUnitsAvailable
 }
 
+// ── Cobertura de turnos (Shifter) ────────────────────────────────────────────
+// Cuenta turnos creados vs ponchados (Completed) por (canal, location) en el rango,
+// deduplicando turnos que aparecen en reportes semanales que se traslapan.
+export interface ShiftCoverage { creados: number; asignados: number; ponchados: number }
+const covKey = (canal: string, location: string) => `${canal}||${location}`
+
+export async function getShiftCoverageByLocation(from: string, to: string): Promise<Map<string, ShiftCoverage>> {
+  const out = new Map<string, ShiftCoverage>()
+  const seen = new Set<string>()
+  const ingest = (rows: ShiftRow[]) => {
+    for (const s of rows) {
+      if (!s.date || s.date < from || s.date > to) continue
+      if (!s.canal || !s.location) continue
+      const dedup = `${s.shiftId}|${s.email}|${s.date}`
+      if (seen.has(dedup)) continue
+      seen.add(dedup)
+      const k = covKey(s.canal, s.location)
+      const c = out.get(k) ?? { creados: 0, asignados: 0, ponchados: 0 }
+      c.creados++
+      if (s.email && s.email !== '---') c.asignados++
+      if (s.shiftStatus === 'Completed') c.ponchados++
+      out.set(k, c)
+    }
+  }
+
+  // Fuente primaria: reportes CSV guardados (igual que /api/stip/shifts). Se
+  // agregan TODOS los reportes que traslapan el rango (dedup por shift).
+  let anyCsv = false
+  const keys = await listWeekKeys()
+  for (const k of keys) {
+    const r = await getWeeklyReport(k)
+    if (!Array.isArray(r?.allShifts) || !r?.weekStart || !r?.weekEnd) continue
+    if (r.weekStart > to || r.weekEnd < from) continue
+    anyCsv = true
+    ingest(r.allShifts)
+  }
+  // Fallback: STIP en vivo solo si ningún CSV cubre el rango.
+  if (!anyCsv) {
+    try { ingest(await getShiftRowsForRange(from, to)) } catch { /* sin datos de turnos */ }
+  }
+  return out
+}
+
+// Suma la cobertura de una lista de locations dentro de un canal. Devuelve dos
+// tasas: cobertura (ponchados/creados) y tasa de ponche (ponchados/asignados).
+function sumCoverage(cov: Map<string, ShiftCoverage>, canal: string, locations: string[]) {
+  let creados = 0, asignados = 0, ponchados = 0
+  for (const loc of locations) {
+    const c = cov.get(covKey(canal, loc))
+    if (c) { creados += c.creados; asignados += c.asignados; ponchados += c.ponchados }
+  }
+  return {
+    creados, asignados, ponchados,
+    cobertura: creados > 0 ? ponchados / creados : null,
+    tasaPonche: asignados > 0 ? ponchados / asignados : null,
+  }
+}
+
 interface BoothPipelineRow { booth: string; pipeline: string; deals: number; amount: number }
 
 // Ventas (excluye canceladas) por booth + pipeline, para un conjunto de booths.
@@ -110,7 +186,7 @@ async function getBoothPipelineRows(from: string, to: string, booths: string[]):
 }
 
 // ── Home Depot ──────────────────────────────────────────────────────────────────
-export async function getHomeDepotFinance(from: string, to: string): Promise<HomeDepotTienda[]> {
+export async function getHomeDepotFinance(from: string, to: string, cov: Map<string, ShiftCoverage>): Promise<HomeDepotTienda[]> {
   const rows = await getBoothPipelineRows(from, to, HD_STORES)
 
   // Unidades reales (placas/baterías) solo si el ETL ya cargó las columnas.
@@ -151,12 +227,14 @@ export async function getHomeDepotFinance(from: string, to: string): Promise<Hom
     const epcSolarRoofing  = booth.filter(r => solarSet.has(normalize(r.pipeline))).reduce((s, r) => s + r.amount, 0)
     const ventasWaterAnker = booth.filter(r => waterSet.has(normalize(r.pipeline))).reduce((s, r) => s + r.amount, 0)
     const gananciaPipeline = epcSolarRoofing * MALL_RATE_SOLAR_ROOFING + ventasWaterAnker * MALL_RATE_WATER_ANKER
-    return { nombre: store, deals, amount, paneles, baterias, ingreso, epcSolarRoofing, ventasWaterAnker, gananciaPipeline }
+    const t = sumCoverage(cov, 'mall', HD_SHIFT_LOCATIONS[store] ?? [])
+    return { nombre: store, deals, amount, paneles, baterias, ingreso, epcSolarRoofing, ventasWaterAnker, gananciaPipeline,
+      turnosCreados: t.creados, turnosAsignados: t.asignados, turnosPonchados: t.ponchados, coberturaTurnos: t.cobertura, tasaPonche: t.tasaPonche }
   })
 }
 
 // ── Centros Comerciales (malls) ─────────────────────────────────────────────────
-export async function getMallFinance(from: string, to: string): Promise<MallFinance[]> {
+export async function getMallFinance(from: string, to: string, cov: Map<string, ShiftCoverage>): Promise<MallFinance[]> {
   // Solo malls activos en el período (traslape con su ventana del Channel Info).
   // fechaFin null = indefinido. El costo mensual se imputa completo si está activo.
   const meses = monthsInRange(from, to)
@@ -175,7 +253,9 @@ export async function getMallFinance(from: string, to: string): Promise<MallFina
     const mesesActivos = meses.filter(mm => overlapDays(mall.fechaInicio, mall.fechaFin ?? FAR_FUTURE, mm.start, mm.end) > 0).length
     const costoPeriodo = mall.costoMensual * mesesActivos
     const pctMeta     = costoPeriodo > 0 ? ganancia / costoPeriodo : 0
-    return { nombre: mall.nombre, costoMensual: mall.costoMensual, mesesActivos, costoPeriodo, epcSolarRoofing, ventasWaterAnker, ganancia, pctMeta }
+    const t = sumCoverage(cov, 'mall', mall.shiftLocations)
+    return { nombre: mall.nombre, costoMensual: mall.costoMensual, mesesActivos, costoPeriodo, epcSolarRoofing, ventasWaterAnker, ganancia, pctMeta,
+      turnosCreados: t.creados, turnosAsignados: t.asignados, turnosPonchados: t.ponchados, coberturaTurnos: t.cobertura, tasaPonche: t.tasaPonche }
   })
 }
 
@@ -238,7 +318,7 @@ async function getEventPipelineRows(from: string, to: string, ids: string[]): Pr
 // TODO: cuando Channel Info entre a Redshift, leer inversión fija + fechas del
 // warehouse (keyed por el mismo channel_info id) en vez de EVENTS.
 const FAR_FUTURE = '9999-12-31'
-export async function getBoothEventFinance(from: string, to: string): Promise<BoothEvent[]> {
+export async function getBoothEventFinance(from: string, to: string, cov: Map<string, ShiftCoverage>): Promise<BoothEvent[]> {
   if (!EVENTS.length) return []
   const meses = monthsInRange(from, to)
   const active = EVENTS.filter(ev => overlapDays(ev.fechaInicio, ev.fechaFin ?? FAR_FUTURE, from, to) > 0)
@@ -257,6 +337,7 @@ export async function getBoothEventFinance(from: string, to: string): Promise<Bo
     // Inversión fija se imputa completa por cada mes activo (no se prorratea).
     const mesesActivos = meses.filter(mm => overlapDays(ev.fechaInicio, ev.fechaFin ?? FAR_FUTURE, mm.start, mm.end) > 0).length
     const costo = ev.inversionFija * mesesActivos
+    const t = sumCoverage(cov, 'independiente', ev.shiftLocations)
     return {
       nombre: ev.nombre,
       fechaInicio: ev.fechaInicio,
@@ -267,6 +348,11 @@ export async function getBoothEventFinance(from: string, to: string): Promise<Bo
       costo,
       ingreso,
       gananciaNeta: ingreso - costo,
+      turnosCreados: t.creados,
+      turnosAsignados: t.asignados,
+      turnosPonchados: t.ponchados,
+      coberturaTurnos: t.cobertura,
+      tasaPonche: t.tasaPonche,
     }
   })
 }
