@@ -39,7 +39,8 @@ export default function Navbar() {
   const role = (session?.user as any)?.role as string | undefined
   const isAdmin = role === 'admin'
   const isCanal = role === 'canal'
-  const canSeeAsalariados = role === 'admin' || role === 'supervisor'
+  const isVentas = role === 'ventas'
+  const isSupervisor = role === 'supervisor'
   const dataAge = useDataStatus()
   const [open, setOpen] = useState(false)
 
@@ -49,17 +50,26 @@ export default function Navbar() {
     { href: '/canales/independiente', label: 'Independiente' },
   ]
 
-  const allLinks = isCanal ? canalLinks : [
-    ...links,
-    ...(canSeeAsalariados ? [
-      { href: '/ventas',      label: 'Dashboard Ventas' },
-      { href: '/finance',     label: 'Finanzas & ROI' },
-      { href: '/asalariados', label: 'Asalariados' },
-      { href: '/promotores',  label: 'Promotores'  },
-      { href: '/bingo',       label: 'Bingo'        },
-    ] : []),
-    ...(isAdmin           ? [{ href: '/accounts',   label: 'Cuentas' }]    : []),
+  const ventasLinks = [
+    { href: '/ventas', label: 'Dashboard Ventas' },
   ]
+
+  // admin y supervisor comparten la base (Inicio, Horas, Canales) + Ventas;
+  // el resto de tabs (Finanzas, Asalariados, Promotores, Bingo, Cuentas) son solo admin.
+  const allLinks =
+    isCanal   ? canalLinks :
+    isVentas  ? ventasLinks :
+    (isAdmin || isSupervisor) ? [
+      ...links,
+      { href: '/ventas', label: 'Dashboard Ventas' },
+      ...(isAdmin ? [
+        { href: '/finance',     label: 'Finanzas & ROI' },
+        { href: '/asalariados', label: 'Asalariados' },
+        { href: '/promotores',  label: 'Promotores'  },
+        { href: '/bingo',       label: 'Bingo'        },
+        { href: '/accounts',    label: 'Cuentas'      },
+      ] : []),
+    ] : links
 
   // Close on ESC
   useEffect(() => {
@@ -115,15 +125,20 @@ export default function Navbar() {
             HORAS
           </span>
 
-          {/* Data status */}
-          {dataAge && (
-            <div className="ml-auto shrink-0 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#00A651]" />
-              <span className="text-xs text-slate-400 whitespace-nowrap">
-                Datos Zoho: <span className="text-slate-300">{dataAge}</span>
-              </span>
-            </div>
-          )}
+          {/* Data status + version */}
+          <div className="ml-auto shrink-0 flex items-center gap-3">
+            {dataAge && (
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#00A651]" />
+                <span className="text-xs text-slate-400 whitespace-nowrap">
+                  Datos Zoho: <span className="text-slate-300">{dataAge}</span>
+                </span>
+              </div>
+            )}
+            <span className="text-[11px] text-slate-500 whitespace-nowrap">
+              v{process.env.NEXT_PUBLIC_APP_VERSION}
+            </span>
+          </div>
         </div>
       </header>
 
@@ -183,6 +198,14 @@ export default function Navbar() {
             </Link>
           ))}
         </nav>
+
+        {/* Version footer */}
+        <div
+          className="shrink-0 px-4 py-3 text-[11px] text-slate-500"
+          style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}
+        >
+          v{process.env.NEXT_PUBLIC_APP_VERSION}
+        </div>
       </aside>
     </>
   )
