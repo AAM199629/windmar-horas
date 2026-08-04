@@ -1,5 +1,5 @@
 import { getVendedores, buildVendedorMap } from '@/lib/smartsheet'
-import { getAsalariadoData } from '@/lib/redshift'
+import { getAsalariadoData, getActivePromotores } from '@/lib/redshift'
 import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import HorasDateView from '@/components/HorasDateView'
@@ -7,11 +7,14 @@ import HorasDateView from '@/components/HorasDateView'
 export const dynamic = 'force-dynamic'
 
 export default async function HorasPage() {
-  const [vendedores, session, asalariadoMap] = await Promise.all([
+  const [vendedores, session, asalariadoMap, promotores] = await Promise.all([
     getVendedores(),
     auth(),
     getAsalariadoData().catch(() => new Map()),
+    getActivePromotores().catch(() => []),
   ])
+
+  const promotorEmails = promotores.map(p => p.email.toLowerCase())
 
   const vmap = buildVendedorMap(vendedores)
   const role = (session?.user as any)?.role
@@ -35,6 +38,7 @@ export default async function HorasPage() {
       <HorasDateView
         vendedorMap={vendedorMapObj}
         asalariadoMap={asalariadoMapObj}
+        promotorEmails={promotorEmails}
         role={role}
       />
     </div>
