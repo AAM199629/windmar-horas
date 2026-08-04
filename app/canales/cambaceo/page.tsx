@@ -39,7 +39,7 @@ export default async function CambaceoPage({
             </p>
             <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(40px, 5vw, 60px)', lineHeight: 0.9, margin: 0 }}>
               <span style={{ color: '#21274E' }}>Canal </span>
-              <span style={{ color: '#F89B24' }}>Cambaceo / Canvaseo</span>
+              <span style={{ color: '#F89B24' }}>Cambaceo</span>
             </h1>
           </div>
           <ViewToggle
@@ -70,7 +70,7 @@ export default async function CambaceoPage({
           </p>
           <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(40px, 5vw, 60px)', lineHeight: 0.9, margin: 0 }}>
             <span style={{ color: '#21274E' }}>Canal </span>
-            <span style={{ color: '#F89B24' }}>Cambaceo / Canvaseo</span>
+            <span style={{ color: '#F89B24' }}>Cambaceo</span>
           </h1>
         </div>
         <ViewToggle
