@@ -10,6 +10,7 @@ import {
   computeComunicadoStatus,
 } from '@/lib/ventas'
 import AsalariadosClient from './AsalariadosClient'
+import AsalariadosDashboardToggle from '@/components/AsalariadosDashboardToggle'
 import type { ComunicadoRecord } from '@/lib/asalariados-kv'
 import type { MonthMetrics } from '@/lib/ventas'
 
@@ -137,6 +138,7 @@ export default async function AsalariadosPage() {
             <span style={{ color: '#F89B24' }}>Asalariados</span>
           </h1>
         </div>
+        <AsalariadosDashboardToggle />
       </div>
       <AsalariadosClient
         asalariados={asalariados}
