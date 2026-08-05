@@ -8,6 +8,7 @@ type EnrichedEmployee = EmployeeSummary & {
   ciudad: string | null
   salesRole: string | null
   supervisorRegional: string | null
+  workerType: 'promotor' | 'asalariado' | 'otro'
 }
 
 const ROLES = [
@@ -21,9 +22,16 @@ const ROLES = [
 ]
 
 export default function HorasClient({ employees }: { employees: EnrichedEmployee[] }) {
-  const [roleFilter, setRoleFilter]     = useState('')
-  const [regionFilter, setRegionFilter] = useState('')
-  const [search, setSearch]             = useState('')
+  const [roleFilter, setRoleFilter]         = useState('')
+  const [regionFilter, setRegionFilter]     = useState('')
+  const [workerTypeFilter, setWorkerTypeFilter] = useState<'' | 'promotor' | 'asalariado'>('')
+  const [search, setSearch]                 = useState('')
+
+  const workerTypeCounts = useMemo(() => ({
+    all:        employees.length,
+    promotor:   employees.filter(e => e.workerType === 'promotor').length,
+    asalariado: employees.filter(e => e.workerType === 'asalariado').length,
+  }), [employees])
 
   const allRegions = useMemo(() => {
     const set = new Set<string>()
@@ -32,6 +40,7 @@ export default function HorasClient({ employees }: { employees: EnrichedEmployee
   }, [employees])
 
   const filtered = useMemo(() => employees.filter(e => {
+    if (workerTypeFilter && e.workerType !== workerTypeFilter) return false
     if (roleFilter   && e.salesRole !== roleFilter) return false
     if (regionFilter === '__sin__' && e.supervisorRegional) return false
     if (regionFilter && regionFilter !== '__sin__' && e.supervisorRegional !== regionFilter) return false
@@ -40,7 +49,7 @@ export default function HorasClient({ employees }: { employees: EnrichedEmployee
       if (!e.name.toLowerCase().includes(q) && !e.email.toLowerCase().includes(q)) return false
     }
     return true
-  }), [employees, roleFilter, regionFilter, search])
+  }), [employees, workerTypeFilter, roleFilter, regionFilter, search])
 
   const totalSinACO = filtered.reduce((a, e) => a + e.horasSinACO, 0)
   const totalConACO = filtered.reduce((a, e) => a + e.horasConACO, 0)
@@ -63,8 +72,33 @@ export default function HorasClient({ employees }: { employees: EnrichedEmployee
     return keys
   }, [grouped])
 
+  const WORKER_TABS: { key: '' | 'promotor' | 'asalariado'; label: string; count: number }[] = [
+    { key: '',           label: 'Todos',       count: workerTypeCounts.all },
+    { key: 'promotor',   label: 'Promotores',  count: workerTypeCounts.promotor },
+    { key: 'asalariado', label: 'Asalariados', count: workerTypeCounts.asalariado },
+  ]
+
   return (
     <div>
+      {/* Worker type segmented control */}
+      <div className="inline-flex gap-1 p-1 mb-5 bg-slate-100 rounded-full">
+        {WORKER_TABS.map(t => {
+          const on = workerTypeFilter === t.key
+          return (
+            <button
+              key={t.key || 'all'}
+              onClick={() => setWorkerTypeFilter(t.key)}
+              className={`px-4 py-1.5 rounded-full text-sm font-semibold transition ${
+                on ? 'bg-[#0D1654] text-white shadow-sm' : 'text-slate-500 hover:text-[#0D1654]'
+              }`}
+            >
+              {t.label}
+              <span className={`ml-2 text-xs font-bold ${on ? 'text-white/70' : 'text-slate-400'}`}>{t.count}</span>
+            </button>
+          )
+        })}
+      </div>
+
       {/* Summary strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
         <Stat label="Empleados" value={filtered.length} />
@@ -106,9 +140,9 @@ export default function HorasClient({ employees }: { employees: EnrichedEmployee
           <option value="__sin__">Sin región asignada</option>
         </select>
 
-        {(roleFilter || regionFilter || search) && (
+        {(roleFilter || regionFilter || search || workerTypeFilter) && (
           <button
-            onClick={() => { setRoleFilter(''); setRegionFilter(''); setSearch('') }}
+            onClick={() => { setRoleFilter(''); setRegionFilter(''); setSearch(''); setWorkerTypeFilter('') }}
             className="text-xs text-slate-400 hover:text-red-500 transition ml-auto"
           >
             ✕ Limpiar filtros

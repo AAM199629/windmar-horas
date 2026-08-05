@@ -16,6 +16,7 @@ const CHANNELS = [
 export default async function HomePage() {
   const session = await auth()
   if ((session?.user as any)?.role === 'canal') redirect('/canales/cambaceo')
+  if ((session?.user as any)?.role === 'supervisor') redirect('/horas')
   return (
     <div className="space-y-8">
       {/* Hero */}

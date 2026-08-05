@@ -26,7 +26,6 @@ function useDataStatus() {
 }
 
 const links = [
-  { href: '/',                      label: 'Inicio' },
   { href: '/horas',                 label: 'Análisis de Horas' },
   { href: '/canales/cambaceo',      label: 'Cambaceo' },
   { href: '/canales/mall',          label: 'Mall / Home Depot' },
@@ -54,19 +53,19 @@ export default function Navbar() {
     { href: '/ventas', label: 'Dashboard Ventas' },
   ]
 
-  // admin y supervisor comparten la base (Inicio, Horas, Canales) + Ventas;
-  // el resto de tabs (Finanzas, Asalariados, Promotores, Bingo, Cuentas) son solo admin.
+  // admin y supervisor comparten la base (Horas, Canales) + Ventas + Asalariados;
+  // Inicio y el resto de tabs (Finanzas, Promotores, Cuentas) son solo admin.
   const allLinks =
     isCanal   ? canalLinks :
     isVentas  ? ventasLinks :
     (isAdmin || isSupervisor) ? [
+      ...(isAdmin ? [{ href: '/', label: 'Inicio' }] : []),
       ...links,
-      { href: '/ventas', label: 'Dashboard Ventas' },
+      { href: '/ventas',      label: 'Dashboard Ventas' },
+      { href: '/asalariados', label: 'Asalariados' },
       ...(isAdmin ? [
         { href: '/finance',     label: 'Finanzas & ROI' },
-        { href: '/asalariados', label: 'Asalariados' },
         { href: '/promotores',  label: 'Promotores'  },
-        { href: '/bingo',       label: 'Bingo'        },
         { href: '/accounts',    label: 'Cuentas'      },
       ] : []),
     ] : links
@@ -91,7 +90,7 @@ export default function Navbar() {
   return (
     <>
       <header style={{ background: '#0D1654' }} className="shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 flex items-center gap-4 h-16">
+        <div className="px-4 flex items-center gap-4 h-16">
 
           {/* Hamburger button */}
           <button

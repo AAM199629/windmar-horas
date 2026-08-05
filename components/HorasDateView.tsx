@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import HorasClient from './HorasClient'
 import NominaSection from './NominaSection'
 import type { WeeklyReport, EmployeeSummary } from '@/lib/types'
@@ -30,17 +31,22 @@ type AEntry = { hireDate: string | null; terminationDate: string | null }
 interface Props {
   vendedorMap:    Record<string, VEntry>
   asalariadoMap:  Record<string, AEntry>
+  promotorEmails: string[]
   role:           string | undefined
 }
 
-export default function HorasDateView({ vendedorMap, asalariadoMap, role }: Props) {
+export default function HorasDateView({ vendedorMap, asalariadoMap, promotorEmails, role }: Props) {
+  const promotorSet = new Set(promotorEmails)
+  const searchParams = useSearchParams()
   const today  = new Date()
   const monday = getMondayOfWeek(today)
   const sunday = new Date(monday)
   sunday.setDate(monday.getDate() + 6)
 
-  const [from,    setFrom]    = useState(toISO(monday))
-  const [to,      setTo]      = useState(toISO(sunday))
+  // Honor ?from&to from the URL (e.g. when opened from an imported file row),
+  // otherwise default to the current week.
+  const [from,    setFrom]    = useState(searchParams.get('from') ?? toISO(monday))
+  const [to,      setTo]      = useState(searchParams.get('to')   ?? toISO(sunday))
   const [report,  setReport]  = useState<WeeklyReport | null>(null)
   const [loading, setLoading] = useState(true)
   const [error,   setError]   = useState<string | null>(null)
@@ -65,12 +71,18 @@ export default function HorasDateView({ vendedorMap, asalariadoMap, role }: Prop
 
   useEffect(() => { load(from, to) }, [load, from, to])
 
-  const enriched = (report?.employees ?? []).map(emp => ({
-    ...emp,
-    ciudad:             vendedorMap[emp.email.toLowerCase()]?.ciudad             ?? null,
-    salesRole:          vendedorMap[emp.email.toLowerCase()]?.salesRole          ?? null,
-    supervisorRegional: vendedorMap[emp.email.toLowerCase()]?.supervisorRegional ?? null,
-  }))
+  const enriched = (report?.employees ?? []).map(emp => {
+    const key = emp.email.toLowerCase()
+    const workerType: 'promotor' | 'asalariado' | 'otro' =
+      asalariadoMap[key] ? 'asalariado' : promotorSet.has(key) ? 'promotor' : 'otro'
+    return {
+      ...emp,
+      ciudad:             vendedorMap[key]?.ciudad             ?? null,
+      salesRole:          vendedorMap[key]?.salesRole          ?? null,
+      supervisorRegional: vendedorMap[key]?.supervisorRegional ?? null,
+      workerType,
+    }
+  })
 
   const salariadosForNomina: SalariadoForNomina[] = enriched
     .filter(e => e.salesRole && JOB_TITLE_MAP[e.salesRole])
