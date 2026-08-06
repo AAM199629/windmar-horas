@@ -144,6 +144,7 @@ export default async function AsalariadosPage() {
         asalariados={asalariados}
         recentMonths={recentMonths}
         isAdmin={role === 'admin'}
+        canEdit={role === 'admin' || role === 'supervisor'}
       />
     </div>
   )

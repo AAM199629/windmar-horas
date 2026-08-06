@@ -320,12 +320,12 @@ function ApprovalModal({
 function AsalariadoCard({
   emp,
   recentMonths,
-  isAdmin,
+  canEdit,
   onEditComunicado,
 }: {
   emp: AsalariadoData
   recentMonths: Array<{ year: number; month: number }>
-  isAdmin: boolean
+  canEdit: boolean
   onEditComunicado: (emp: AsalariadoData) => void
 }) {
   const [open, setOpen] = useState(false)
@@ -613,8 +613,8 @@ function AsalariadoCard({
             </div>
           )}
 
-          {/* Admin approve button */}
-          {isAdmin && effStatus(emp) !== 'none' && (
+          {/* Approve/edit button — admin y supervisor */}
+          {canEdit && effStatus(emp) !== 'none' && (
             <div className="mt-3">
               <button
                 onClick={() => onEditComunicado(emp)}
@@ -637,10 +637,12 @@ export default function AsalariadosClient({
   asalariados,
   recentMonths,
   isAdmin,
+  canEdit,
 }: {
   asalariados: AsalariadoData[]
   recentMonths: Array<{ year: number; month: number }>
   isAdmin: boolean
+  canEdit: boolean
 }) {
   const [search, setSearch]               = useState('')
   const [roleFilter, setRoleFilter]       = useState('')
@@ -805,7 +807,7 @@ export default function AsalariadosClient({
                     key={emp.nombre}
                     emp={emp}
                     recentMonths={recentMonths}
-                    isAdmin={isAdmin}
+                    canEdit={canEdit}
                     onEditComunicado={setEditingEmp}
                   />
                 ))}
