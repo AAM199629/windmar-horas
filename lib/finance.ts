@@ -4,8 +4,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { getRedshiftPool } from './redshift'
-import { listWeekKeys, getWeeklyReport } from './kv'
-import { getShiftRowsForRange } from './stip'
+import { getShifterShiftRows } from './shifter-api'
 import type { ShiftRow } from './types'
 import {
   SOLAR_ROOFING_PIPELINES, WATER_ANKER_PIPELINES,
@@ -127,21 +126,8 @@ export async function getShiftCoverageByLocation(from: string, to: string): Prom
     }
   }
 
-  // Fuente primaria: reportes CSV guardados (igual que /api/stip/shifts). Se
-  // agregan TODOS los reportes que traslapan el rango (dedup por shift).
-  let anyCsv = false
-  const keys = await listWeekKeys()
-  for (const k of keys) {
-    const r = await getWeeklyReport(k)
-    if (!Array.isArray(r?.allShifts) || !r?.weekStart || !r?.weekEnd) continue
-    if (r.weekStart > to || r.weekEnd < from) continue
-    anyCsv = true
-    ingest(r.allShifts)
-  }
-  // Fallback: STIP en vivo solo si ningún CSV cubre el rango.
-  if (!anyCsv) {
-    try { ingest(await getShiftRowsForRange(from, to)) } catch { /* sin datos de turnos */ }
-  }
+  // Fuente única: API de Shifter (mismo ShiftRow[] que /api/stip/shifts).
+  try { ingest(await getShifterShiftRows(from, to)) } catch { /* sin datos de turnos */ }
   return out
 }
 

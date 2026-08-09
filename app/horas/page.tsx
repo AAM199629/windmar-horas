@@ -33,7 +33,7 @@ export default async function HorasPage() {
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#0D1654]">Análisis de Horas</h1>
-        <p className="text-slate-500 text-sm mt-0.5">Turnos en tiempo real · STIP</p>
+        <p className="text-slate-500 text-sm mt-0.5">Turnos en tiempo real · Shifter</p>
       </div>
       <HorasDateView
         vendedorMap={vendedorMapObj}

@@ -1,6 +1,7 @@
-import { listWeekKeys, getWeeklyReport } from '@/lib/kv'
+import { getShifterShiftRows } from '@/lib/shifter-api'
 import { getMonthDeals, getMonthLeadsByCoordinator } from '@/lib/redshift'
 import type { CoordinadorRow } from '@/lib/redshift'
+import type { ShiftRow } from '@/lib/types'
 
 export type { CoordinadorRow }
 
@@ -22,36 +23,28 @@ export async function computeCambaceoPerformance(month: string): Promise<{
   const monthStart = `${year}-${mm}-01`
   const monthEnd   = `${year}-${mm}-${String(lastDayNum).padStart(2, '0')}`
 
-  const weekKeys = await listWeekKeys()
-  const [reports, deals, coordinadores] = await Promise.all([
-    Promise.all(weekKeys.map(k => getWeeklyReport(k))),
+  const [shiftRows, deals, coordinadores] = await Promise.all([
+    getShifterShiftRows(monthStart, monthEnd).catch(() => [] as ShiftRow[]),
     getMonthDeals(monthStart, monthEnd).catch(() => []),
     getMonthLeadsByCoordinator(monthStart, monthEnd).catch(() => []),
   ])
 
   const shiftMap = new Map<string, { name: string; turnos: number; missed: number }>()
 
-  for (let i = 0; i < weekKeys.length; i++) {
-    const report = reports[i]
-    if (!report) continue
-    if (report.weekEnd < monthStart || report.weekStart > monthEnd) continue
+  for (const shift of shiftRows) {
+    if (shift.canal !== 'cambaceo') continue
+    if (shift.date < monthStart || shift.date > monthEnd) continue
+    const email = shift.email.toLowerCase()
+    if (!email) continue
 
-    for (const emp of report.employees) {
-      const email = emp.email.toLowerCase()
-      for (const shift of (emp.shifts ?? [])) {
-        if (shift.canal !== 'cambaceo') continue
-        if (shift.date < monthStart || shift.date > monthEnd) continue
-
-        if (!shiftMap.has(email)) {
-          shiftMap.set(email, { name: emp.name, turnos: 0, missed: 0 })
-        }
-        const s = shiftMap.get(email)!
-        if (shift.shiftStatus === 'Missed') {
-          s.missed++
-        } else {
-          s.turnos++
-        }
-      }
+    if (!shiftMap.has(email)) {
+      shiftMap.set(email, { name: shift.name, turnos: 0, missed: 0 })
+    }
+    const s = shiftMap.get(email)!
+    if (shift.shiftStatus === 'Missed') {
+      s.missed++
+    } else {
+      s.turnos++
     }
   }
 
