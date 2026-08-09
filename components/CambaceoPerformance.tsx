@@ -655,7 +655,7 @@ export default function CambaceoPerformance({
             gap: 16, marginBottom: 20,
           }}>
             <div>
-              <p style={EYEBROW}>STIP · TURNOS</p>
+              <p style={EYEBROW}>SHIFTER · TURNOS</p>
               <h3 style={SECTION_TITLE}>Vendedores</h3>
               <div style={ACCENT_RULE} />
             </div>

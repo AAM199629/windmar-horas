@@ -33,6 +33,10 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# credenciales / documentos sensibles (contienen secretos en texto plano)
+shifter-api-guia-consumidor.md
+report*.csv
+
 # vercel
 .vercel
 

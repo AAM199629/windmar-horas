@@ -3,7 +3,8 @@ import { auth } from '@/auth'
 import { getActivePromotores } from '@/lib/redshift'
 import { getFollowUpFromRedshift } from '@/lib/redshift'
 import { getPromoterLeadStats } from '@/lib/zoho-crm'
-import { getLatestReport } from '@/lib/kv'
+import { getShifterShiftRows } from '@/lib/shifter-api'
+import { buildWeeklyReport } from '@/lib/shifter'
 import { getVendedores } from '@/lib/smartsheet'
 import { isActiveSupervisor } from '@/lib/ventas'
 import PromotoresClient from './PromotoresClient'
@@ -27,16 +28,29 @@ export interface PromotorData {
   locations: string[]
 }
 
+// Reporte de la semana en curso (lun–dom) desde el API de Shifter.
+async function currentWeekReport() {
+  const today = new Date()
+  const day = today.getDay()
+  const monday = new Date(today)
+  monday.setDate(today.getDate() + (day === 0 ? -6 : 1 - day))
+  const sunday = new Date(monday)
+  sunday.setDate(monday.getDate() + 6)
+  const iso = (d: Date) => d.toISOString().slice(0, 10)
+  const rows = await getShifterShiftRows(iso(monday), iso(sunday))
+  return rows.length ? buildWeeklyReport(rows) : null
+}
+
 export default async function PromotoresPage() {
   const session = await auth()
   const role = (session?.user as any)?.role
-  if (!session || (role !== 'admin' && role !== 'supervisor')) redirect('/')
+  if (!session || role !== 'admin') redirect('/')
 
   const [promotores, followUpMap, vendedores, report] = await Promise.all([
     getActivePromotores().catch(() => []),
     getFollowUpFromRedshift().catch(() => new Map()),
     getVendedores(),
-    getLatestReport().catch(() => null),
+    currentWeekReport().catch(() => null),
   ])
 
   const promoterList = promotores.map(p => ({ email: p.email, name: p.fullName }))

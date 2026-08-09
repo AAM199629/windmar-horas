@@ -36,7 +36,7 @@ export default async function IndependientePage({
         }}>
           {currentView === 'dashboard'
             ? 'CANAL · DASHBOARD DE VENTAS EN VIVO · REDSHIFT'
-            : 'CANAL · TURNOS EN TIEMPO REAL · STIP'}
+            : 'CANAL · TURNOS EN TIEMPO REAL · SHIFTER'}
         </p>
         <h1 style={{
           fontFamily: "'Bebas Neue', sans-serif",
