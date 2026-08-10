@@ -27,15 +27,30 @@ const JOB_TITLE_MAP: Record<string, string> = {
 
 type VEntry = { ciudad: string | null; salesRole: string | null; supervisorRegional: string | null }
 type AEntry = { hireDate: string | null; terminationDate: string | null }
-
-interface Props {
-  vendedorMap:    Record<string, VEntry>
-  asalariadoMap:  Record<string, AEntry>
-  promotorEmails: string[]
-  role:           string | undefined
+type ActiveAsalariado = {
+  email:           string
+  fullName:        string
+  salesRole:       string
+  hireDate:        string | null
+  terminacionDate: string | null
+}
+type ActivePromotor = {
+  email:     string
+  fullName:  string
+  salesRole: string
+  hireDate:  string | null
 }
 
-export default function HorasDateView({ vendedorMap, asalariadoMap, promotorEmails, role }: Props) {
+interface Props {
+  vendedorMap:       Record<string, VEntry>
+  asalariadoMap:     Record<string, AEntry>
+  activeAsalariados: ActiveAsalariado[]
+  activePromotores:  ActivePromotor[]
+  promotorEmails:    string[]
+  role:              string | undefined
+}
+
+export default function HorasDateView({ vendedorMap, asalariadoMap, activeAsalariados, activePromotores, promotorEmails, role }: Props) {
   const promotorSet = new Set(promotorEmails)
   const searchParams = useSearchParams()
   const today  = new Date()
@@ -84,20 +99,83 @@ export default function HorasDateView({ vendedorMap, asalariadoMap, promotorEmai
     }
   })
 
-  const salariadosForNomina: SalariadoForNomina[] = enriched
-    .filter(e => e.salesRole && JOB_TITLE_MAP[e.salesRole])
-    .map(e => {
-      const rd = asalariadoMap[e.email.toLowerCase()]
-      return {
-        name:            e.name,
-        email:           e.email,
-        jobTitle:        JOB_TITLE_MAP[e.salesRole!],
-        horasWorked:     e.horasConACO,
-        metHoursAuto:    e.horasConACO >= 24.5,
-        hireDate:        rd?.hireDate        ?? null,
-        terminationDate: rd?.terminationDate ?? null,
-      }
+  // Nómina debe listar TODOS los asalariados activos (Consultor/Líder/Gerente),
+  // hayan o no reportado horas esta semana. Los que no reportaron salen con 0h
+  // para que nóminas los registre como que no cumplieron.
+  const reportedByEmail = new Map(enriched.map(e => [e.email.toLowerCase(), e]))
+  const byEmail = new Map<string, SalariadoForNomina>()
+
+  for (const a of activeAsalariados) {
+    const jobTitle = JOB_TITLE_MAP[a.salesRole]
+    if (!jobTitle) continue
+    const key   = a.email.toLowerCase()
+    const rep   = reportedByEmail.get(key)
+    const horas = rep?.horasConACO ?? 0
+    byEmail.set(key, {
+      name:            a.fullName,
+      email:           a.email,
+      jobTitle,
+      horasWorked:     horas,
+      metHoursAuto:    horas >= 24.5,
+      hireDate:        a.hireDate ?? asalariadoMap[key]?.hireDate ?? null,
+      terminationDate: a.terminacionDate ?? asalariadoMap[key]?.terminationDate ?? null,
     })
+  }
+
+  // Incluir también a quien reportó horas como asalariado pero no figura en el
+  // roster activo (p. ej. terminado recientemente pero trabajó esta semana).
+  for (const e of enriched) {
+    const key = e.email.toLowerCase()
+    if (byEmail.has(key)) continue
+    if (!(e.salesRole && JOB_TITLE_MAP[e.salesRole])) continue
+    const rd = asalariadoMap[key]
+    byEmail.set(key, {
+      name:            e.name,
+      email:           e.email,
+      jobTitle:        JOB_TITLE_MAP[e.salesRole!],
+      horasWorked:     e.horasConACO,
+      metHoursAuto:    e.horasConACO >= 24.5,
+      hireDate:        rd?.hireDate        ?? null,
+      terminationDate: rd?.terminationDate ?? null,
+    })
+  }
+
+  const salariadosForNomina: SalariadoForNomina[] = [...byEmail.values()]
+    .sort((a, b) => a.name.localeCompare(b.name))
+
+  // Roster de promotores para el reporte de nómina de promotores. Mismo patrón:
+  // TODOS los promotores activos + horas de quien reportó esta semana. Sin umbral
+  // de "cumplió" (metHoursAuto siempre false; se marca manualmente si aplica).
+  const promotorByEmail = new Map<string, SalariadoForNomina>()
+  for (const p of activePromotores) {
+    const key   = p.email.toLowerCase()
+    const rep   = reportedByEmail.get(key)
+    const horas = rep?.horasConACO ?? 0
+    promotorByEmail.set(key, {
+      name:            p.fullName,
+      email:           p.email,
+      jobTitle:        p.salesRole || 'Promotor',
+      horasWorked:     horas,
+      metHoursAuto:    false,
+      hireDate:        p.hireDate ?? null,
+      terminationDate: null,
+    })
+  }
+  for (const e of enriched) {
+    const key = e.email.toLowerCase()
+    if (promotorByEmail.has(key)) continue
+    if (e.workerType !== 'promotor') continue
+    promotorByEmail.set(key, {
+      name:            e.name,
+      email:           e.email,
+      jobTitle:        e.salesRole || 'Promotor',
+      horasWorked:     e.horasConACO,
+      metHoursAuto:    false,
+      hireDate:        null,
+      terminationDate: null,
+    })
+  }
+  const promotoresForNomina: SalariadoForNomina[] = [...promotorByEmail.values()]
     .sort((a, b) => a.name.localeCompare(b.name))
 
   return (
@@ -159,6 +237,7 @@ export default function HorasDateView({ vendedorMap, asalariadoMap, promotorEmai
               weekStart={report.weekStart}
               weekEnd={report.weekEnd}
               salaried={salariadosForNomina}
+              promotores={promotoresForNomina}
             />
           )}
         </>

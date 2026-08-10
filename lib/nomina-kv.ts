@@ -20,6 +20,7 @@ export interface NominaEntry {
 
 export interface NominaRecord {
   weekKey: string
+  kind?: 'asalariado' | 'promotor'  // default asalariado (registros previos)
   entries: NominaEntry[]
   updatedAt: string
 }
