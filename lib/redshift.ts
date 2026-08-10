@@ -167,6 +167,50 @@ export async function getActiveAsalariados(): Promise<ActiveAsalariado[]> {
   })
 }
 
+// Perfiles de prueba en el data warehouse que NO deben aparecer en nómina.
+const NOMINA_EXCLUDED_EMAILS = ['p.parra@windmarhome.com'] // Paula Parra (perfil de prueba)
+
+// Roster completo para nómina: TODOS los asalariados activos (Consultor/Líder/
+// Gerente), sin exigir start_date ni la lógica de re-contratación que usa
+// getActiveAsalariados (esa es para el dashboard de tenure/memos). Nómina debe
+// registrar a todo el que esté 'Activo', tenga o no fecha de inicio cargada.
+export async function getSalariadosNominaRoster(): Promise<ActiveAsalariado[]> {
+  const pool = getRedshiftPool()
+  const { rows } = await pool.query(`
+    SELECT
+      LOWER(email)  AS email,
+      full_name,
+      sales_role,
+      ciudad,
+      TO_CHAR(empleado_consultor_start_date, 'YYYY-MM-DD') AS hire_date,
+      TO_CHAR(fecha_de_memo_1, 'YYYY-MM-DD')              AS memo_1_date,
+      TO_CHAR(fecha_de_memo_2, 'YYYY-MM-DD')              AS memo_2_date,
+      memo,
+      TO_CHAR(fecha_terminacion_asalariado, 'YYYY-MM-DD') AS terminacion_date
+    FROM dw_zoho.dim_sales_team_member
+    WHERE sales_role = ANY($1)
+      AND status = 'Activo'
+      AND email IS NOT NULL
+      AND LOWER(email) != ALL($2)
+    ORDER BY full_name
+  `, [SALARIED_ROLES, NOMINA_EXCLUDED_EMAILS])
+
+  return rows.map(r => {
+    const lvl = r.memo ? parseInt(r.memo, 10) : NaN
+    return {
+      email:          r.email,
+      fullName:       r.full_name,
+      salesRole:      r.sales_role,
+      ciudad:         r.ciudad ?? null,
+      hireDate:       r.hire_date ?? null,
+      memo1Date:      r.memo_1_date ?? null,
+      memo2Date:      r.memo_2_date ?? null,
+      memoLevel:      isNaN(lvl) ? null : lvl,
+      terminacionDate: r.terminacion_date ?? null,
+    }
+  })
+}
+
 export interface FollowUpRedshiftEntry {
   email: string
   fullName: string

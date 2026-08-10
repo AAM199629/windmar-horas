@@ -55,23 +55,39 @@ interface EntryState {
   terminationDate: string
 }
 
+type Mode = 'asalariado' | 'promotor'
+
 interface Props {
   weekKey: string
   weekStart: string
   weekEnd: string
   salaried: SalariadoForNomina[]
+  promotores: SalariadoForNomina[]
 }
 
 const JOB_ORDER = ['Consultor Energético', 'Gerente de Ventas - Asalariado', 'Líder Energético']
 
-export default function NominaSection({ weekKey, weekStart, weekEnd, salaried }: Props) {
-  const [entries, setEntries] = useState<Record<string, EntryState>>({})
-  const [saving, setSaving]   = useState(false)
-  const [msg, setMsg]         = useState('')
+// Los promotores no tienen umbral de horas: la columna "Cumplió" arranca sin
+// marcar (null) y sólo se marca manualmente. Los asalariados sí traen su valor
+// automático (>= 24.5h) como default.
+const storageKeyFor = (weekKey: string, mode: Mode) =>
+  mode === 'asalariado' ? weekKey : `${weekKey}-promotores`
 
-  const initEntries = useCallback((saved: Record<string, any> | null) => {
+export default function NominaSection({ weekKey, weekStart, weekEnd, salaried, promotores }: Props) {
+  const [mode, setMode]         = useState<Mode>('asalariado')
+  const [entriesA, setEntriesA] = useState<Record<string, EntryState>>({})
+  const [entriesP, setEntriesP] = useState<Record<string, EntryState>>({})
+  const [saving, setSaving]     = useState(false)
+  const [msg, setMsg]           = useState('')
+
+  const roster       = mode === 'asalariado' ? salaried : promotores
+  const entries      = mode === 'asalariado' ? entriesA : entriesP
+  const setEntries   = mode === 'asalariado' ? setEntriesA : setEntriesP
+  const storageKey   = storageKeyFor(weekKey, mode)
+
+  const buildEntries = useCallback((list: SalariadoForNomina[], saved: Record<string, any> | null) => {
     const init: Record<string, EntryState> = {}
-    for (const s of salaried) {
+    for (const s of list) {
       const sv = saved?.[s.email]
       init[s.email] = {
         name:             s.name,
@@ -89,37 +105,32 @@ export default function NominaSection({ weekKey, weekStart, weekEnd, salaried }:
       }
     }
     return init
-  }, [salaried])
+  }, [])
 
-  useEffect(() => {
-    fetch(`/api/nomina/${weekKey}`)
+  const loadMode = useCallback((m: Mode, list: SalariadoForNomina[], setter: (v: Record<string, EntryState>) => void) => {
+    fetch(`/api/nomina/${storageKeyFor(weekKey, m)}`)
       .then(r => r.ok ? r.json() : null)
       .then((data: any) => {
-        if (data?.entries) {
-          const savedMap: Record<string, any> = {}
-          for (const e of data.entries) savedMap[e.email] = e
-          setEntries(initEntries(savedMap))
-        } else {
-          setEntries(initEntries(null))
-        }
+        const savedMap: Record<string, any> = {}
+        if (data?.entries) for (const e of data.entries) savedMap[e.email] = e
+        setter(buildEntries(list, data?.entries ? savedMap : null))
       })
-  }, [weekKey, initEntries])
+  }, [weekKey, buildEntries])
+
+  useEffect(() => { loadMode('asalariado', salaried, setEntriesA) }, [loadMode, salaried])
+  useEffect(() => { loadMode('promotor', promotores, setEntriesP) }, [loadMode, promotores])
 
   function update(email: string, field: keyof EntryState, value: any) {
     setEntries(prev => ({ ...prev, [email]: { ...prev[email], [field]: value } }))
   }
 
-  function metHours(e: EntryState) {
-    return e.metHoursOverride !== null ? e.metHoursOverride : e.metHoursAuto
-  }
-
   async function handleSave() {
     setSaving(true)
     setMsg('')
-    const res = await fetch(`/api/nomina/${weekKey}`, {
+    const res = await fetch(`/api/nomina/${storageKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ weekStart, weekEnd, entries: Object.values(entries) }),
+      body: JSON.stringify({ weekStart, weekEnd, kind: mode, entries: Object.values(entries) }),
     })
     setSaving(false)
     setMsg(res.ok ? '✓ Guardado' : '✗ Error al guardar')
@@ -128,12 +139,18 @@ export default function NominaSection({ weekKey, weekStart, weekEnd, salaried }:
 
   async function handleExport() {
     await handleSave()
-    window.open(`/api/nomina/${weekKey}/export`, '_blank')
+    window.open(`/api/nomina/${storageKey}/export`, '_blank')
   }
 
   const allEntries = Object.values(entries)
 
-  const activeGroups = JOB_ORDER.map(jt => ({
+  // Asalariados: orden fijo de puestos. Promotores: agrupar por los puestos que
+  // haya en el roster (p. ej. "Promotor", "Promotor de Ventas").
+  const jobOrder = mode === 'asalariado'
+    ? JOB_ORDER
+    : [...new Set(allEntries.map(e => e.jobTitle))].sort()
+
+  const activeGroups = jobOrder.map(jt => ({
     jobTitle: jt,
     employees: allEntries.filter(e => e.jobTitle === jt),
   })).filter(g => g.employees.length > 0)
@@ -152,7 +169,6 @@ export default function NominaSection({ weekKey, weekStart, weekEnd, salaried }:
   )
 
   function renderRow(emp: EntryState) {
-    const met = metHours(emp)
     return (
       <tr key={emp.email} className="hover:bg-slate-50">
         <td className="px-3 py-2">
@@ -167,7 +183,11 @@ export default function NominaSection({ weekKey, weekStart, weekEnd, salaried }:
         </td>
         <td className="px-3 py-2 text-slate-500 text-xs">{emp.jobTitle}</td>
         <td className="px-3 py-2 text-center">
-          <span className={`text-xs font-semibold ${emp.horasWorked >= 24.5 ? 'text-green-600' : 'text-orange-600'}`}>
+          <span className={`text-xs font-semibold ${
+            mode === 'promotor'
+              ? 'text-slate-700'
+              : emp.horasWorked >= 24.5 ? 'text-green-600' : 'text-orange-600'
+          }`}>
             {emp.horasWorked.toFixed(1)}h
           </span>
         </td>
@@ -177,15 +197,40 @@ export default function NominaSection({ weekKey, weekStart, weekEnd, salaried }:
           </span>
         </td>
         <td className="px-3 py-2 text-center">
-          <button
-            onClick={() => update(emp.email, 'metHoursOverride', !met)}
-            className={`w-7 h-7 rounded-full text-xs font-bold border-2 transition-colors ${
-              met ? 'bg-green-100 border-green-400 text-green-700' : 'bg-red-100 border-red-400 text-red-700'
-            }`}
-            title={met ? 'Cumplió — clic para cambiar' : 'No cumplió — clic para cambiar'}
-          >
-            {met ? '✓' : '✗'}
-          </button>
+          {mode === 'promotor'
+            ? (() => {
+                // Tri-state: — (sin marcar) → ✓ → ✗ → —
+                const ov = emp.metHoursOverride
+                const label = ov === null ? '—' : ov ? '✓' : '✗'
+                const cls =
+                  ov === null ? 'bg-slate-100 border-slate-300 text-slate-400'
+                  : ov         ? 'bg-green-100 border-green-400 text-green-700'
+                               : 'bg-red-100 border-red-400 text-red-700'
+                const next = ov === null ? true : ov ? false : null
+                return (
+                  <button
+                    onClick={() => update(emp.email, 'metHoursOverride', next)}
+                    className={`w-7 h-7 rounded-full text-xs font-bold border-2 transition-colors ${cls}`}
+                    title="Sin marcar / Cumplió / No cumplió — clic para cambiar"
+                  >
+                    {label}
+                  </button>
+                )
+              })()
+            : (() => {
+                const met = emp.metHoursOverride !== null ? emp.metHoursOverride : emp.metHoursAuto
+                return (
+                  <button
+                    onClick={() => update(emp.email, 'metHoursOverride', !met)}
+                    className={`w-7 h-7 rounded-full text-xs font-bold border-2 transition-colors ${
+                      met ? 'bg-green-100 border-green-400 text-green-700' : 'bg-red-100 border-red-400 text-red-700'
+                    }`}
+                    title={met ? 'Cumplió — clic para cambiar' : 'No cumplió — clic para cambiar'}
+                  >
+                    {met ? '✓' : '✗'}
+                  </button>
+                )
+              })()}
         </td>
         <td className="px-3 py-2 text-center">
           <input type="number" min={0} value={emp.sickHours || ''}
@@ -212,13 +257,18 @@ export default function NominaSection({ weekKey, weekStart, weekEnd, salaried }:
     )
   }
 
+  const TABS: { key: Mode; label: string; count: number }[] = [
+    { key: 'asalariado', label: 'Asalariados', count: salaried.length },
+    { key: 'promotor',   label: 'Promotores',  count: promotores.length },
+  ]
+
   return (
     <div className="mt-10 border-t border-slate-200 pt-8">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <div>
           <h2 className="text-xl font-bold text-[#0D1654]">Confirmación de Nómina</h2>
           <p className="text-sm text-slate-500 mt-0.5">
-            Semana {weekKey} · {salaried.length} asalariados
+            Semana {weekKey} · {roster.length} {mode === 'asalariado' ? 'asalariados' : 'promotores'}
           </p>
         </div>
         <div className="flex gap-2">
@@ -234,7 +284,25 @@ export default function NominaSection({ weekKey, weekStart, weekEnd, salaried }:
         </div>
       </div>
 
-      {/* Active employees */}
+      {/* Toggle Asalariados / Promotores */}
+      <div className="flex gap-2 mb-4">
+        {TABS.map(t => {
+          const on = mode === t.key
+          return (
+            <button
+              key={t.key}
+              onClick={() => setMode(t.key)}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                on ? 'bg-[#0D1654] text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+              }`}
+            >
+              {t.label} <span className={on ? 'text-white/70' : 'text-slate-400'}>{t.count}</span>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Employee table */}
       <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
         <table className="min-w-full text-sm">
           <thead>{colHeaders}</thead>

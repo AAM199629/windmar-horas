@@ -55,12 +55,33 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ wee
   if (!record) return NextResponse.json({ error: 'No nomina data for this week' }, { status: 404 })
 
   const { weekStart, weekEnd, entries } = record as any
+  const isPromotor = (record as any).kind === 'promotor'
   const active     = (entries ?? []).filter((e: any) => !e.terminationDate)
   const terminados = (entries ?? []).filter((e: any) => !!e.terminationDate)
 
+  // Puestos a agrupar: asalariados con orden canónico; promotores según los
+  // puestos presentes en los datos.
+  const jobOrder = isPromotor
+    ? [...new Set((entries ?? []).map((e: any) => e.jobTitle))].sort() as string[]
+    : JOB_ORDER
+
+  // Marca de cumplió/no cumplió. Promotores no tienen umbral: si no se marcó
+  // manualmente (override null/undefined) ambas columnas quedan en blanco.
+  function marks(e: any): { cumplio: string; noCumplio: string } {
+    if (isPromotor) {
+      const ov = e.metHoursOverride
+      if (ov === null || ov === undefined) return { cumplio: '', noCumplio: '' }
+      return { cumplio: ov ? 'X' : '', noCumplio: ov ? '' : 'X' }
+    }
+    const met = e.metHoursOverride !== null ? e.metHoursOverride : e.metHoursAuto ?? true
+    return { cumplio: met ? 'X' : '', noCumplio: met ? '' : 'X' }
+  }
+
   const s1 = formatDateTitle(weekStart ?? week)
   const s2 = formatDateTitle(weekEnd ?? week)
-  const titleText = `CONSULTORES ASALARIADOS NOMINA SEMANA DEL ${s1.day} AL ${s2.day} DE ${s2.month} DE ${s2.year}`
+  const titleText = isPromotor
+    ? `PROMOTORES NOMINA SEMANA DEL ${s1.day} AL ${s2.day} DE ${s2.month} DE ${s2.year}`
+    : `CONSULTORES ASALARIADOS NOMINA SEMANA DEL ${s1.day} AL ${s2.day} DE ${s2.month} DE ${s2.year}`
 
   const wb = new ExcelJS.Workbook()
   const ws = wb.addWorksheet('Nómina')
@@ -103,18 +124,18 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ wee
   })
 
   // ── Employee rows by job title group ───────────────────────────────────────
-  for (const jobTitle of JOB_ORDER) {
+  for (const jobTitle of jobOrder) {
     const group = active.filter((e: any) => e.jobTitle === jobTitle)
     for (const emp of group) {
-      const met = emp.metHoursOverride !== null ? emp.metHoursOverride : emp.metHoursAuto ?? true
+      const { cumplio, noCumplio } = marks(emp)
       const empRow = ws.addRow([
         emp.hireDate || '',
         emp.jobTitle,
         lastFirst(emp.name),
-        met ? 'X' : '',
+        cumplio,
         emp.sickHours || '',
         emp.vacationHours || '',
-        !met ? 'X' : '',
+        noCumplio,
         '',
       ])
       empRow.height = 18
@@ -179,15 +200,15 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ wee
     })
 
     for (const t of terminados) {
-      const tMet = t.metHoursOverride !== null ? t.metHoursOverride : t.metHoursAuto ?? true
+      const { cumplio, noCumplio } = marks(t)
       const r = ws.addRow([
         t.terminationDate || '',
         t.jobTitle,
         lastFirst(t.name),
-        tMet ? 'X' : '',
+        cumplio,
         t.sickHours || '',
         t.vacationHours || '',
-        !tMet ? 'X' : '',
+        noCumplio,
         '',
       ])
       r.height = 18
