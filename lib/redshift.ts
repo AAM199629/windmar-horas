@@ -68,8 +68,15 @@ export async function getVentasFromRedshift(): Promise<VentaRow[]> {
   lookbackDate.setMonth(lookbackDate.getMonth() - 12)
   const lookback = lookbackDate.toISOString().slice(0, 10)
 
+  // Una fila por deal. Ojo: NO usar SELECT DISTINCT sobre estas columnas — no
+  // incluyen identificador del deal, así que dos ventas distintas del mismo rep
+  // con igual fecha de cierre y pipeline se colapsaban en una y desaparecían del
+  // conteo. El fan-out real (reps con dos registros en dim_sales_team_member que
+  // comparten email) se resuelve con ROW_NUMBER por zoho_deal_id.
   const { rows } = await pool.query(`
-    SELECT DISTINCT
+    WITH deals AS (
+    SELECT
+      ROW_NUMBER() OVER (PARTITION BY fd.zoho_deal_id ORDER BY stm.member_id NULLS LAST) AS rn,
       -- The deal's rep (trainee or own) always goes in sales_team_name
       COALESCE(stm.full_name, ds.sale_rep_email) AS sales_team_name,
       -- For trainee deals (1st–4th Sale): mentor = the rep's sponsor in dim_sales_team_member
@@ -104,6 +111,12 @@ export async function getVentasFromRedshift(): Promise<VentaRow[]> {
       ON dt.zoho_deal_id = fd.zoho_deal_id AND dt.is_current = true
     WHERE ds.sale_rep_email IS NOT NULL
       AND fd.closing_date >= $1
+    )
+    SELECT sales_team_name, sales_rep_assist_trainee, recruited_by, trainee_sales,
+           closing_date, finance_company, installation_completion_date,
+           pipeline, on_hold_status, stage
+    FROM deals
+    WHERE rn = 1
   `, [lookback])
 
   return rows.map(r => ({
