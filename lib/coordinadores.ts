@@ -1,4 +1,4 @@
-import { listWeekKeys, getWeeklyReport } from '@/lib/kv'
+import { getShifterShiftRows } from '@/lib/shifter-api'
 import { getMonthLeadsByCoordinator, getMonthDeals } from '@/lib/redshift'
 import type { ShiftRow } from '@/lib/types'
 
@@ -142,9 +142,8 @@ export async function computeCoordinadoresAnalysis(month: string): Promise<Coord
   const monthStart = `${year}-${mm}-01`
   const monthEnd   = `${year}-${mm}-${String(lastDayNum).padStart(2, '0')}`
 
-  const weekKeys = await listWeekKeys()
-  const [reports, leadsRows, dealRows] = await Promise.all([
-    Promise.all(weekKeys.map(k => getWeeklyReport(k))),
+  const [shiftRows, leadsRows, dealRows] = await Promise.all([
+    getShifterShiftRows(monthStart, monthEnd).catch(() => [] as ShiftRow[]),
     getMonthLeadsByCoordinator(monthStart, monthEnd).catch(() => []),
     getMonthDeals(monthStart, monthEnd).catch(() => []),
   ])
@@ -159,11 +158,8 @@ export async function computeCoordinadoresAnalysis(month: string): Promise<Coord
   const sin = { compl: 0, missed: 0 }
   const seenShift = new Set<string>()
 
-  for (const report of reports) {
-    if (!report) continue
-    if (report.weekEnd < monthStart || report.weekStart > monthEnd) continue
-
-    for (const sh of ((report.allShifts ?? []) as ShiftRow[])) {
+  {
+    for (const sh of shiftRows) {
       if (sh.canal !== 'cambaceo') continue
       if (sh.date < monthStart || sh.date > monthEnd) continue
       if (sh.shiftStatus !== 'Completed' && sh.shiftStatus !== 'Missed') continue

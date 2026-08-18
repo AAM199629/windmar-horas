@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/windmar-home-design-system-pr-d4aca48e-dd6a-4a85-b0e1-e35b81dc0b6b/colors_and_type.css">
+<style>
+  body { margin: 0; background:
+      radial-gradient(1100px 520px at 12% -8%, #E2EAFB 0%, transparent 60%),
+      radial-gradient(900px 480px at 100% 4%, #FBE9D0 0%, transparent 55%),
+      linear-gradient(180deg, #EEF2F9 0%, #E9EDF6 100%);
+    background-attachment: fixed; }
+  *, *::before, *::after { box-sizing: border-box; }
+  .wm-th { padding: 14px 18px; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #fff; text-align: right; white-space: nowrap; }
+  .wm-th--l { text-align: left; }
+  .wm-td { padding: 13px 18px; font-size: 14px; color: #21274E; text-align: right; white-space: nowrap; }
+  .wm-td--l { text-align: left; font-weight: 500; }
+  .wm-row { border-bottom: 1px solid #EDF0F5; }
+  .wm-row:nth-child(even) { background: #F8FAFD; }
+</style>
+</helmet>
+<div style="font-family: var(--wm-font-sans); max-width: 1320px; margin: 0 auto; padding: 0 28px 72px;">
+
+  <!-- HEADER -->
+  <div style="background: var(--wm-gradient-hero); border-radius: 0 0 28px 28px; padding: 40px 44px 38px; display: flex; align-items: center; justify-content: space-between; box-shadow: var(--wm-shadow-blue); position: relative; overflow: hidden;">
+    <div style="position: absolute; right: -60px; top: -80px; width: 320px; height: 320px; border-radius: 50%; background: radial-gradient(circle, rgba(248,155,36,.18), transparent 70%);"></div>
+    <div style="position: relative;">
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+        <span style="width: 28px; height: 3px; background: var(--wm-orange); border-radius: 999px;"></span>
+        <span style="font-size: 13px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #AFC3EE;">Fuerza de Venta y Canales · Reporte Ejecutivo · Zoho CRM</span>
+      </div>
+      <h1 style="margin: 0; font-family: var(--wm-font-display); font-weight: 400; font-size: 64px; line-height: .92; letter-spacing: .01em; color: #fff; text-transform: uppercase;">Dashboard <span style="color: var(--wm-orange);">de Ventas</span></h1>
+    </div>
+    <img src="assets/windmar-white-yellow.png" alt="WindMar HOME" style="position: relative; height: 78px; width: auto; object-fit: contain;">
+  </div>
+
+  <!-- PERIOD FILTER BAR -->
+  <div style="background: #fff; border-radius: 20px; box-shadow: var(--wm-shadow-md); padding: 22px 28px; margin-top: 28px; display: flex; align-items: flex-end; gap: 28px; flex-wrap: wrap;">
+    <div>
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;"><span style="width: 9px; height: 9px; border-radius: 50%; background: var(--wm-blue-deep);"></span><span style="font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--wm-blue-deep);">Período A — Actual</span></div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <input type="date" value="2026-06-01" style="font-family: var(--wm-font-sans); font-size: 15px; font-weight: 600; color: #21274E; border: 1.5px solid #DDE3EE; border-radius: 12px; padding: 10px 14px;">
+        <span style="color: #9AA3B5; font-weight: 700;">–</span>
+        <input type="date" value="2026-06-22" style="font-family: var(--wm-font-sans); font-size: 15px; font-weight: 600; color: #21274E; border: 1.5px solid #DDE3EE; border-radius: 12px; padding: 10px 14px;">
+      </div>
+    </div>
+    <div>
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;"><span style="width: 9px; height: 9px; border-radius: 50%; background: #9AA3B5;"></span><span style="font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #6B7388;">Período B — Comparación</span></div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <input type="date" value="2026-05-01" style="font-family: var(--wm-font-sans); font-size: 15px; font-weight: 600; color: #21274E; border: 1.5px solid #DDE3EE; border-radius: 12px; padding: 10px 14px;">
+        <span style="color: #9AA3B5; font-weight: 700;">–</span>
+        <input type="date" value="2026-05-22" style="font-family: var(--wm-font-sans); font-size: 15px; font-weight: 600; color: #21274E; border: 1.5px solid #DDE3EE; border-radius: 12px; padding: 10px 14px;">
+      </div>
+    </div>
+    <button style="font-family: var(--wm-font-sans); font-size: 15px; font-weight: 700; color: #fff; background: var(--wm-blue-deep); border: none; border-radius: 12px; padding: 12px 30px; cursor: pointer;">Aplicar</button>
+    <button style="margin-left: auto; font-family: var(--wm-font-sans); font-size: 15px; font-weight: 700; color: #fff; background: var(--wm-orange); border: none; border-radius: 12px; padding: 12px 26px; cursor: pointer; display: flex; align-items: center; gap: 8px;">↓ Descargar PDF</button>
+  </div>
+
+  <!-- PERIOD LEGEND -->
+  <div style="display: flex; align-items: center; gap: 32px; margin-top: 18px; padding: 0 8px;">
+    <div style="display: flex; align-items: center; gap: 9px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: var(--wm-blue-deep);"></span><span style="font-weight: 800; color: var(--wm-blue-deep); font-size: 14px; letter-spacing: .04em;">PERÍODO A</span><span style="color: #6B7388; font-size: 14px;">1 jun – 22 jun 2026</span></div>
+    <span style="width: 1px; height: 22px; background: #D5DCEA;"></span>
+    <div style="display: flex; align-items: center; gap: 9px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #9AA3B5;"></span><span style="font-weight: 800; color: #6B7388; font-size: 14px; letter-spacing: .04em;">PERÍODO B</span><span style="color: #6B7388; font-size: 14px;">1 may – 22 may 2026</span></div>
+  </div>
+
+  <!-- LIQUID GLASS SEGMENTED NAV -->
+  <div style="position: sticky; top: 16px; z-index: 50; display: flex; justify-content: center; margin-top: 22px;">
+    <div style="display: flex; gap: 4px; padding: 6px; border-radius: 999px; background: rgba(255,255,255,0.38); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); border: 1px solid rgba(255,255,255,0.65); box-shadow: 0 8px 30px rgba(33,39,78,0.16), inset 0 1px 1px rgba(255,255,255,0.85), inset 0 -1px 2px rgba(33,39,78,0.06);">
+      <sc-for list="{{ segments }}" as="s" hint-placeholder-count="5">
+        <button onClick="{{ s.onClick }}" style="font-family: var(--wm-font-sans); font-size: 13.5px; font-weight: 700; letter-spacing: .01em; padding: 9px 20px; border: none; border-radius: 999px; cursor: pointer; transition: all .25s ease; white-space: nowrap; color: {{ s.fg }}; background: {{ s.bg }}; box-shadow: {{ s.shadow }};" style-hover="filter: brightness(1.04);">{{ s.label }}</button>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- KPI CARDS -->
+  <div id="sec-kpi" style="scroll-margin-top: 96px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 18px; margin-top: 22px;">
+    <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="5">
+      <div style="background: #fff; border-radius: 18px; box-shadow: var(--wm-shadow-md); padding: 22px 22px 20px; border-top: 4px solid {{ k.accent }}; display: flex; flex-direction: column;">
+        <div style="font-size: 12px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: #6B7388;">{{ k.label }}</div>
+        <div style="font-size: 46px; font-weight: 900; line-height: 1; letter-spacing: -.02em; color: var(--wm-blue-deep); margin: 14px 0 8px;">{{ k.value }}</div>
+        <div style="font-size: 13px; color: #9AA3B5; font-weight: 500;">{{ k.sub }}</div>
+        <div style="border-top: 1px solid #EDF0F5; margin-top: 16px; padding-top: 12px; font-size: 13px; color: #6B7388;">may 1–22: <span style="font-weight: 800; color: #21274E;">{{ k.prev }}</span></div>
+      </div>
+    </sc-for>
+  </div>
+
+  <!-- VENDEDORES ACTIVOS + MIX -->
+  <div style="background: linear-gradient(180deg, #FFFFFF 0%, #F7F9FE 100%); border: 1px solid #E7ECF6; border-radius: 20px; box-shadow: var(--wm-shadow-md); padding: 30px 34px; margin-top: 18px; display: grid; grid-template-columns: 1fr 1fr 1.1fr; gap: 36px; align-items: center;">
+    <div>
+      <div style="font-size: 12px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: #6B7388;">Vendedores Activos</div>
+      <div style="font-size: 58px; font-weight: 900; line-height: 1; color: var(--wm-blue-deep); margin: 10px 0 6px;">374</div>
+      <div style="font-size: 14px; font-style: italic; color: #9AA3B5;">Status "Activo" en Sales Teams</div>
+    </div>
+    <div style="display: flex; gap: 28px; border-left: 1px solid #EDF0F5; padding-left: 32px;">
+      <div>
+        <div style="font-size: 12px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--wm-blue-deep);">Asalariados</div>
+        <div style="font-size: 40px; font-weight: 900; color: var(--wm-blue-deep); margin: 8px 0 4px;">82</div>
+        <div style="font-size: 13px; color: #9AA3B5;">21.9% del equipo</div>
+      </div>
+      <div>
+        <div style="font-size: 12px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--wm-orange-600);">Full Commission</div>
+        <div style="font-size: 40px; font-weight: 900; color: var(--wm-orange); margin: 8px 0 4px;">292</div>
+        <div style="font-size: 13px; color: #9AA3B5;">78.1% del equipo</div>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 26px; border-left: 1px solid #EDF0F5; padding-left: 32px;">
+      <div style="width: 130px; height: 130px; border-radius: 50%; background: conic-gradient(var(--wm-blue-deep) 0 21.9%, var(--wm-orange) 21.9% 100%); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <div style="width: 74px; height: 74px; border-radius: 50%; background: #fff;"></div>
+      </div>
+      <div>
+        <div style="font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: #9AA3B5; margin-bottom: 12px;">Mix de Vendedores</div>
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;"><span style="width: 11px; height: 11px; border-radius: 50%; background: var(--wm-blue-deep);"></span><span style="font-weight: 700; color: #21274E; font-size: 14px;">Asalariados: 82</span><span style="color: #9AA3B5; font-size: 14px;">(21.9%)</span></div>
+        <div style="display: flex; align-items: center; gap: 8px;"><span style="width: 11px; height: 11px; border-radius: 50%; background: var(--wm-orange);"></span><span style="font-weight: 700; color: var(--wm-orange-600); font-size: 14px;">Full Commission: 292</span><span style="color: #9AA3B5; font-size: 14px;">(78.1%)</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROGRAMA ASALARIADO -->
+  <div id="sec-asalariado" style="scroll-margin-top: 96px; background: linear-gradient(180deg, #FFFFFF 0%, #F7F9FE 100%); border: 1px solid #E7ECF6; border-radius: 20px; box-shadow: var(--wm-shadow-md); padding: 30px 34px; margin-top: 26px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
+      <div style="display: flex; align-items: center; gap: 14px;"><span style="width: 5px; height: 26px; background: var(--wm-blue); border-radius: 999px;"></span><span style="font-size: 19px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--wm-blue-deep);">Programa Asalariado</span></div>
+      <span style="font-size: 14px; color: #9AA3B5; font-style: italic;">jun 1–22 vs may 1–22</span>
+    </div>
+    <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 40px; align-items: center;">
+      <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr>
+            <th class="wm-th wm-th--l" style="background: var(--wm-blue-deep); border-radius: 10px 0 0 0;">Rol</th>
+            <th class="wm-th" style="background: var(--wm-blue-deep);">Jun 1–22</th>
+            <th class="wm-th" style="background: var(--wm-blue-deep);">%</th>
+            <th class="wm-th" style="background: #2E3866;">May 1–22</th>
+            <th class="wm-th" style="background: #2E3866;">%</th>
+            <th class="wm-th" style="background: var(--wm-blue-deep); border-radius: 0 10px 0 0;">Var.</th>
+          </tr>
+        </thead>
+        <tbody>
+          <sc-for list="{{ asalariadoRows }}" as="r" hint-placeholder-count="3">
+            <tr class="wm-row">
+              <td class="wm-td wm-td--l">{{ r.rol }}</td>
+              <td class="wm-td" style="font-weight: 800;">{{ r.a }}</td>
+              <td class="wm-td" style="color: #9AA3B5;">{{ r.ap }}</td>
+              <td class="wm-td">{{ r.b }}</td>
+              <td class="wm-td" style="color: #9AA3B5;">{{ r.bp }}</td>
+              <td class="wm-td" style="font-weight: 800; color: {{ r.varColor }};">{{ r.varText }}</td>
+            </tr>
+          </sc-for>
+          <tr style="background: #EFF3FA;">
+            <td class="wm-td wm-td--l" style="font-weight: 800;">TOTAL Asalariados</td>
+            <td class="wm-td" style="font-weight: 800;">237</td>
+            <td class="wm-td" style="font-weight: 800;">48.1%</td>
+            <td class="wm-td" style="font-weight: 700;">229</td>
+            <td class="wm-td">44.9%</td>
+            <td class="wm-td" style="font-weight: 800; color: #1E9E62;">▲ +8</td>
+          </tr>
+          <tr style="background: #F8FAFD; border-top: 2px solid var(--wm-blue-deep);">
+            <td class="wm-td wm-td--l" style="font-weight: 800; color: var(--wm-orange-600);">Full Commission</td>
+            <td class="wm-td" style="font-weight: 800;">256</td>
+            <td class="wm-td" style="font-weight: 800;">51.9%</td>
+            <td class="wm-td" style="font-weight: 700;">281</td>
+            <td class="wm-td">55.1%</td>
+            <td class="wm-td" style="font-weight: 800; color: #D64545;">▼ –25</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <div style="font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: #9AA3B5; margin-bottom: 18px;">Mix de Ventas — Jun 1–22</div>
+        <div style="width: 168px; height: 168px; border-radius: 50%; background: conic-gradient(var(--wm-blue-deep) 0 48.1%, var(--wm-orange) 48.1% 100%); display: flex; align-items: center; justify-content: center;">
+          <div style="width: 92px; height: 92px; border-radius: 50%; background: #fff;"></div>
+        </div>
+        <div style="display: flex; gap: 22px; margin-top: 22px; flex-wrap: wrap; justify-content: center;">
+          <div style="display: flex; align-items: center; gap: 8px;"><span style="width: 11px; height: 11px; border-radius: 50%; background: var(--wm-blue-deep);"></span><span style="font-weight: 700; color: #21274E; font-size: 14px;">Asalariados: 237 (48.1%)</span></div>
+          <div style="display: flex; align-items: center; gap: 8px;"><span style="width: 11px; height: 11px; border-radius: 50%; background: var(--wm-orange);"></span><span style="font-weight: 700; color: var(--wm-orange-600); font-size: 14px;">Full Commission: 256 (51.9%)</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VENTAS POR LEAD SOURCE -->
+  <div id="sec-lead" style="scroll-margin-top: 96px; background: linear-gradient(180deg, #FFFFFF 0%, #F7F9FE 100%); border: 1px solid #E7ECF6; border-radius: 20px; box-shadow: var(--wm-shadow-md); padding: 30px 34px; margin-top: 26px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
+      <div style="display: flex; align-items: center; gap: 14px;"><span style="width: 5px; height: 26px; background: var(--wm-blue); border-radius: 999px;"></span><span style="font-size: 19px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--wm-blue-deep);">Ventas por Lead Source</span></div>
+      <span style="font-size: 14px; color: #9AA3B5; font-style: italic;">jun 1–22 vs may 1–22</span>
+    </div>
+    <div style="display: grid; grid-template-columns: .85fr 1.4fr; gap: 40px; align-items: start;">
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <div style="font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: #9AA3B5; margin-bottom: 18px;">Top Sources — Jun 1–22</div>
+        <div style="width: 178px; height: 178px; border-radius: 50%; background: conic-gradient(var(--wm-blue-deep) 0 51.1%, var(--wm-orange) 51.1% 66.5%, var(--wm-blue) 66.5% 77.2%, #6B7388 77.2% 84.5%, #1E9E62 84.5% 91.8%, var(--wm-blue-vibrant) 91.8% 96.9%, var(--wm-orange-300) 96.9% 98.9%, #D64545 98.9% 100%); display: flex; align-items: center; justify-content: center;">
+          <div style="width: 96px; height: 96px; border-radius: 50%; background: #fff;"></div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px; margin-top: 22px;">
+          <sc-for list="{{ leadLegend }}" as="l" hint-placeholder-count="8">
+            <div style="display: flex; align-items: center; gap: 7px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: {{ l.color }}; flex-shrink: 0;"></span><span style="font-size: 13px; color: #4B4B4E;">{{ l.name }}</span></div>
+          </sc-for>
+        </div>
+      </div>
+      <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr>
+            <th class="wm-th wm-th--l" style="background: var(--wm-blue); border-radius: 10px 0 0 0;">Lead Source</th>
+            <th class="wm-th" style="background: var(--wm-blue);">Jun 1–22</th>
+            <th class="wm-th" style="background: var(--wm-blue);">%</th>
+            <th class="wm-th" style="background: #2E3866;">May 1–22</th>
+            <th class="wm-th" style="background: var(--wm-blue); border-radius: 0 10px 0 0;">Var.</th>
+          </tr>
+        </thead>
+        <tbody>
+          <sc-for list="{{ leadRows }}" as="r" hint-placeholder-count="7">
+            <tr class="wm-row">
+              <td class="wm-td wm-td--l">{{ r.name }}</td>
+              <td class="wm-td" style="font-weight: 800;">{{ r.a }}</td>
+              <td class="wm-td" style="color: #9AA3B5;">{{ r.p }}</td>
+              <td class="wm-td">{{ r.b }}</td>
+              <td class="wm-td" style="font-weight: 800; color: {{ r.varColor }};">{{ r.varText }}</td>
+            </tr>
+          </sc-for>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- BOOTHS MALL & HOME DEPOT -->
+  <div id="sec-booths" style="scroll-margin-top: 96px; background: linear-gradient(180deg, #FFFFFF 0%, #F7F9FE 100%); border: 1px solid #E7ECF6; border-radius: 20px; box-shadow: var(--wm-shadow-md); padding: 30px 34px; margin-top: 26px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
+      <div style="display: flex; align-items: center; gap: 14px;"><span style="width: 5px; height: 26px; background: var(--wm-blue); border-radius: 999px;"></span><span style="font-size: 19px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--wm-blue-deep);">Booths — Mall &amp; Home Depot</span></div>
+      <span style="font-size: 14px; color: #9AA3B5; font-style: italic;">jun 1–22 vs may 1–22</span>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 36px; align-items: start;">
+      <div>
+        <div style="margin-bottom: 12px;"><span style="font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--wm-blue);">Home Depot</span> <span style="font-size: 13px; color: #9AA3B5;">(10 ubicaciones)</span></div>
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead><tr>
+            <th class="wm-th wm-th--l" style="background: var(--wm-blue-deep); border-radius: 10px 0 0 0;">Ubicación</th>
+            <th class="wm-th" style="background: var(--wm-blue-deep);">Jun 1–22</th>
+            <th class="wm-th" style="background: #2E3866;">May 1–22</th>
+            <th class="wm-th" style="background: var(--wm-blue-deep); border-radius: 0 10px 0 0;">Var.</th>
+          </tr></thead>
+          <tbody>
+            <sc-for list="{{ hdRows }}" as="r" hint-placeholder-count="10">
+              <tr class="wm-row"><td class="wm-td wm-td--l">{{ r.name }}</td><td class="wm-td" style="font-weight: 800;">{{ r.a }}</td><td class="wm-td">{{ r.b }}</td><td class="wm-td" style="font-weight: 800; color: {{ r.varColor }};">{{ r.varText }}</td></tr>
+            </sc-for>
+            <tr style="background: #EFF3FA; border-top: 2px solid var(--wm-blue-deep);"><td class="wm-td wm-td--l" style="font-weight: 800;">TOTAL HD</td><td class="wm-td" style="font-weight: 800;">50</td><td class="wm-td" style="font-weight: 700;">63</td><td class="wm-td" style="font-weight: 800; color: #D64545;">▼ –13</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <div style="margin-bottom: 12px;"><span style="font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--wm-blue);">Malls</span> <span style="font-size: 13px; color: #9AA3B5;">(4 ubicaciones)</span></div>
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead><tr>
+            <th class="wm-th wm-th--l" style="background: var(--wm-blue-deep); border-radius: 10px 0 0 0;">Ubicación</th>
+            <th class="wm-th" style="background: var(--wm-blue-deep);">Jun 1–22</th>
+            <th class="wm-th" style="background: #2E3866;">May 1–22</th>
+            <th class="wm-th" style="background: var(--wm-blue-deep); border-radius: 0 10px 0 0;">Var.</th>
+          </tr></thead>
+          <tbody>
+            <sc-for list="{{ mallRows }}" as="r" hint-placeholder-count="4">
+              <tr class="wm-row"><td class="wm-td wm-td--l">{{ r.name }}</td><td class="wm-td" style="font-weight: 800;">{{ r.a }}</td><td class="wm-td">{{ r.b }}</td><td class="wm-td" style="font-weight: 800; color: {{ r.varColor }};">{{ r.varText }}</td></tr>
+            </sc-for>
+            <tr style="background: #EFF3FA; border-top: 2px solid var(--wm-blue-deep);"><td class="wm-td wm-td--l" style="font-weight: 800;">TOTAL Malls</td><td class="wm-td" style="font-weight: 800;">12</td><td class="wm-td" style="font-weight: 700;">27</td><td class="wm-td" style="font-weight: 800; color: #D64545;">▼ –15</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- CAMBACEO -->
+  <div id="sec-cambaceo" style="scroll-margin-top: 96px; background: linear-gradient(180deg, #FFFFFF 0%, #F7F9FE 100%); border: 1px solid #E7ECF6; border-radius: 20px; box-shadow: var(--wm-shadow-md); padding: 30px 34px; margin-top: 26px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
+      <div style="display: flex; align-items: center; gap: 14px;"><span style="width: 5px; height: 26px; background: var(--wm-blue); border-radius: 999px;"></span><span style="font-size: 19px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--wm-blue-deep);">Cambaceo — Coordinadores</span></div>
+      <span style="font-size: 14px; color: #9AA3B5; font-style: italic;">jun 1–22 vs may 1–22</span>
+    </div>
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead><tr>
+        <th class="wm-th wm-th--l" style="background: var(--wm-blue); border-radius: 10px 0 0 0;">Coordinador</th>
+        <th class="wm-th" style="background: var(--wm-blue);">Leads Jun 1–22</th>
+        <th class="wm-th" style="background: var(--wm-blue);">Ventas Jun 1–22</th>
+        <th class="wm-th" style="background: #2E3866;">Leads May 1–22</th>
+        <th class="wm-th" style="background: #2E3866;">Ventas May 1–22</th>
+        <th class="wm-th" style="background: var(--wm-blue); border-radius: 0 10px 0 0;">Var. Vtas</th>
+      </tr></thead>
+      <tbody>
+        <sc-for list="{{ cambaceoRows }}" as="r" hint-placeholder-count="10">
+          <tr class="wm-row"><td class="wm-td wm-td--l">{{ r.name }}</td><td class="wm-td">{{ r.la }}</td><td class="wm-td" style="font-weight: 800;">{{ r.va }}</td><td class="wm-td">{{ r.lb }}</td><td class="wm-td">{{ r.vb }}</td><td class="wm-td" style="font-weight: 800; color: {{ r.varColor }};">{{ r.varText }}</td></tr>
+        </sc-for>
+        <tr style="background: #EFF3FA; border-top: 2px solid var(--wm-blue-deep);"><td class="wm-td wm-td--l" style="font-weight: 800;">TOTAL</td><td class="wm-td" style="font-weight: 800;">298</td><td class="wm-td" style="font-weight: 800;">41</td><td class="wm-td" style="font-weight: 700;">418</td><td class="wm-td" style="font-weight: 700;">61</td><td class="wm-td"></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- BOOTHS INDEPENDIENTES & EVENTOS -->
+  <div style="background: linear-gradient(180deg, #FFFFFF 0%, #F7F9FE 100%); border: 1px solid #E7ECF6; border-radius: 20px; box-shadow: var(--wm-shadow-md); padding: 30px 34px; margin-top: 26px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+      <div style="display: flex; align-items: center; gap: 14px;"><span style="width: 5px; height: 26px; background: var(--wm-blue); border-radius: 999px;"></span><span style="font-size: 19px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--wm-blue-deep);">Booths Independientes &amp; Eventos</span></div>
+      <span style="font-size: 14px; color: #9AA3B5; font-style: italic;">jun 1–22 vs may 1–22</span>
+    </div>
+    <div style="display: inline-block; background: var(--wm-orange); color: #fff; font-size: 12px; font-weight: 700; letter-spacing: .04em; padding: 7px 16px; border-radius: 999px; margin-bottom: 18px;">8 fuentes activas · jun 1–22</div>
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead><tr>
+        <th class="wm-th wm-th--l" style="background: var(--wm-blue-deep); border-radius: 10px 0 0 0;">Booth / Fuente</th>
+        <th class="wm-th" style="background: var(--wm-blue-deep);">Jun 1–22</th>
+        <th class="wm-th" style="background: var(--wm-blue-deep);">%</th>
+        <th class="wm-th" style="background: #2E3866;">May 1–22</th>
+        <th class="wm-th" style="background: var(--wm-blue-deep); border-radius: 0 10px 0 0;">Var.</th>
+      </tr></thead>
+      <tbody>
+        <sc-for list="{{ boothRows }}" as="r" hint-placeholder-count="10">
+          <tr class="wm-row"><td class="wm-td wm-td--l">{{ r.name }}</td><td class="wm-td" style="font-weight: 800;">{{ r.a }}</td><td class="wm-td" style="color: #9AA3B5;">{{ r.p }}</td><td class="wm-td">{{ r.b }}</td><td class="wm-td" style="font-weight: 800; color: {{ r.varColor }};">{{ r.varText }}</td></tr>
+        </sc-for>
+        <tr style="background: #EFF3FA; border-top: 2px solid var(--wm-blue-deep);"><td class="wm-td wm-td--l" style="font-weight: 800;">TOTAL</td><td class="wm-td" style="font-weight: 800;">26</td><td class="wm-td" style="font-weight: 800;">100%</td><td class="wm-td" style="font-weight: 700;">34</td><td class="wm-td"></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { active: 'sec-kpi' };
+  componentDidMount() {
+    this._ids = ['sec-kpi', 'sec-asalariado', 'sec-lead', 'sec-booths', 'sec-cambaceo'];
+    this._io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) this.setState({ active: e.target.id });
+      });
+    }, { rootMargin: '-45% 0px -50% 0px', threshold: 0 });
+    this._ids.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) this._io.observe(el);
+    });
+  }
+  componentWillUnmount() { if (this._io) this._io.disconnect(); }
+  goTo(id) {
+    const el = document.getElementById(id);
+    if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 88, behavior: 'smooth' });
+    this.setState({ active: id });
+  }
+  v(n) {
+    const GREEN = '#1E9E62', RED = '#D64545', FLAT = '#9AA3B5';
+    if (n === 0 || n === null) return { varText: '—', varColor: FLAT };
+    if (n > 0) return { varText: '▲ +' + n, varColor: GREEN };
+    return { varText: '▼ –' + Math.abs(n), varColor: RED };
+  }
+  renderVals() {
+    const segDefs = [
+      { id: 'sec-kpi', label: 'Resumen' },
+      { id: 'sec-asalariado', label: 'Asalariado' },
+      { id: 'sec-lead', label: 'Lead Source' },
+      { id: 'sec-booths', label: 'Booths' },
+      { id: 'sec-cambaceo', label: 'Cambaceo' },
+    ];
+    const segments = segDefs.map((s) => {
+      const on = this.state.active === s.id;
+      return {
+        label: s.label,
+        onClick: () => this.goTo(s.id),
+        fg: on ? '#fff' : '#3A4156',
+        bg: on ? 'linear-gradient(180deg, #2A56C4 0%, #1D429B 100%)' : 'transparent',
+        shadow: on ? '0 4px 14px rgba(29,66,155,0.45), inset 0 1px 1px rgba(255,255,255,0.4)' : 'none',
+      };
+    });
+    return {
+      segments,
+      kpis: [
+        { label: 'Ventas Totales', value: '493', sub: 'jun 1–22', prev: '510', accent: 'var(--wm-blue)' },
+        { label: 'Variación', value: '-17', sub: '-3.3% vs may 1–22', prev: '—', accent: 'var(--wm-orange)' },
+        { label: 'Asalariados', value: '237', sub: 'jun 1–22', prev: '229', accent: 'var(--wm-blue-vibrant)' },
+        { label: '% Asalariados', value: '48.1%', sub: 'jun 1–22', prev: '44.9%', accent: 'var(--wm-blue-deep)' },
+        { label: 'Full Commission', value: '256', sub: 'jun 1–22', prev: '281', accent: 'var(--wm-orange)' },
+      ],
+      asalariadoRows: [
+        { rol: 'Empleado - Consultor', a: '81', ap: '16.4%', b: '82', bp: '16.1%', ...this.v(-1) },
+        { rol: 'Empleado - Líder', a: '96', ap: '19.5%', b: '74', bp: '14.5%', ...this.v(22) },
+        { rol: 'Empleado - Gerente', a: '60', ap: '12.2%', b: '73', bp: '14.3%', ...this.v(-13) },
+      ],
+      leadLegend: [
+        { name: 'Cuenta Propia', color: 'var(--wm-blue-deep)' },
+        { name: 'Home Depot', color: 'var(--wm-orange)' },
+        { name: 'Canvassing', color: 'var(--wm-blue)' },
+        { name: 'WH Telemarketing', color: '#6B7388' },
+        { name: 'Booth Peq & Evento', color: '#1E9E62' },
+        { name: 'Booths (Malls)', color: 'var(--wm-blue-vibrant)' },
+        { name: 'Showroom', color: 'var(--wm-orange-300)' },
+        { name: 'C. Propia - Instala y Gana', color: '#D64545' },
+      ],
+      leadRows: [
+        { name: 'Cuenta Propia', a: '182', p: '51.1%', b: '215', ...this.v(-33) },
+        { name: 'Home Depot', a: '55', p: '15.4%', b: '58', ...this.v(-3) },
+        { name: 'Canvassing', a: '38', p: '10.7%', b: '51', ...this.v(-13) },
+        { name: 'Booth Peq & Evento', a: '26', p: '7.3%', b: '34', ...this.v(-8) },
+        { name: 'WH Telemarketing (Cita/Lead WH)', a: '26', p: '7.3%', b: '43', ...this.v(-17) },
+        { name: 'Booths (Malls)', a: '18', p: '5.1%', b: '37', ...this.v(-19) },
+        { name: 'Showroom', a: '7', p: '2.0%', b: '33', ...this.v(-26) },
+      ],
+      hdRows: [
+        { name: 'Caguas', a: '2', b: '7', ...this.v(-5) },
+        { name: 'Colobos', a: '4', b: '6', ...this.v(-2) },
+        { name: 'Escorial', a: '6', b: '5', ...this.v(1) },
+        { name: 'Hatillo', a: '6', b: '3', ...this.v(3) },
+        { name: 'Humacao', a: '4', b: '3', ...this.v(1) },
+        { name: 'Mayaguez', a: '2', b: '3', ...this.v(-1) },
+        { name: 'Montehiedra', a: '9', b: '6', ...this.v(3) },
+        { name: 'Plaza del Sol', a: '2', b: '15', ...this.v(-13) },
+        { name: 'Ponce', a: '11', b: '9', ...this.v(2) },
+        { name: 'Rexville', a: '4', b: '6', ...this.v(-2) },
+      ],
+      mallRows: [
+        { name: 'Plaza las Americas', a: '3', b: '13', ...this.v(-10) },
+        { name: 'Plaza del Caribe', a: '6', b: '10', ...this.v(-4) },
+        { name: 'Santa Rosa', a: '3', b: '3', ...this.v(0) },
+        { name: 'Aguadilla Mall', a: '0', b: '1', ...this.v(-1) },
+      ],
+      cambaceoRows: [
+        { name: 'Abdiel Edmundo Oliveras Rivera', la: '91', va: '6', lb: '123', vb: '15', ...this.v(-9) },
+        { name: 'Christian Ariel Gonzalez Jimenez', la: '59', va: '2', lb: '29', vb: '3', ...this.v(-1) },
+        { name: 'Javier Alberto Gonzalez Acevedo', la: '34', va: '8', lb: '45', vb: '18', ...this.v(-10) },
+        { name: 'Javier Andres Larregoity', la: '18', va: '2', lb: '22', vb: '2', ...this.v(0) },
+        { name: 'Lorenzo Trinidad Adorno', la: '14', va: '2', lb: '78', vb: '6', ...this.v(-4) },
+        { name: 'Nashualiz Marquez', la: '0', va: '0', lb: '1', vb: '1', ...this.v(-1) },
+        { name: 'Nashualiz Marquez Febres', la: '17', va: '10', lb: '35', vb: '6', ...this.v(4) },
+        { name: 'Oficina Roosevelt', la: '4', va: '0', lb: '0', vb: '0', ...this.v(0) },
+        { name: 'Orlando Pena Ayala', la: '33', va: '3', lb: '38', vb: '6', ...this.v(-3) },
+        { name: 'Roberto Luis Irizarry Alicea', la: '28', va: '8', lb: '47', vb: '4', ...this.v(4) },
+      ],
+      boothRows: [
+        { name: 'Booth Peq & Evento', a: '7', p: '26.9%', b: '4', ...this.v(3) },
+        { name: 'Booth Peq & Evento › Amigos', a: '0', p: '0.0%', b: '1', ...this.v(-1) },
+        { name: 'Booth Peq & Evento › Econo', a: '1', p: '3.8%', b: '11', ...this.v(-10) },
+        { name: 'Booth Peq & Evento › Eventos Especiales', a: '6', p: '23.1%', b: '6', ...this.v(0) },
+        { name: 'Booth Peq & Evento › Mr. Special Supermarket', a: '1', p: '3.8%', b: '0', ...this.v(0) },
+        { name: 'Booth Peq & Evento › National Ferreteria', a: '2', p: '7.7%', b: '0', ...this.v(0) },
+        { name: 'Booth Peq & Evento › Pueblo', a: '1', p: '3.8%', b: '2', ...this.v(-1) },
+        { name: 'Booth Peq & Evento › Selectos', a: '5', p: '19.2%', b: '3', ...this.v(2) },
+        { name: 'Booth Peq & Evento › SuperMax', a: '3', p: '11.5%', b: '5', ...this.v(-2) },
+        { name: 'Booth Peq & Evento › Trailer Booth', a: '0', p: '0.0%', b: '2', ...this.v(-2) },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

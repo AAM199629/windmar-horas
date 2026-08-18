@@ -1,0 +1,559 @@
+{
+  "yelitza": [
+    {
+      "nombre": "Malls - Aguadilla Mall",
+      "pueblo": "Aguadilla",
+      "tipo": "Centro Comercial",
+      "region": "Mayagüez",
+      "grupo": "yelitza",
+      "inversion": 1750,
+      "ini": "2024-04-01",
+      "fin": null,
+      "marker": false
+    },
+    {
+      "nombre": "Malls - Santa Rosa",
+      "pueblo": "Bayamón",
+      "tipo": "Centro Comercial",
+      "region": "San Juan I y III",
+      "grupo": "yelitza",
+      "inversion": 2000,
+      "ini": "2026-03-09",
+      "fin": "2026-08-09",
+      "marker": false
+    },
+    {
+      "nombre": "Malls - Plaza del Caribe",
+      "pueblo": "Ponce",
+      "tipo": "Centro Comercial",
+      "region": "Ponce",
+      "grupo": "yelitza",
+      "inversion": 4000,
+      "ini": "2020-01-01",
+      "fin": null,
+      "marker": false
+    },
+    {
+      "nombre": "Malls - Montehiedra",
+      "pueblo": "San Juan",
+      "tipo": "Centro Comercial",
+      "region": "San Juan I y III",
+      "grupo": "yelitza",
+      "inversion": 5000,
+      "ini": "2020-01-01",
+      "fin": null,
+      "marker": false
+    },
+    {
+      "nombre": "Malls - Plaza las Americas",
+      "pueblo": "San Juan",
+      "tipo": "Centro Comercial",
+      "region": "San Juan I y III",
+      "grupo": "yelitza",
+      "inversion": 6800,
+      "ini": "2020-01-01",
+      "fin": null,
+      "marker": false
+    },
+    {
+      "nombre": "Home Depot - Ponce",
+      "pueblo": null,
+      "tipo": "Home Depot",
+      "region": "Ponce",
+      "grupo": "yelitza",
+      "inversion": 0,
+      "ini": "2000-01-01",
+      "fin": null,
+      "marker": false
+    },
+    {
+      "nombre": "Home Depot - Montehiedra",
+      "pueblo": null,
+      "tipo": "Home Depot",
+      "region": "San Juan I y III",
+      "grupo": "yelitza",
+      "inversion": 0,
+      "ini": "2000-01-01",
+      "fin": null,
+      "marker": false
+    },
+    {
+      "nombre": "Home Depot - Colobos",
+      "pueblo": null,
+      "tipo": "Home Depot",
+      "region": "San Juan I y III",
+      "grupo": "yelitza",
+      "inversion": 0,
+      "ini": "2000-01-01",
+      "fin": null,
+      "marker": false
+    },
+    {
+      "nombre": "Home Depot - Rexville",
+      "pueblo": null,
+      "tipo": "Home Depot",
+      "region": "San Juan I y III",
+      "grupo": "yelitza",
+      "inversion": 0,
+      "ini": "2000-01-01",
+      "fin": null,
+      "marker": false
+    },
+    {
+      "nombre": "Home Depot - Plaza Escorial",
+      "pueblo": null,
+      "tipo": "Home Depot",
+      "region": "San Juan I y III",
+      "grupo": "yelitza",
+      "inversion": 0,
+      "ini": "2000-01-01",
+      "fin": null,
+      "marker": false
+    },
+    {
+      "nombre": "Home Depot - Plaza del Sol",
+      "pueblo": null,
+      "tipo": "Home Depot",
+      "region": "San Juan I y III",
+      "grupo": "yelitza",
+      "inversion": 0,
+      "ini": "2000-01-01",
+      "fin": null,
+      "marker": false
+    },
+    {
+      "nombre": "Home Depot - Arecibo",
+      "pueblo": null,
+      "tipo": "Home Depot",
+      "region": "Hatillo",
+      "grupo": "yelitza",
+      "inversion": 0,
+      "ini": "2000-01-01",
+      "fin": null,
+      "marker": false
+    },
+    {
+      "nombre": "Home Depot - Mayaguez",
+      "pueblo": null,
+      "tipo": "Home Depot",
+      "region": "Mayagüez",
+      "grupo": "yelitza",
+      "inversion": 0,
+      "ini": "2000-01-01",
+      "fin": null,
+      "marker": false
+    },
+    {
+      "nombre": "Home Depot - Humacao",
+      "pueblo": null,
+      "tipo": "Home Depot",
+      "region": "San Juan II",
+      "grupo": "yelitza",
+      "inversion": 0,
+      "ini": "2000-01-01",
+      "fin": null,
+      "marker": false
+    },
+    {
+      "nombre": "Home Depot - Caguas",
+      "pueblo": null,
+      "tipo": "Home Depot",
+      "region": "San Juan II",
+      "grupo": "yelitza",
+      "inversion": 0,
+      "ini": "2000-01-01",
+      "fin": null,
+      "marker": false
+    }
+  ],
+  "genesis": [
+    {
+      "nombre": "Estacion de Gasolina — Aguadilla",
+      "pueblo": "Aguadilla",
+      "tipo": "Estacion de Gasolina",
+      "region": "Mayagüez",
+      "grupo": "genesis",
+      "inversion": 1000,
+      "ini": "2026-07-27",
+      "fin": "2026-08-09",
+      "marker": false
+    },
+    {
+      "nombre": "BSN",
+      "pueblo": "Arecibo",
+      "tipo": "Eventos Especiales",
+      "region": "Hatillo",
+      "grupo": "genesis",
+      "inversion": 0,
+      "ini": "2026-03-01",
+      "fin": null,
+      "marker": true
+    },
+    {
+      "nombre": "Eventos Especiales — Carolina",
+      "pueblo": "Carolina",
+      "tipo": "Eventos Especiales",
+      "region": "San Juan I y III",
+      "grupo": "genesis",
+      "inversion": 0,
+      "ini": "2026-07-30",
+      "fin": "2026-08-09",
+      "marker": false
+    },
+    {
+      "nombre": "Eventos Especiales — Dorado",
+      "pueblo": "Dorado",
+      "tipo": "Eventos Especiales",
+      "region": "San Juan I y III",
+      "grupo": "genesis",
+      "inversion": 500,
+      "ini": "2026-08-02",
+      "fin": "2026-08-03",
+      "marker": false
+    },
+    {
+      "nombre": "Cooperativa Floricoop",
+      "pueblo": "Florida",
+      "tipo": "Eventos Especiales",
+      "region": "Hatillo",
+      "grupo": "genesis",
+      "inversion": 0,
+      "ini": "2026-04-27",
+      "fin": null,
+      "marker": false
+    },
+    {
+      "nombre": "Promotor",
+      "pueblo": "Hatillo",
+      "tipo": "Eventos Especiales",
+      "region": "Hatillo",
+      "grupo": "genesis",
+      "inversion": 0,
+      "ini": "2026-01-01",
+      "fin": null,
+      "marker": true
+    },
+    {
+      "nombre": "BSN",
+      "pueblo": "Mayagüez",
+      "tipo": "Eventos Especiales",
+      "region": "Mayagüez",
+      "grupo": "genesis",
+      "inversion": 0,
+      "ini": "2026-03-01",
+      "fin": null,
+      "marker": true
+    },
+    {
+      "nombre": "Promotor",
+      "pueblo": "Mayagüez",
+      "tipo": "Eventos Especiales",
+      "region": "Mayagüez",
+      "grupo": "genesis",
+      "inversion": 0,
+      "ini": "2026-01-01",
+      "fin": null,
+      "marker": true
+    },
+    {
+      "nombre": "Eventos Especiales — Ponce",
+      "pueblo": "Ponce",
+      "tipo": "Eventos Especiales",
+      "region": "Ponce",
+      "grupo": "genesis",
+      "inversion": 450,
+      "ini": "2026-06-22",
+      "fin": "2026-09-22",
+      "marker": false
+    },
+    {
+      "nombre": "Promotor",
+      "pueblo": "Ponce",
+      "tipo": "Eventos Especiales",
+      "region": "Ponce",
+      "grupo": "genesis",
+      "inversion": 0,
+      "ini": "2026-01-01",
+      "fin": null,
+      "marker": true
+    },
+    {
+      "nombre": "Promotor",
+      "pueblo": "San Juan",
+      "tipo": "Eventos Especiales",
+      "region": "San Juan I y III",
+      "grupo": "genesis",
+      "inversion": 0,
+      "ini": "2026-01-01",
+      "fin": null,
+      "marker": true
+    },
+    {
+      "nombre": "BSN",
+      "pueblo": "Canóvanas",
+      "tipo": "Ferreterias",
+      "region": "San Juan I y III",
+      "grupo": "genesis",
+      "inversion": 0,
+      "ini": "2025-04-01",
+      "fin": null,
+      "marker": true
+    },
+    {
+      "nombre": "BSN",
+      "pueblo": "Carolina",
+      "tipo": "Ferreterias",
+      "region": "San Juan I y III",
+      "grupo": "genesis",
+      "inversion": 0,
+      "ini": "2026-04-01",
+      "fin": null,
+      "marker": true
+    },
+    {
+      "nombre": "BSN",
+      "pueblo": "Ponce",
+      "tipo": "Ferreterias",
+      "region": "Ponce",
+      "grupo": "genesis",
+      "inversion": 0,
+      "ini": "2025-04-01",
+      "fin": null,
+      "marker": true
+    },
+    {
+      "nombre": "Supermercados — Bayamón",
+      "pueblo": "Bayamón",
+      "tipo": "Supermercados",
+      "region": "San Juan I y III",
+      "grupo": "genesis",
+      "inversion": 1800,
+      "ini": "2026-07-13",
+      "fin": "2026-08-09",
+      "marker": false
+    },
+    {
+      "nombre": "Econo Colobos",
+      "pueblo": "Carolina",
+      "tipo": "Supermercados",
+      "region": "San Juan I y III",
+      "grupo": "genesis",
+      "inversion": 1600,
+      "ini": "2026-06-01",
+      "fin": "2026-08-30",
+      "marker": false
+    },
+    {
+      "nombre": "Supermercados — Ciales",
+      "pueblo": "Ciales",
+      "tipo": "Supermercados",
+      "region": "Hatillo",
+      "grupo": "genesis",
+      "inversion": 800,
+      "ini": "2026-07-06",
+      "fin": "2026-08-06",
+      "marker": false
+    },
+    {
+      "nombre": "Supermax",
+      "pueblo": "Dorado",
+      "tipo": "Supermercados",
+      "region": "San Juan I y III",
+      "grupo": "genesis",
+      "inversion": 1900,
+      "ini": "2026-06-08",
+      "fin": "2026-08-30",
+      "marker": false
+    },
+    {
+      "nombre": "Pueblo Las Cumbres",
+      "pueblo": "Guaynabo",
+      "tipo": "Supermercados",
+      "region": "San Juan I y III",
+      "grupo": "genesis",
+      "inversion": 1500,
+      "ini": "2026-05-05",
+      "fin": "2026-08-03",
+      "marker": false
+    },
+    {
+      "nombre": "Econo",
+      "pueblo": "Hatillo",
+      "tipo": "Supermercados",
+      "region": "Hatillo",
+      "grupo": "genesis",
+      "inversion": 1500,
+      "ini": "2023-10-01",
+      "fin": "2026-09-07",
+      "marker": false
+    },
+    {
+      "nombre": "Supermercados — Naguabo",
+      "pueblo": "Naguabo",
+      "tipo": "Supermercados",
+      "region": "San Juan II",
+      "grupo": "genesis",
+      "inversion": 1250,
+      "ini": "2026-06-08",
+      "fin": "2026-08-10",
+      "marker": false
+    }
+  ],
+  "genesisReal": [
+    {
+      "nombre": "Estacion de Gasolina — Aguadilla",
+      "pueblo": "Aguadilla",
+      "tipo": "Estacion de Gasolina",
+      "region": "Mayagüez",
+      "grupo": "genesis",
+      "inversion": 1000,
+      "ini": "2026-07-27",
+      "fin": "2026-08-09",
+      "marker": false
+    },
+    {
+      "nombre": "Eventos Especiales — Carolina",
+      "pueblo": "Carolina",
+      "tipo": "Eventos Especiales",
+      "region": "San Juan I y III",
+      "grupo": "genesis",
+      "inversion": 0,
+      "ini": "2026-07-30",
+      "fin": "2026-08-09",
+      "marker": false
+    },
+    {
+      "nombre": "Eventos Especiales — Dorado",
+      "pueblo": "Dorado",
+      "tipo": "Eventos Especiales",
+      "region": "San Juan I y III",
+      "grupo": "genesis",
+      "inversion": 500,
+      "ini": "2026-08-02",
+      "fin": "2026-08-03",
+      "marker": false
+    },
+    {
+      "nombre": "Cooperativa Floricoop",
+      "pueblo": "Florida",
+      "tipo": "Eventos Especiales",
+      "region": "Hatillo",
+      "grupo": "genesis",
+      "inversion": 0,
+      "ini": "2026-04-27",
+      "fin": null,
+      "marker": false
+    },
+    {
+      "nombre": "Eventos Especiales — Ponce",
+      "pueblo": "Ponce",
+      "tipo": "Eventos Especiales",
+      "region": "Ponce",
+      "grupo": "genesis",
+      "inversion": 450,
+      "ini": "2026-06-22",
+      "fin": "2026-09-22",
+      "marker": false
+    },
+    {
+      "nombre": "Supermercados — Bayamón",
+      "pueblo": "Bayamón",
+      "tipo": "Supermercados",
+      "region": "San Juan I y III",
+      "grupo": "genesis",
+      "inversion": 1800,
+      "ini": "2026-07-13",
+      "fin": "2026-08-09",
+      "marker": false
+    },
+    {
+      "nombre": "Econo Colobos",
+      "pueblo": "Carolina",
+      "tipo": "Supermercados",
+      "region": "San Juan I y III",
+      "grupo": "genesis",
+      "inversion": 1600,
+      "ini": "2026-06-01",
+      "fin": "2026-08-30",
+      "marker": false
+    },
+    {
+      "nombre": "Supermercados — Ciales",
+      "pueblo": "Ciales",
+      "tipo": "Supermercados",
+      "region": "Hatillo",
+      "grupo": "genesis",
+      "inversion": 800,
+      "ini": "2026-07-06",
+      "fin": "2026-08-06",
+      "marker": false
+    },
+    {
+      "nombre": "Supermax",
+      "pueblo": "Dorado",
+      "tipo": "Supermercados",
+      "region": "San Juan I y III",
+      "grupo": "genesis",
+      "inversion": 1900,
+      "ini": "2026-06-08",
+      "fin": "2026-08-30",
+      "marker": false
+    },
+    {
+      "nombre": "Pueblo Las Cumbres",
+      "pueblo": "Guaynabo",
+      "tipo": "Supermercados",
+      "region": "San Juan I y III",
+      "grupo": "genesis",
+      "inversion": 1500,
+      "ini": "2026-05-05",
+      "fin": "2026-08-03",
+      "marker": false
+    },
+    {
+      "nombre": "Econo",
+      "pueblo": "Hatillo",
+      "tipo": "Supermercados",
+      "region": "Hatillo",
+      "grupo": "genesis",
+      "inversion": 1500,
+      "ini": "2023-10-01",
+      "fin": "2026-09-07",
+      "marker": false
+    },
+    {
+      "nombre": "Supermercados — Naguabo",
+      "pueblo": "Naguabo",
+      "tipo": "Supermercados",
+      "region": "San Juan II",
+      "grupo": "genesis",
+      "inversion": 1250,
+      "ini": "2026-06-08",
+      "fin": "2026-08-10",
+      "marker": false
+    }
+  ],
+  "resumen": {
+    "yelitzaPorRegion": {
+      "Mayagüez": 2,
+      "San Juan I y III": 8,
+      "Ponce": 2,
+      "Hatillo": 1,
+      "San Juan II": 2
+    },
+    "genesisPorRegion": {
+      "Mayagüez": 3,
+      "Hatillo": 5,
+      "San Juan I y III": 9,
+      "Ponce": 3,
+      "San Juan II": 1
+    },
+    "genesisRealPorRegion": {
+      "Mayagüez": 1,
+      "San Juan I y III": 6,
+      "Hatillo": 3,
+      "Ponce": 1,
+      "San Juan II": 1
+    }
+  }
+}

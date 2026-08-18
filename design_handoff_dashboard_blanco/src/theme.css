@@ -1,0 +1,233 @@
+/* ============================================================================
+   WindMar Home · Futuristic "Liquid Glass" dashboard theme
+   Dark navy gradient base · approved glassmorphism (over dark gradient only).
+   All glass blocks follow the system spec: rgba white fill + backdrop blur,
+   white hairline border, blue-tinted shadows. Orange stays a micro-accent.
+   ============================================================================ */
+
+/* ---- canvas-level reset for each artboard root ---- */
+.wmx {
+  --c-bg-0: #070B16;
+  --c-bg-1: #0A0F1B;
+  --c-bg-2: #141B34;
+  --c-ink: #EAF0FF;
+  --c-ink-soft: #A9B6D9;
+  --c-ink-dim: #6E7CA6;
+  --c-blue: #1D429B;
+  --c-blue-deep: #21274E;
+  --c-blue-bright: #3D6BFF;
+  --c-cyan: #22C7E6;
+  --c-orange: #F89B24;
+  --c-green: #1FD79B;
+  --c-red: #FF5D6C;
+  --glass: rgba(255,255,255,0.07);
+  --glass-strong: rgba(255,255,255,0.11);
+  --glass-border: rgba(255,255,255,0.16);
+  --glass-border-bright: rgba(255,255,255,0.26);
+  font-family: "Montserrat", system-ui, sans-serif;
+  color: var(--c-ink);
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 12% -8%, #1b2a5c 0%, rgba(27,42,92,0) 46%),
+    radial-gradient(120% 90% at 100% 0%, #123a52 0%, rgba(18,58,82,0) 40%),
+    linear-gradient(160deg, #0A0F1B 0%, #0B1226 55%, #070B16 100%);
+}
+.wmx * { box-sizing: border-box; }
+
+/* animated aurora mesh + dot grid texture */
+.wmx::before {
+  content: "";
+  position: absolute; inset: -20%;
+  background:
+    radial-gradient(38% 34% at 22% 30%, rgba(61,107,255,0.30), transparent 70%),
+    radial-gradient(34% 30% at 78% 22%, rgba(34,199,230,0.22), transparent 70%),
+    radial-gradient(40% 38% at 65% 82%, rgba(155,107,255,0.18), transparent 72%),
+    radial-gradient(30% 30% at 30% 88%, rgba(31,215,155,0.14), transparent 70%);
+  filter: blur(8px);
+  animation: wmx-aurora 26s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 0;
+}
+.wmx::after {
+  content: "";
+  position: absolute; inset: 0;
+  background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1.4px);
+  background-size: 26px 26px;
+  mask-image: radial-gradient(120% 120% at 50% 0%, #000 30%, transparent 90%);
+  pointer-events: none;
+  z-index: 0;
+}
+@keyframes wmx-aurora {
+  0%   { transform: translate3d(-3%, -2%, 0) scale(1.05); }
+  50%  { transform: translate3d(3%, 2%, 0) scale(1.12); }
+  100% { transform: translate3d(-2%, 3%, 0) scale(1.06); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wmx::before { animation: none; }
+}
+
+.wmx-stage { position: relative; z-index: 1; }
+
+/* ---- glass panel ---- */
+.wmx-glass {
+  background: var(--glass);
+  backdrop-filter: blur(26px) saturate(135%);
+  -webkit-backdrop-filter: blur(26px) saturate(135%);
+  border: 1px solid var(--glass-border);
+  border-radius: 28px;
+  box-shadow:
+    0 24px 60px rgba(6,10,22,0.55),
+    0 4px 14px rgba(6,10,22,0.30),
+    inset 0 1px 0 rgba(255,255,255,0.30),
+    inset 0 0 0 1px rgba(255,255,255,0.02);
+}
+.wmx-glass-strong {
+  background: var(--glass-strong);
+  backdrop-filter: blur(30px) saturate(140%);
+  -webkit-backdrop-filter: blur(30px) saturate(140%);
+  border: 1px solid var(--glass-border-bright);
+  border-radius: 28px;
+  box-shadow:
+    0 26px 64px rgba(6,10,22,0.60),
+    0 6px 16px rgba(6,10,22,0.34),
+    inset 0 1px 0 rgba(255,255,255,0.38);
+}
+
+/* sheen sweep on hero glass */
+.wmx-sheen { position: relative; overflow: hidden; }
+.wmx-sheen::before {
+  content: "";
+  position: absolute; top: 0; left: -60%;
+  width: 45%; height: 100%;
+  background: linear-gradient(105deg, transparent, rgba(255,255,255,0.16), transparent);
+  transform: skewX(-18deg);
+  animation: wmx-sheen 7.5s ease-in-out infinite;
+}
+@keyframes wmx-sheen { 0%,60% { left: -60%; } 100% { left: 130%; } }
+@media (prefers-reduced-motion: reduce) { .wmx-sheen::before { animation: none; display: none; } }
+
+/* ---- type helpers ---- */
+.wmx-eyebrow {
+  font-size: 12px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--c-ink-dim);
+}
+.wmx-display {
+  font-family: "Bebas Neue", "Montserrat", sans-serif;
+  font-weight: 400; line-height: 0.92; letter-spacing: 0.01em;
+}
+.wmx-num { font-variant-numeric: tabular-nums; }
+.wmx-accent-rule {
+  width: 64px; height: 3px; border-radius: 999px;
+  background: linear-gradient(90deg, var(--c-orange), #FBC074);
+  box-shadow: 0 0 16px rgba(248,155,36,0.55);
+}
+.wmx-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--glass-border);
+  font-size: 12px; font-weight: 600; color: var(--c-ink-soft);
+}
+.wmx-live-dot {
+  width: 8px; height: 8px; border-radius: 999px; background: var(--c-green);
+  box-shadow: 0 0 0 0 rgba(31,215,155,0.6);
+  animation: wmx-pulse 2.4s ease-out infinite;
+}
+@keyframes wmx-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(31,215,155,0.55); }
+  70% { box-shadow: 0 0 0 9px rgba(31,215,155,0); }
+  100% { box-shadow: 0 0 0 0 rgba(31,215,155,0); }
+}
+
+/* ---- nav ---- */
+.wmx-nav {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 18px;
+  background: rgba(10,15,27,0.55);
+  backdrop-filter: blur(24px) saturate(130%);
+  -webkit-backdrop-filter: blur(24px) saturate(130%);
+  border: 1px solid var(--glass-border);
+  border-radius: 22px;
+  box-shadow: 0 18px 44px rgba(6,10,22,0.5), inset 0 1px 0 rgba(255,255,255,0.22);
+}
+.wmx-navlink {
+  font-size: 13.5px; font-weight: 600; color: var(--c-ink-soft);
+  padding: 9px 13px; border-radius: 12px; white-space: nowrap;
+  transition: color .18s, background .18s;
+}
+.wmx-navlink:hover { color: var(--c-ink); background: rgba(255,255,255,0.06); }
+.wmx-navlink.is-active {
+  color: #fff;
+  background: linear-gradient(180deg, rgba(248,155,36,0.95), rgba(226,131,18,0.95));
+  box-shadow: 0 6px 18px rgba(248,155,36,0.4), inset 0 1px 0 rgba(255,255,255,0.4);
+}
+
+/* ---- bars ---- */
+.wmx-bar-track {
+  position: relative; height: 30px; border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.07);
+  overflow: hidden;
+}
+.wmx-bar-fill {
+  position: absolute; inset: 0 auto 0 0; height: 100%;
+  border-radius: 999px;
+  width: var(--w, 0);
+}
+.wmx[data-anim="on"] .wmx-bar-fill { animation: wmx-fill 1.2s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes wmx-fill { from { width: 0; } to { width: var(--w); } }
+@media (prefers-reduced-motion: reduce) { .wmx[data-anim="on"] .wmx-bar-fill { animation: none; } }
+.wmx-bar-fill::after {
+  content: ""; position: absolute; inset: 0; border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.35), rgba(255,255,255,0) 55%);
+}
+
+/* table */
+.wmx-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.wmx-table th, .wmx-table td { text-align: center; padding: 11px 8px; font-size: 13.5px; }
+.wmx-table tbody tr { border-top: 1px solid rgba(255,255,255,0.06); }
+.wmx-table tbody tr:hover { background: rgba(255,255,255,0.04); }
+
+/* ---- LIGHT / HYBRID variant (Direction C) ----
+   White page per WindMar rule (no glass on white). Glass lives only inside the
+   dark-gradient hero band. Data lives on solid white cards with blue shadow. */
+.wmx-light {
+  background:
+    radial-gradient(rgba(29,66,155,0.05) 1px, transparent 1.4px) 0 0 / 26px 26px,
+    var(--c-bg-light, #F1F2F5);
+  color: #231F20;
+}
+.wmx-light::before, .wmx-light::after { display: none; content: none; }
+.wmx-hero-dark {
+  position: relative; overflow: hidden;
+  border-radius: 32px;
+  background: linear-gradient(135deg, #0A0F1B 0%, #223264 100%); /* deep & elegant — one dark gradient */
+  box-shadow: 0 30px 70px rgba(10,15,27,0.30);
+}
+.wmx-hero-dark::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(40% 60% at 85% 10%, rgba(34,199,230,0.22), transparent 70%),
+    radial-gradient(40% 60% at 10% 90%, rgba(61,107,255,0.22), transparent 70%);
+}
+.wmx-card-light {
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(33,39,78,0.10);
+  border: 1px solid rgba(33,39,78,0.04);
+}
+.wmx-light .wmx-eyebrow { color: var(--c-blue); }
+.wmx-light .wmx-display { color: var(--c-blue-deep); }
+.wmx-bar-track-light {
+  position: relative; height: 28px; border-radius: 999px;
+  background: #EEF3FD; overflow: hidden;
+}
+.wmx-table-light { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.wmx-table-light th, .wmx-table-light td { text-align: center; padding: 11px 8px; font-size: 13.5px; color: #231F20; }
+.wmx-table-light tbody tr { border-top: 1px solid #E4E5E9; }
+.wmx-table-light tbody tr:hover { background: #F7F8FA; }
+
+/* scrollbar hide inside artboards is handled by canvas; keep tidy */
+.wmx-scroll::-webkit-scrollbar { height: 8px; width: 8px; }
+.wmx-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 999px; }

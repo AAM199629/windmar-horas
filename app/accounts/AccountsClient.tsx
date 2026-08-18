@@ -6,13 +6,13 @@ interface User {
   id: string
   email: string
   name: string
-  role: 'admin' | 'supervisor' | 'viewer' | 'canal'
+  role: 'admin' | 'supervisor' | 'canal' | 'ventas'
 }
 
 export default function AccountsClient({ currentEmail }: { currentEmail: string }) {
   const [users, setUsers]       = useState<User[]>([])
   const [loading, setLoading]   = useState(true)
-  const [form, setForm]         = useState({ email: '', name: '', password: '', role: 'viewer' as 'admin' | 'supervisor' | 'viewer' | 'canal' })
+  const [form, setForm]         = useState({ email: '', name: '', password: '', role: 'ventas' as 'admin' | 'supervisor' | 'canal' | 'ventas' })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError]       = useState('')
   const [success, setSuccess]   = useState('')
@@ -45,7 +45,7 @@ export default function AccountsClient({ currentEmail }: { currentEmail: string 
       setError(data.error ?? 'Error al crear usuario')
     } else {
       setSuccess(`Usuario ${data.name} creado correctamente`)
-      setForm({ email: '', name: '', password: '', role: 'viewer' as 'admin' | 'supervisor' | 'viewer' })
+      setForm({ email: '', name: '', password: '', role: 'ventas' as 'admin' | 'supervisor' | 'canal' | 'ventas' })
       loadUsers()
     }
     setSubmitting(false)
@@ -129,12 +129,12 @@ export default function AccountsClient({ currentEmail }: { currentEmail: string 
             <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Rol</label>
             <select
               value={form.role}
-              onChange={e => setForm(f => ({ ...f, role: e.target.value as 'admin' | 'supervisor' | 'viewer' | 'canal' }))}
+              onChange={e => setForm(f => ({ ...f, role: e.target.value as 'admin' | 'supervisor' | 'canal' | 'ventas' }))}
               className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E88B0C] bg-white"
             >
-              <option value="viewer">Viewer — solo lectura</option>
+              <option value="ventas">Ventas — solo Dashboard de Ventas</option>
               <option value="canal">Canal — solo turnos de canales</option>
-              <option value="supervisor">Supervisor — ve Asalariados</option>
+              <option value="supervisor">Supervisor — Horas, Canales y Ventas</option>
               <option value="admin">Admin — acceso completo</option>
             </select>
           </div>
@@ -191,9 +191,10 @@ export default function AccountsClient({ currentEmail }: { currentEmail: string 
                   u.role === 'admin'      ? 'bg-[#0D1654]/10 text-[#0D1654]' :
                   u.role === 'supervisor' ? 'bg-amber-100 text-amber-700' :
                   u.role === 'canal'      ? 'bg-teal-100 text-teal-700' :
+                  u.role === 'ventas'     ? 'bg-blue-100 text-blue-700' :
                                            'bg-slate-100 text-slate-500'
                 }`}>
-                  {u.role === 'admin' ? 'Admin' : u.role === 'supervisor' ? 'Supervisor' : u.role === 'canal' ? 'Canal' : 'Viewer'}
+                  {u.role === 'admin' ? 'Admin' : u.role === 'supervisor' ? 'Supervisor' : u.role === 'canal' ? 'Canal' : u.role === 'ventas' ? 'Ventas' : u.role}
                 </span>
                 {u.email !== currentEmail && (
                   <button

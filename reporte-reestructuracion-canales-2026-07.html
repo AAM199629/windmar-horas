@@ -1,0 +1,429 @@
+<title>Organigrama de Ventas — Reestructuración · WindMar</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{
+  --ground:#EDF0F6; --card:#FFFFFF; --text:#21274E; --muted:#6B7291;
+  --amber:#F89B24; --blue:#1D429B; --green:#1FA971; --purple:#7A5AF0; --red:#E0334B;
+  --line:#D7DCEA; --shadow:0 10px 26px rgba(33,39,78,.12);
+  --disp:'Arial Narrow','Oswald','Helvetica Neue',system-ui,sans-serif;
+  --body:'Montserrat',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--ground);color:var(--text);font-family:var(--body);font-size:15px}
+h1,.disp{font-family:var(--disp);font-weight:700;letter-spacing:.02em}
+
+/* Top bar */
+.bar{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:14px 20px;
+  background:#fff;border-bottom:1px solid var(--line)}
+.bar .brand{display:flex;flex-direction:column;margin-right:auto}
+.bar .kick{font-size:10.5px;letter-spacing:.3em;color:var(--amber);text-transform:uppercase;font-weight:700}
+.bar h1{margin:0;font-size:22px;text-transform:uppercase;letter-spacing:.03em;line-height:1}
+.seg{display:inline-flex;background:var(--ground);border:1px solid var(--line);border-radius:999px;padding:4px}
+.seg button{font-family:var(--body);font-weight:700;font-size:13px;border:0;background:transparent;color:var(--muted);
+  padding:8px 16px;border-radius:999px;cursor:pointer;transition:.2s;white-space:nowrap}
+.seg button .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:currentColor;margin-right:7px;opacity:.5;vertical-align:middle}
+.seg button[aria-pressed="true"]{color:#fff;background:var(--text)}
+body.vchg .seg button.chg-btn[aria-pressed="true"]{background:var(--green);color:#04240f}
+
+/* Canvas */
+.canvas{position:relative;width:100%;height:720px;overflow:hidden;cursor:grab;
+  background-color:#EDF0F6;background-image:radial-gradient(circle, #C7CEDE 1.3px, transparent 1.3px);
+  background-size:24px 24px}
+.canvas.grabbing{cursor:grabbing}
+#stage{position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform}
+#links{position:absolute;top:0;left:0;pointer-events:none;overflow:visible}
+#links path{fill:none;stroke:#B9C1D4;stroke-width:2}
+#links path.grp{stroke:var(--amber);stroke-dasharray:6 6;opacity:.9}
+#tree{position:relative;z-index:1;padding:40px 60px}
+
+/* tree layout */
+.subtree{display:flex;flex-direction:column;align-items:flex-start}
+.subtree.rootsub{align-items:center}
+/* niveles profundos: vertical indentado */
+.children{display:flex;flex-direction:column;align-items:flex-start;gap:15px;margin-top:16px;margin-left:48px}
+/* línea directa del director: horizontal */
+.children.row{flex-direction:row;align-items:flex-start;justify-content:center;gap:26px;margin-left:0;margin-top:46px}
+
+/* Card */
+.card{position:relative;background:#fff;border:2px solid var(--amber);border-radius:16px;
+  box-shadow:var(--shadow);padding:13px 16px;min-width:236px;max-width:270px;cursor:pointer;
+  transition:box-shadow .15s,transform .15s}
+.card:hover{box-shadow:0 14px 30px rgba(33,39,78,.18);transform:translateY(-1px)}
+.card.dept-ops{border-color:var(--green)}
+.card.dept-canvaseo{border-color:var(--purple)}
+.card.root{border-width:3px;box-shadow:0 0 0 4px rgba(248,155,36,.16),var(--shadow)}
+.card .hd{display:flex;align-items:center;gap:11px}
+.card .av{width:40px;height:40px;border-radius:11px;flex:none;display:grid;place-items:center;
+  font-family:var(--disp);font-size:17px;letter-spacing:.02em;background:#FCEBD2;color:#9a5a12}
+.dept-ops .av{background:#dcf3e8;color:#0f6f47}
+.dept-canvaseo .av{background:#e9e3fb;color:#4a34a6}
+.card .meta{min-width:0;flex:1}
+.card .nm{font-weight:700;font-size:14.5px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .ttl{font-size:11.5px;color:var(--muted);line-height:1.25;margin-top:1px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .tag{display:inline-block;margin-top:9px;font-size:10px;font-weight:800;letter-spacing:.06em;
+  text-transform:uppercase;padding:3px 9px;border-radius:6px;background:#FDF0DC;color:#a5641a}
+.dept-ops .tag{background:#e3f6ee;color:#0f6f47}
+.dept-canvaseo .tag{background:#ece7fc;color:#4a34a6}
+.card .rgn{display:inline-block;margin-top:9px;margin-left:6px;font-size:10px;font-weight:700;color:var(--muted);
+  background:#f1f4fa;border:1px solid var(--line);padding:3px 8px;border-radius:999px}
+
+/* Role-group card */
+.card.group{border-style:dashed;border-color:var(--amber);background:#FFFBF3}
+.card.group .subttl{font-size:12px;color:var(--muted);margin-top:1px}
+.card.group .grpname{font-weight:700;font-size:14.5px;line-height:1.15}
+.card.group .team{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:11.5px;font-weight:700;color:#a5641a}
+.card.group .team svg{width:14px;height:14px}
+.card .cnt{position:absolute;top:-11px;right:-11px;min-width:30px;height:30px;padding:0 7px;border-radius:999px;
+  background:var(--amber);color:#fff;font-family:var(--disp);font-size:15px;display:grid;place-items:center;
+  box-shadow:0 4px 10px rgba(248,155,36,.5);border:2px solid #fff}
+
+/* collapsed children badge (▶ N) */
+.card .repbadge{position:absolute;left:22px;bottom:-13px;transform:translateX(-50%);
+  display:flex;align-items:center;gap:5px;background:var(--amber);color:#fff;font-weight:800;font-size:12px;
+  padding:3px 10px 3px 8px;border-radius:999px;box-shadow:0 4px 10px rgba(248,155,36,.45);border:2px solid #fff}
+.card .repbadge .tri{font-size:9px}
+
+/* Point leaf card */
+.card.point{min-width:150px;max-width:190px;padding:10px 12px 10px 14px;border-width:1.5px;border-color:var(--line);
+  border-style:solid;cursor:default;box-shadow:0 4px 12px rgba(33,39,78,.08)}
+.card.point:hover{transform:none}
+.card.point::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:4px;border-radius:4px;background:var(--blue)}
+.card.point.k-indep::before{background:var(--amber)}
+.card.point.k-resp::before{background:var(--green)}
+/* disponibles / banca (sin asignar) */
+.card.dept-free{border-color:#B9C1D4}
+.dept-free .av{background:#eceff5;color:#6B7291}
+.dept-free .tag{background:#eef1f7;color:#6B7291}
+.card.group.dept-free{border-color:#B9C1D4;background:#f4f6fa}
+.card.group.dept-free .grpname,.card.group.dept-free .team{color:#6B7291}
+.card.group.dept-free .cnt{background:#8891a8;box-shadow:0 4px 10px rgba(107,113,145,.4)}
+.subtree.detached{margin-left:38px;border-left:2px dashed var(--line);padding-left:30px}
+.card.point .pn{font-weight:600;font-size:12px;line-height:1.25}
+.card.point .pk{font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-top:2px}
+
+/* toggle handle */
+.handle{position:absolute;left:22px;bottom:-14px;transform:translateX(-50%);width:26px;height:26px;border-radius:50%;
+  background:var(--text);color:#fff;display:grid;place-items:center;font-size:10px;border:2px solid #fff;
+  box-shadow:0 4px 10px rgba(33,39,78,.35);z-index:3;cursor:pointer}
+.card.group .handle,.card.hasrep .handle{display:none}
+.card.root .handle{left:50%}
+
+/* controls */
+.legend{position:absolute;top:16px;right:16px;background:#fff;border:1px solid var(--line);border-radius:12px;
+  padding:12px 14px;box-shadow:var(--shadow);font-size:12px;z-index:5}
+.legend .lh{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:8px}
+.legend .row{display:flex;align-items:center;gap:8px;margin-top:6px}
+.legend .box{width:22px;height:15px;border-radius:4px;border:2px solid var(--amber)}
+.legend .box.dash{border-style:dashed;background:#FFFBF3}
+.zoom{position:absolute;left:16px;bottom:16px;display:flex;gap:6px;z-index:5}
+.zoom button{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--text);
+  font-size:18px;font-weight:700;cursor:pointer;box-shadow:var(--shadow);display:grid;place-items:center}
+.zoom button:hover{background:var(--ground)}
+.hint{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);font-size:11.5px;color:var(--muted);
+  background:rgba(255,255,255,.8);padding:5px 12px;border-radius:999px;z-index:4}
+
+/* Below-canvas */
+.wrap{max-width:1180px;margin:0 auto;padding:24px 22px 70px}
+.changes{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:18px 20px}
+.changes h2{margin:0 0 12px;font-size:17px;text-transform:uppercase;letter-spacing:.04em}
+.chg-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+@media(max-width:760px){.chg-grid{grid-template-columns:1fr}}
+.chg{display:flex;gap:11px;align-items:flex-start;padding:11px 12px;border:1px solid var(--line);border-radius:11px;background:#fafbfe}
+.chg .num{font-family:var(--disp);font-size:22px;color:var(--amber);line-height:.85;min-width:20px}
+.chg .ct{font-size:12.5px;line-height:1.4}
+.st{display:inline-block;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;padding:2px 7px;border-radius:6px;margin-left:2px}
+.st.prop{background:#fff5e8;color:#a5641a}.st.gate{background:#eafaf3;color:#127a52}.st.tent{background:#f2f3f7;color:var(--muted)}
+.foot{margin-top:16px;font-size:11.5px;color:var(--muted);line-height:1.6}
+.foot b{color:var(--text)}.foot code{background:#fff;border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="bar">
+  <div class="brand">
+    <span class="kick">WindMar · Reestructuración</span>
+    <h1>Organigrama de Ventas</h1>
+  </div>
+  <div class="seg" role="group" aria-label="Vista">
+    <button id="btnNow" aria-pressed="true"><span class="dot"></span>Actual</button>
+    <button id="btnOpt1" class="chg-btn" aria-pressed="false"><span class="dot"></span>Opción 1</button>
+    <button id="btnOpt2" class="chg-btn" aria-pressed="false"><span class="dot"></span>Opción 2</button>
+  </div>
+</div>
+
+<div class="canvas" id="canvas">
+  <div id="stage"><svg id="links"></svg><div id="tree"></div></div>
+  <div class="legend">
+    <div class="lh">Tipos de tarjeta</div>
+    <div class="row"><span class="box"></span> Individual</div>
+    <div class="row"><span class="box dash"></span> Grupo / equipo</div>
+  </div>
+  <div class="zoom">
+    <button id="zOut" title="Alejar">−</button>
+    <button id="zFit" title="Ajustar" style="font-size:13px">Fit</button>
+    <button id="zIn" title="Acercar">+</button>
+  </div>
+  <div class="hint">Arrastra para mover · rueda para zoom · clic en un grupo para ver su equipo</div>
+</div>
+
+<div class="wrap">
+  <div class="changes">
+    <h2>Qué cambia</h2>
+    <div class="chg-grid">
+      <div class="chg"><span class="num">1</span><span class="ct"><b>Yelitza Alfaro → Gerente de la tienda Anker (Ponce) y POC.</b> <span class="st prop">Propuesto</span></span></div>
+      <div class="chg"><span class="num">2</span><span class="ct"><b>Genesis Figueroa → Operaciones:</b> Solar Academy, Shipment de Shopify, logística de Carretones para vendedores y de eventos, y almacén de eventos.</span></div>
+      <div class="chg"><span class="num">3</span><span class="ct"><b>Laura Rozo pasa con Ángel Alverio:</b> support de eventos y booths independientes + apoyo a los regionales.</span></div>
+      <div class="chg"><span class="num">4</span><span class="ct"><b>Los 25 puntos de venta pasan a los regionales</b> por región (13 Mall/HD + 12 booths). <span class="st prop">SJ I y III 6/6</span></span></div>
+      <div class="chg"><span class="num">5</span><span class="ct"><b>Disponibles para reasignación:</b> Michael Modesti y Ashia Viera quedan fuera del diagrama, libres para otra asignación. <span class="st tent">Sin asignar</span></span></div>
+      <div class="chg"><span class="num">6</span><span class="ct"><b>Opción 1 vs Opción 2.</b> En la <b>Opción 2</b>, Jeisy Tibaguy también queda disponible y sus funciones las asume Laura Rozo. En la <b>Opción 1</b>, Jeisy sigue con Yelitza. <span class="st gate">2 escenarios</span></span></div>
+    </div>
+    <div class="foot">
+      <b>Fuentes.</b> Puntos y pueblos: módulo <b>Channel Info</b> de Zoho (<code>dwh.dim_channel_info</code>, solo activos y vigentes); región por el mapa oficial WindMar (pueblo→región). <b>San Juan I y III</b> se divide equitativamente 6/6 (mismos pueblos); los 5 Home Depot se reparten 3/2 entre Pedro (I) y Ángel Manuel (III). Malls <b>Montehiedra</b> y <b>Santa Rosa</b> excluidos (en cierre). De Genesis se reparten los <b>12 booths físicos</b> (se excluyen 9 marcadores "Promotor/BSN" sin costo).
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Point data by region ─────────────────────────────
+const P = {
+  'Mayagüez':[['Malls - Aguadilla','mall'],['Home Depot - Mayagüez','mall'],['Gasolinera - Aguadilla','indep']],
+  'Hatillo':[['Home Depot - Arecibo','mall'],['Coop. Floricoop - Florida','indep'],['Supermercado - Ciales','indep'],['Econo - Hatillo','indep']],
+  'Ponce':[['Malls - Plaza del Caribe','mall'],['Home Depot - Ponce','mall'],['Evento - Ponce','indep']],
+  'San Juan II':[['Home Depot - Humacao','mall'],['Home Depot - Caguas','mall'],['Supermercado - Naguabo','indep']],
+  // Malls Montehiedra y Santa Rosa eliminados (en cierre). 5 Home Depot 3/2; Rexville y Plaza del Sol
+  // juntos (cercanos) con Ángel/SJ III. SJ I y III = 6/6.
+  'San Juan I':[['Home Depot - Montehiedra','mall'],['Home Depot - Los Colobos','mall'],['Home Depot - Escorial','mall'],['Evento - Carolina','indep'],['Supermercado - Bayamón','indep'],['Supermax - Dorado','indep']],
+  'San Juan III':[['Malls - Plaza las Américas','mall'],['Home Depot - Rexville','mall'],['Home Depot - Plaza del Sol','mall'],['Evento - Dorado','indep'],['Econo - Los Colobos','indep'],['Pueblo - Las Cumbres','indep']],
+};
+const pointNodes = reg => P[reg].map(([n,k])=>({type:'point',name:n,k}));
+const allMall  = Object.values(P).flat().filter(p=>p[1]==='mall').map(([n,k])=>({type:'point',name:n,k}));
+const allIndep = Object.values(P).flat().filter(p=>p[1]==='indep').map(([n,k])=>({type:'point',name:n,k}));
+
+const COORDS = [['Lorenzo Trinidad Adorno','Hatillo'],['Roberto Luis Irizarry Alicea','Mayagüez'],['Orlando Peña Ayala','Ponce'],['Javier Alberto González Acevedo','Ponce'],['Abdiel Edmundo Oliveras Rivera','San Juan'],['Nashualiz Márquez Febres','San Juan']]
+  .map(([n,r])=>({type:'person',name:n,title:'Coordinador de Canvaseo',dept:'canvaseo',rgn:r}));
+
+const REGIONALS = [
+  ['Manuel Antonio González Figueroa','Mayagüez'],['Ramón Hommy Rodríguez Sánchez','Hatillo'],
+  ['Eric Emanuel Rodríguez Román','Ponce'],['Pedro Iturregui','San Juan I'],
+  ['Ángel Manuel Maldonado Castelló','San Juan III'],['Ariel Figueroa Vélez','San Juan II'],
+];
+
+// ── Trees ────────────────────────────────────────────
+function regionalNode(who,reg){
+  const pts=pointNodes(reg);
+  return {type:'person',name:who,title:'Supervisor Regional',dept:'ventas',rgn:reg,
+    children:[{type:'group',name:'Puntos de venta',dept:'ventas',children:pts}]};
+}
+function TREE_ACTUAL(){
+  return {type:'person',name:'Ángel Alverio',title:'Director de Ventas',dept:'ventas',root:true,children:[
+    {type:'person',name:'Yelitza Alfaro',title:'Booth Mall · Home Depot',dept:'ventas',children:[
+      {type:'group',name:'Puntos Mall / HD',dept:'ventas',children:allMall},
+      {type:'person',name:'Jeisy Tibaguy',title:'Apoyo',dept:'ventas'},
+    ]},
+    {type:'person',name:'Genesis Figueroa',title:'Booth Ind. y Evento',dept:'ventas',children:[
+      {type:'group',name:'Booths & Eventos',dept:'ventas',children:allIndep},
+      {type:'person',name:'Laura Rozo',title:'Apoyo',dept:'ventas'},
+      {type:'person',name:'Michael Modesti',title:'Apoyo',dept:'ventas'},
+    ]},
+    {type:'person',name:'Rafel Carrillo',title:'Canvaseo',dept:'canvaseo',children:[
+      {type:'group',name:'Coordinadores',dept:'canvaseo',children:COORDS},
+    ]},
+    {type:'group',name:'Regionales',dept:'ventas',children:REGIONALS.map(([w,r])=>
+      ({type:'person',name:w,title:'Supervisor Regional',dept:'ventas',rgn:r}))},
+  ]};
+}
+const GENESIS_OPS = ()=>({type:'person',name:'Genesis Figueroa',title:'Operaciones',dept:'ops',children:[
+  {type:'point',name:'Solar Academy',k:'resp'},{type:'point',name:'Shipment de Shopify',k:'resp'},
+  {type:'point',name:'Logística de Carretones y Eventos',k:'resp'},{type:'point',name:'Almacén de eventos',k:'resp'},
+]});
+const RAFEL = ()=>({type:'person',name:'Rafel Carrillo',title:'Canvaseo',dept:'canvaseo',children:[
+  {type:'group',name:'Coordinadores',dept:'canvaseo',children:COORDS},
+]});
+const REGIONALES_NODE = ()=>({type:'group',name:'Regionales',dept:'ventas',children:REGIONALS.map(([w,r])=>regionalNode(w,r))});
+const DISPONIBLES = extra => ({type:'group',name:'Disponibles',dept:'free',detached:true,children:[
+  {type:'person',name:'Michael Modesti',title:'Sin asignar',dept:'free'},
+  {type:'person',name:'Ashia Viera',title:'Sin asignar',dept:'free'},
+  ...(extra||[]),
+]});
+
+// Opción 1: Jeisy sigue con Yelitza; Laura pasa con Ángel.
+function TREE_OPT1(){
+  return {type:'person',name:'Ángel Alverio',title:'Director de Ventas',dept:'ventas',root:true,children:[
+    {type:'person',name:'Yelitza Alfaro',title:'Gerente Tienda Anker (Ponce) · POC',dept:'ops',children:[
+      {type:'person',name:'Jeisy Tibaguy',title:'Apoyo',dept:'ops'},
+    ]},
+    GENESIS_OPS(),
+    {type:'person',name:'Laura Rozo',title:'Support eventos, booths indep. y apoyo a regionales',dept:'ventas'},
+    RAFEL(),
+    REGIONALES_NODE(),
+    DISPONIBLES(),
+  ]};
+}
+// Opción 2: Jeisy también queda disponible; Laura asume sus funciones.
+function TREE_OPT2(){
+  return {type:'person',name:'Ángel Alverio',title:'Director de Ventas',dept:'ventas',root:true,children:[
+    {type:'person',name:'Yelitza Alfaro',title:'Gerente Tienda Anker (Ponce) · POC',dept:'ops'},
+    GENESIS_OPS(),
+    {type:'person',name:'Laura Rozo',title:'Support eventos/booths + funciones de Jeisy',dept:'ventas'},
+    RAFEL(),
+    REGIONALES_NODE(),
+    DISPONIBLES([{type:'person',name:'Jeisy Tibaguy',title:'Sin asignar',dept:'free'}]),
+  ]};
+}
+
+// ── Render ───────────────────────────────────────────
+const EYE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const initials = s => s.replace(/[^A-Za-zÁÉÍÓÚÑ ]/g,'').split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+let uid=0;
+function cardHTML(n){
+  const dept = n.dept?`dept-${n.dept}`:'';
+  const TAG = d => d==='ops'?'OPERACIONES':d==='canvaseo'?'CANVASEO':d==='free'?'SIN ASIGNAR':'VENTAS';
+  if(n.type==='point'){
+    const lbl = n.k==='mall'?'Mall / Home Depot':n.k==='indep'?'Booth / Evento':'';
+    return `<div class="card point k-${n.k}"><div class="pn">${n.name}</div>${lbl?`<div class="pk">${lbl}</div>`:''}</div>`;
+  }
+  const kids = n.children||[];
+  const hasKids = kids.length>0;
+  if(n.type==='group'){
+    const noun = /Punto|Booth|Mall/.test(n.name)?'puntos':'personas';
+    return `<div class="card group ${dept}${n.detached?' detached':''}" data-id="${n._id}">
+      <span class="cnt">${kids.length}</span>
+      <div class="grpname">${n.name}</div>
+      <div class="subttl">${kids.length} ${noun} · ${TAG(n.dept)}</div>
+      <div class="team">${EYE}<span>${n._open?'Ocultar':'Ver equipo'}</span></div>
+    </div>`;
+  }
+  // person
+  const rgn = n.rgn?`<span class="rgn">${n.rgn}</span>`:'';
+  const tag = TAG(n.dept);
+  const collapsedRep = hasKids && !n._open ? `<div class="repbadge"><span class="tri">▶</span>${kids.length}</div>`:'';
+  const handle = hasKids && n._open ? `<div class="handle" data-id="${n._id}">▼</div>`:'';
+  const cls = 'card '+dept+(n.root?' root':'')+(collapsedRep?' hasrep':'');
+  return `<div class="${cls}" data-id="${n._id}">
+    <div class="hd">
+      <div class="av">${initials(n.name)}</div>
+      <div class="meta"><div class="nm">${n.name}</div><div class="ttl">${n.title||''}</div></div>
+    </div>
+    <div><span class="tag">${tag}</span>${rgn}</div>
+    ${collapsedRep}${handle}
+  </div>`;
+}
+function assignIds(n){ n._id=++uid; if(n._open===undefined) n._open=(n.type!=='group'); (n.children||[]).forEach(assignIds); }
+function renderSubtree(n,depth=0){
+  const kids=n.children||[];
+  const open = kids.length && n._open;
+  const stCls='subtree'+(depth===0?' rootsub':'')+(n.detached?' detached':'');
+  const chCls='children'+(depth===0?' row':'');  // línea directa del director = horizontal
+  return `<div class="${stCls}" data-node="${n._id}">${cardHTML(n)}${open?`<div class="${chCls}">${kids.map(k=>renderSubtree(k,depth+1)).join('')}</div>`:''}</div>`;
+}
+
+// ── Links ────────────────────────────────────────────
+const tree=document.getElementById('tree'), stage=document.getElementById('stage'), svg=document.getElementById('links');
+let scale=1, tx=0, ty=0;
+function applyT(){ stage.style.transform=`translate(${tx}px,${ty}px) scale(${scale})`; }
+function rectIn(el,sRect){
+  const r=el.getBoundingClientRect();
+  return { left:(r.left-sRect.left)/scale, right:(r.right-sRect.left)/scale,
+           top:(r.top-sRect.top)/scale, bottom:(r.bottom-sRect.top)/scale,
+           midY:(r.top+r.bottom)/2/scale - sRect.top/scale };
+}
+const RAD=9; // radio del codo
+function drawLinks(){
+  const w=tree.scrollWidth, h=tree.scrollHeight;
+  svg.setAttribute('width',w); svg.setAttribute('height',h);
+  const sRect=stage.getBoundingClientRect();
+  let d='';
+  tree.querySelectorAll('.subtree').forEach(st=>{
+    const parent=st.querySelector(':scope > .card');
+    const wrap=st.querySelector(':scope > .children');
+    if(!wrap) return;
+    const pr=rectIn(parent,sRect);
+    const kids=[...wrap.children].map(cs=>cs.querySelector(':scope > .card')).filter(Boolean);
+    if(!kids.length) return;
+    if(wrap.classList.contains('row')){
+      // línea directa horizontal → conectores curvos (fondo-centro del padre → tope-centro del hijo)
+      const px=(pr.left+pr.right)/2, py=pr.bottom;
+      kids.forEach(cc=>{
+        if(cc.classList.contains('detached')) return; // fuera del organigrama, sin conector
+        const cr=rectIn(cc,sRect);
+        const cx=(cr.left+cr.right)/2, cy=cr.top, my=(py+cy)/2;
+        const grp=cc.classList.contains('group')?' grp':'';
+        d+=`<path class="lnk${grp}" d="M${px} ${py} C ${px} ${my} ${cx} ${my} ${cx} ${cy}"/>`;
+      });
+    } else {
+      // desglose vertical → espina + codos redondeados
+      const spineX=pr.left+22, startY=pr.bottom;
+      let lastY=startY, stubs='';
+      kids.forEach(cc=>{
+        const cr=rectIn(cc,sRect);
+        const cy=(cr.top+cr.bottom)/2, cx=cr.left;
+        lastY=cy;
+        const grp=cc.classList.contains('group')?' grp':'';
+        stubs+=`<path class="lnk${grp}" d="M${spineX} ${cy-RAD} Q ${spineX} ${cy} ${spineX+RAD} ${cy} L ${cx} ${cy}"/>`;
+      });
+      d+=`<path class="lnk" d="M${spineX} ${startY} L ${spineX} ${lastY}"/>`+stubs;
+    }
+  });
+  svg.innerHTML=d;
+}
+
+// ── State + interactions ─────────────────────────────
+let MODEL=null;
+function findNode(n,id){ if(n._id===id) return n; for(const k of (n.children||[])){ const r=findNode(k,id); if(r) return r; } return null; }
+function paint(){ tree.innerHTML=renderSubtree(MODEL); requestAnimationFrame(drawLinks); }
+function build(view){
+  MODEL = view==='opt1'?TREE_OPT1():view==='opt2'?TREE_OPT2():TREE_ACTUAL(); uid=0; assignIds(MODEL);
+  paint(); requestAnimationFrame(()=>{ requestAnimationFrame(()=>{ resetView(); }); });
+}
+tree.addEventListener('click',e=>{
+  const el=e.target.closest('[data-id]'); if(!el) return;
+  const id=+el.dataset.id; const node=findNode(MODEL,id); if(!node||!(node.children||[]).length) return;
+  node._open=!node._open; paint();
+});
+
+// pan
+const canvas=document.getElementById('canvas');
+let pan=null;
+canvas.addEventListener('mousedown',e=>{ if(e.target.closest('.card, .zoom, .legend')) return; pan={x:e.clientX-tx,y:e.clientY-ty}; canvas.classList.add('grabbing'); });
+window.addEventListener('mousemove',e=>{ if(!pan) return; tx=e.clientX-pan.x; ty=e.clientY-pan.y; applyT(); });
+window.addEventListener('mouseup',()=>{ pan=null; canvas.classList.remove('grabbing'); });
+canvas.addEventListener('wheel',e=>{ e.preventDefault(); const f=e.deltaY<0?1.1:1/1.1; zoomAt(f,e.clientX,e.clientY); },{passive:false});
+function zoomAt(f,cx,cy){
+  const rect=canvas.getBoundingClientRect(); const ox=cx-rect.left, oy=cy-rect.top;
+  const ns=Math.min(2.2,Math.max(.3,scale*f)); const k=ns/scale;
+  tx=ox-(ox-tx)*k; ty=oy-(oy-ty)*k; scale=ns; applyT();
+}
+document.getElementById('zIn').onclick=()=>zoomAt(1.15,canvas.getBoundingClientRect().left+canvas.clientWidth/2,canvas.getBoundingClientRect().top+canvas.clientHeight/2);
+document.getElementById('zOut').onclick=()=>zoomAt(1/1.15,canvas.getBoundingClientRect().left+canvas.clientWidth/2,canvas.getBoundingClientRect().top+canvas.clientHeight/2);
+document.getElementById('zFit').onclick=fitView;
+function fitView(){
+  const w=tree.scrollWidth, h=tree.scrollHeight;
+  const cw=canvas.clientWidth||canvas.getBoundingClientRect().width||window.innerWidth;
+  const ch=canvas.clientHeight||720;
+  if(!w){ scale=1; tx=40; ty=20; applyT(); return; }
+  scale=Math.min(1, (cw-40)/w, (ch-40)/h); if(!isFinite(scale)||scale<=0) scale=1;
+  tx=Math.max(20,(cw-w*scale)/2); ty=20; applyT();
+}
+// Vista por defecto: escala legible (ajusta al ancho, no achica por alto) y arriba.
+function resetView(){
+  const w=tree.scrollWidth;
+  const cw=canvas.clientWidth||canvas.getBoundingClientRect().width||window.innerWidth;
+  if(!w){ scale=1; tx=40; ty=20; applyT(); return; }
+  scale=Math.min(1,(cw-40)/w); if(!isFinite(scale)||scale<=0) scale=1;
+  tx=Math.max(20,(cw-w*scale)/2); ty=20; applyT();
+}
+
+// toggle views (Actual / Opción 1 / Opción 2)
+const bN=document.getElementById('btnNow'), b1=document.getElementById('btnOpt1'), b2=document.getElementById('btnOpt2');
+function setView(v){
+  document.body.classList.toggle('vchg', v!=='actual');
+  bN.setAttribute('aria-pressed',String(v==='actual'));
+  b1.setAttribute('aria-pressed',String(v==='opt1'));
+  b2.setAttribute('aria-pressed',String(v==='opt2'));
+  build(v);
+}
+bN.onclick=()=>setView('actual'); b1.onclick=()=>setView('opt1'); b2.onclick=()=>setView('opt2');
+setView('actual');
+window.addEventListener('resize',()=>requestAnimationFrame(drawLinks));
+</script>

@@ -3,15 +3,15 @@ import { auth } from '@/auth'
 import { parseVentasCSV } from '@/lib/ventas'
 import { saveVentasRows } from '@/lib/asalariados-kv'
 
-async function requireAdminOrSupervisor() {
+async function requireAdmin() {
   const session = await auth()
   const role = (session?.user as any)?.role
-  if (!session || (role !== 'admin' && role !== 'supervisor')) return null
+  if (!session || role !== 'admin') return null
   return session
 }
 
 export async function POST(req: NextRequest) {
-  if (!await requireAdminOrSupervisor()) {
+  if (!await requireAdmin()) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

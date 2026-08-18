@@ -558,7 +558,7 @@ export default function VentasDashboard({
     >
       {saleModal && <SaleDealModal state={saleModal} onClose={() => setSaleModal(null)} />}
 
-      <div ref={contentRef} style={{ maxWidth: 1320, margin: '0 auto' }}>
+      <div ref={contentRef} style={{ margin: '0 auto' }}>
 
         {/* ── HEADER BAND ── */}
         <div style={{
