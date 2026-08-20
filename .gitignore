@@ -48,3 +48,6 @@ shifter-handoff-bingo.md
 # python caches (skills locales)
 __pycache__/
 *.pyc
+
+# documentos de trabajo (analisis, SOPs, decks) — viven en Drive, no en git
+*.pdf
