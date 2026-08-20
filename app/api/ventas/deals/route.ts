@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireRole } from '@/lib/api-auth'
 import { getSalesDealDetailsByRoles } from '@/lib/redshift'
 
 export async function GET(req: NextRequest) {
+  const denied = await requireRole(['admin', 'supervisor', 'ventas'])
+  if (denied) return denied
   const { searchParams } = req.nextUrl
   const from    = searchParams.get('from')
   const to      = searchParams.get('to')

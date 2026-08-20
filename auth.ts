@@ -13,7 +13,7 @@ export interface AppUser {
   email: string
   name: string
   passwordHash: string
-  role: 'admin' | 'supervisor' | 'viewer' | 'canal'
+  role: 'admin' | 'supervisor' | 'canal' | 'ventas'
 }
 
 async function getUser(email: string): Promise<AppUser | null> {

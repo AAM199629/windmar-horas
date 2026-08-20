@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orientaciones Asalariados — Junio 2026 · WindMar Home</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blue:#1D429B; --navy:#21274E; --vibrant:#0079C0;
+    --orange:#F89B24; --orange600:#E28312;
+    --green:#1E9E62; --red:#D64545; --grey:#6B7388; --flat:#9AA3B5;
+    --border:#E7ECF6; --rowline:#EDF0F5; --zebra:#F8FAFD; --totalrow:#EFF3FA;
+    --card-grad:linear-gradient(180deg,#FFFFFF 0%,#F7F9FE 100%);
+    --hero-grad:linear-gradient(135deg,#1D429B 0%,#21274E 100%);
+    --shadow-md:0 8px 24px rgba(33,39,78,.10);
+    --shadow-blue:0 18px 40px rgba(29,66,155,.25);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Montserrat',system-ui,sans-serif;
+    color:var(--navy);
+    background:
+      radial-gradient(1200px 600px at 12% -8%, rgba(29,66,155,.10), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(248,155,36,.10), transparent 55%),
+      #EEF2F9;
+    min-height:100vh;
+    padding:32px 20px 60px;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .wrap{max-width:1240px;margin:0 auto}
+
+  /* HERO */
+  .hero{
+    background:var(--hero-grad);
+    border-radius:24px;
+    padding:38px 42px;
+    color:#fff;
+    box-shadow:var(--shadow-blue);
+    position:relative;
+    overflow:hidden;
+  }
+  .hero::after{
+    content:"";position:absolute;right:-60px;top:-60px;
+    width:260px;height:260px;border-radius:50%;
+    background:radial-gradient(circle,rgba(248,155,36,.28),transparent 70%);
+  }
+  .brand{display:flex;align-items:center;gap:14px;margin-bottom:22px}
+  .brand-dot{width:14px;height:14px;border-radius:50%;background:var(--orange);box-shadow:0 0 0 5px rgba(248,155,36,.25)}
+  .brand-name{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:.14em;color:#fff}
+  .brand-name span{color:var(--orange)}
+  .hero h1{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:clamp(34px,5vw,52px);
+    letter-spacing:.02em;line-height:1;font-weight:400;
+  }
+  .hero .period{
+    display:inline-block;margin-top:14px;
+    font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+    background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);
+    padding:7px 16px;border-radius:999px;
+  }
+  .hero .sub{margin-top:16px;max-width:720px;font-size:13.5px;line-height:1.6;color:rgba(255,255,255,.82)}
+
+  /* KPI CARDS */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:22px}
+  .kpi{
+    background:var(--card-grad);border:1px solid var(--border);
+    border-radius:18px;padding:20px 22px;box-shadow:var(--shadow-md);
+    position:relative;overflow:hidden;
+  }
+  .kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;border-radius:999px}
+  .kpi.k1::before{background:var(--blue)}
+  .kpi.k2::before{background:var(--vibrant)}
+  .kpi.k3::before{background:var(--green)}
+  .kpi.k4::before{background:var(--orange)}
+  .kpi .label{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--grey)}
+  .kpi .value{font-family:'Bebas Neue',sans-serif;font-size:44px;line-height:1;margin-top:8px;color:var(--navy)}
+  .kpi .hint{font-size:11px;color:var(--flat);margin-top:6px}
+
+  /* TABLE CARD */
+  .card{
+    background:var(--card-grad);border:1px solid var(--border);
+    border-radius:22px;box-shadow:var(--shadow-md);
+    padding:26px 28px 30px;margin-top:26px;
+  }
+  .card-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+  .card-title{display:flex;align-items:center;gap:13px}
+  .card-title .bar{width:5px;height:26px;border-radius:999px;background:var(--blue)}
+  .card-title h2{font-size:18px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--navy)}
+  .controls{display:flex;gap:10px;flex-wrap:wrap}
+  .controls input,.controls select{
+    font-family:'Montserrat',sans-serif;font-size:13px;color:var(--navy);
+    border:1.5px solid var(--border);border-radius:10px;padding:9px 13px;background:#fff;outline:none;
+    transition:border-color .15s;
+  }
+  .controls input:focus,.controls select:focus{border-color:var(--blue)}
+  .controls input{min-width:210px}
+
+  .tbl-scroll{overflow-x:auto;border-radius:12px}
+  table{width:100%;border-collapse:collapse;min-width:1040px}
+  thead th{
+    background:var(--navy);color:#fff;font-size:11px;font-weight:700;
+    letter-spacing:.07em;text-transform:uppercase;padding:12px 16px;
+    white-space:nowrap;cursor:pointer;user-select:none;position:relative;
+  }
+  thead th:first-child{border-top-left-radius:10px;text-align:left}
+  thead th:last-child{border-top-right-radius:10px}
+  thead th.num{text-align:right}
+  thead th .arrow{opacity:.4;font-size:9px;margin-left:5px}
+  thead th.sorted .arrow{opacity:1;color:var(--orange)}
+  tbody td{
+    font-size:13px;padding:11px 16px;border-bottom:1px solid var(--rowline);
+    color:var(--navy);vertical-align:middle;
+  }
+  tbody td.num{text-align:right;font-variant-numeric:tabular-nums}
+  tbody tr:nth-child(even){background:var(--zebra)}
+  tbody tr.zero{color:var(--flat)}
+  tbody tr.zero td{color:var(--flat)}
+  .rank{color:var(--flat);font-size:11px;font-weight:600;width:34px}
+  .name{font-weight:600}
+  .badge{
+    display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.03em;
+    padding:4px 10px;border-radius:999px;white-space:nowrap;
+  }
+  .badge.consultor{background:#E8EEFB;color:#1D429B}
+  .badge.lider{background:#E6F4EC;color:#1E7E52}
+  .badge.gerente{background:#FDEFDD;color:#B9700F}
+  .pag{font-weight:800;color:var(--blue)}
+  td.money{font-weight:700}
+  td.money.win{color:var(--green)}
+  td.money.lose{color:var(--grey)}
+  td.salary{font-weight:700;color:var(--navy)}
+  tbody tr.zero td.money,tbody tr.zero td.salary{color:var(--flat)}
+  .capped{color:var(--red);font-weight:800}
+  .cap-flag{font-size:9px;color:var(--red);margin-left:5px;font-weight:700;letter-spacing:.04em}
+  .ratio-ok{color:var(--green);font-weight:700}
+  .ratio-low{color:var(--grey)}
+  tfoot td{
+    background:var(--totalrow);border-top:2px solid var(--navy);
+    font-size:13px;font-weight:800;padding:13px 16px;color:var(--navy);
+  }
+  tfoot td.num{text-align:right;font-variant-numeric:tabular-nums}
+
+  .empty{text-align:center;color:var(--flat);padding:26px;font-size:13px;font-style:italic}
+
+  /* METHODOLOGY */
+  .method{
+    margin-top:24px;background:#fff;border:1px solid var(--border);
+    border-radius:18px;padding:22px 26px;font-size:12.5px;line-height:1.7;color:var(--grey);
+  }
+  .method h3{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--navy);margin-bottom:12px}
+  .method p{margin-bottom:9px}
+  .method b{color:var(--navy)}
+  .method code{background:#EEF2F9;border-radius:5px;padding:1px 6px;font-size:11.5px;color:var(--blue);font-family:ui-monospace,Menlo,monospace}
+  .method .ex{background:var(--zebra);border-left:3px solid var(--orange);border-radius:0 8px 8px 0;padding:10px 14px;margin-top:6px;color:var(--navy)}
+
+  .foot{text-align:center;margin-top:28px;font-size:11px;color:var(--flat);letter-spacing:.03em}
+
+  @media (max-width:860px){
+    .kpis{grid-template-columns:repeat(2,1fr)}
+    .hero{padding:28px 24px}
+  }
+  @media print{
+    body{background:#fff;padding:0}
+    .controls{display:none}
+    .hero,.kpi,.card,.method{box-shadow:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <div class="brand">
+      <span class="brand-dot"></span>
+      <span class="brand-name">WINDMAR <span>HOME</span></span>
+    </div>
+    <h1>Orientaciones — Programa Asalariado</h1>
+    <div class="period">Junio 2026</div>
+    <p class="sub">Orientaciones registradas vs. ventas cerradas por vendedor asalariado, con el número de orientaciones pagables según el piso de conversión del 30% (modelo de la propuesta de compensación).</p>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi k1"><div class="label">Vendedores activos</div><div class="value">82</div><div class="hint">Consultor · Líder · Gerente</div></div>
+    <div class="kpi k2"><div class="label">Orientaciones</div><div class="value">358</div><div class="hint">registradas en junio</div></div>
+    <div class="kpi k3"><div class="label">Ventas</div><div class="value">433</div><div class="hint">deals cerrados</div></div>
+    <div class="kpi k4"><div class="label">Orientaciones pagables</div><div class="value">338</div><div class="hint">dentro del piso 30%</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title"><span class="bar"></span><h2>Detalle por vendedor</h2></div>
+      <div class="controls">
+        <input id="search" type="text" placeholder="Buscar vendedor…" autocomplete="off">
+        <select id="roleFilter">
+          <option value="">Todos los roles</option>
+          <option value="Consultor">Consultor</option>
+          <option value="Líder">Líder</option>
+          <option value="Gerente">Gerente</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="tbl-scroll">
+      <table id="tbl">
+        <thead>
+          <tr>
+            <th class="rank"></th>
+            <th data-key="name" data-type="str">Vendedor <span class="arrow">▲▼</span></th>
+            <th data-key="role" data-type="str">Sales Role <span class="arrow">▲▼</span></th>
+            <th class="num" data-key="ori" data-type="num">Orientaciones <span class="arrow">▲▼</span></th>
+            <th class="num" data-key="ven" data-type="num">Ventas <span class="arrow">▲▼</span></th>
+            <th class="num" data-key="ratio" data-type="num">Conversión Ventas/Ori (%) <span class="arrow">▲▼</span></th>
+            <th class="num" data-key="pagables" data-type="num">Orient. Pagables <span class="arrow">▲▼</span></th>
+            <th class="num" data-key="pay70" data-type="num">Ganancia @ $70 <span class="arrow">▲▼</span></th>
+            <th class="num" data-key="pay80" data-type="num">Ganancia @ $80 <span class="arrow">▲▼</span></th>
+            <th class="num" data-key="salary" data-type="num">Salario mensual <span class="arrow">▲▼</span></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+        <tfoot>
+          <tr>
+            <td></td>
+            <td>TOTAL</td>
+            <td id="f-count"></td>
+            <td class="num" id="f-ori"></td>
+            <td class="num" id="f-ven"></td>
+            <td class="num" id="f-ratio"></td>
+            <td class="num" id="f-pag"></td>
+            <td class="num" id="f-pay70"></td>
+            <td class="num" id="f-pay80"></td>
+            <td class="num" id="f-salary"></td>
+          </tr>
+        </tfoot>
+      </table>
+      <div id="empty" class="empty" style="display:none">Ningún vendedor coincide con el filtro.</div>
+    </div>
+  </div>
+
+  <div class="method">
+    <h3>Metodología</h3>
+    <p><b>Orientación registrada:</b> lead cuyo dueño es un vendedor asalariado y que tiene una cita con resultado post-cita, con estatus del lead en <i>Cita Realizada</i>, <i>Credit Fail</i> o <i>Caso Vendido</i>. Se cuenta por la fecha de la cita dentro de junio 2026. <span style="color:var(--flat)">(Redshift: <code>fact_leads</code> → <code>dim_appointment_status</code> · <code>dim_lead_status_extended</code>.)</span></p>
+    <p><b>Venta:</b> deal con fecha de cierre en junio 2026, sin cancelación y sin estatus <i>on hold</i>, atribuido al vendedor asalariado. <span style="color:var(--flat)">(Redshift: <code>fact_deals</code> → <code>dim_staff</code> · <code>dim_status_reason</code>.)</span></p>
+    <p><b>Orientaciones pagables (piso de conversión 30%):</b> si la conversión <code>ventas / orientaciones ≥ 30%</code>, se pagan <b>todas</b> las orientaciones. Si es <b>menor de 30%</b>, solo se pagan las que caben dentro del 30%, es decir <code>ceil(ventas / 0.30)</code>. Equivale a <code>min(orientaciones, ceil(ventas / 0.30))</code>.</p>
+    <p class="ex"><b>Ejemplo:</b> 15 orientaciones y 3 ventas → conversión 3/15 = 20% (&lt; 30%) → pagables = <code>ceil(3 / 0.30) = 10</code>. Las 5 restantes no se pagan.</p>
+    <p style="margin-top:12px"><b>Ganancia @ $70 / @ $80:</b> lo que el vendedor habría ganado en el mes bajo el modelo de orientaciones = <code>orientaciones pagables × $70</code> (o <code>× $80</code>). En verde cuando iguala o supera su salario mensual.</p>
+    <p><b>Salario mensual:</b> salario semanal por rol convertido a mensual (<code>× 52/12 ≈ ×4.33</code>): Consultor $400/sem → <b>$1,733</b> · Líder $500/sem → <b>$2,167</b> · Gerente $600/sem → <b>$2,600</b>.</p>
+    <p style="margin-top:12px;color:var(--flat)">Universo: 82 asalariados activos (Empleado – Consultor / Líder / Gerente, status Activo, deduplicados por email). Junio 2026: 358 orientaciones · 433 ventas · 338 pagables · 79 con actividad. Las filas con orientaciones pero 0 ventas quedan en 0 pagables por el mismo piso.</p>
+  </div>
+
+  <div class="foot">WindMar Home · Generado el 1 de julio de 2026 · Fuente: Data Warehouse (Redshift)</div>
+
+</div>
+
+<script>
+const DATA = [
+{"name":"Carlos Enrique Ortiz De Hostos","role":"Consultor","ori":22,"ven":10,"ratio":2.2,"pagables":22,"capped":false},
+{"name":"Candido Antonio Velez Lugo","role":"Consultor","ori":17,"ven":12,"ratio":1.42,"pagables":17,"capped":false},
+{"name":"Valerie Fonseca Rios","role":"Consultor","ori":15,"ven":12,"ratio":1.25,"pagables":15,"capped":false},
+{"name":"Joanne Bowden","role":"Consultor","ori":15,"ven":11,"ratio":1.36,"pagables":15,"capped":false},
+{"name":"Glenda Milagros Nieves Agosto","role":"Consultor","ori":13,"ven":6,"ratio":2.17,"pagables":13,"capped":false},
+{"name":"Merari Velazquez Aldarondo","role":"Gerente","ori":11,"ven":12,"ratio":0.92,"pagables":11,"capped":false},
+{"name":"Wilson Morales Ruiz","role":"Gerente","ori":9,"ven":9,"ratio":1.00,"pagables":9,"capped":false},
+{"name":"Jose Jafet Vazquez Santos","role":"Consultor","ori":9,"ven":5,"ratio":1.80,"pagables":9,"capped":false},
+{"name":"Fransheska Carradero Roldan","role":"Líder","ori":9,"ven":5,"ratio":1.80,"pagables":9,"capped":false},
+{"name":"Briand Steven Ramos Diaz","role":"Gerente","ori":9,"ven":5,"ratio":1.80,"pagables":9,"capped":false},
+{"name":"Hector Luis Figueroa Perez","role":"Consultor","ori":9,"ven":3,"ratio":3.00,"pagables":9,"capped":false},
+{"name":"Jonathan Torres Fernandez","role":"Líder","ori":8,"ven":40,"ratio":0.20,"pagables":8,"capped":false},
+{"name":"Cinthia Rivera Pagan","role":"Líder","ori":8,"ven":10,"ratio":0.80,"pagables":8,"capped":false},
+{"name":"Xavier Omar Musa Matos","role":"Líder","ori":8,"ven":10,"ratio":0.80,"pagables":8,"capped":false},
+{"name":"Ileana Ortiz Santiago","role":"Líder","ori":8,"ven":6,"ratio":1.33,"pagables":8,"capped":false},
+{"name":"Raul Deya","role":"Gerente","ori":8,"ven":4,"ratio":2.00,"pagables":8,"capped":false},
+{"name":"Stephanie Marie Sanabria Santana","role":"Consultor","ori":8,"ven":3,"ratio":2.67,"pagables":8,"capped":false},
+{"name":"Luis Angel Torres Velazquez","role":"Gerente","ori":8,"ven":1,"ratio":8.00,"pagables":4,"capped":true},
+{"name":"Christian Samir Rivera Santiago","role":"Gerente","ori":7,"ven":17,"ratio":0.41,"pagables":7,"capped":false},
+{"name":"Keila Patricia Rodriguez Rivera","role":"Consultor","ori":7,"ven":6,"ratio":1.17,"pagables":7,"capped":false},
+{"name":"Rafael Antonio Recondo Pietrantoni","role":"Consultor","ori":7,"ven":0,"ratio":null,"pagables":0,"capped":true},
+{"name":"Nathalia Cristina Cordova Moran","role":"Gerente","ori":6,"ven":3,"ratio":2.00,"pagables":6,"capped":false},
+{"name":"Nicole Alvarado Camacho","role":"Consultor","ori":6,"ven":2,"ratio":3.00,"pagables":6,"capped":false},
+{"name":"Jose Ramon Velez Medina","role":"Consultor","ori":6,"ven":1,"ratio":6.00,"pagables":4,"capped":true},
+{"name":"Eduardo Alvarez Perez","role":"Líder","ori":5,"ven":14,"ratio":0.36,"pagables":5,"capped":false},
+{"name":"Ricardo Gomez Martinez","role":"Gerente","ori":5,"ven":6,"ratio":0.83,"pagables":5,"capped":false},
+{"name":"Luis Enrique Velazquez Giraldes","role":"Líder","ori":5,"ven":5,"ratio":1.00,"pagables":5,"capped":false},
+{"name":"Giovanni Roberto Rivera Orengo","role":"Gerente","ori":5,"ven":4,"ratio":1.25,"pagables":5,"capped":false},
+{"name":"Luis Manuel Fortuno Ortiz","role":"Líder","ori":5,"ven":4,"ratio":1.25,"pagables":5,"capped":false},
+{"name":"Alfredo Arturo Plaza Weber","role":"Consultor","ori":5,"ven":2,"ratio":2.50,"pagables":5,"capped":false},
+{"name":"Jose Alfonso Rivera Mojica","role":"Líder","ori":5,"ven":2,"ratio":2.50,"pagables":5,"capped":false},
+{"name":"Tanya Liz Ruiz Torres","role":"Consultor","ori":5,"ven":1,"ratio":5.00,"pagables":4,"capped":true},
+{"name":"Carlos Emmanuel Alejandro Mercado","role":"Gerente","ori":4,"ven":10,"ratio":0.40,"pagables":4,"capped":false},
+{"name":"Michelle Marie Saez Pabon","role":"Líder","ori":4,"ven":8,"ratio":0.50,"pagables":4,"capped":false},
+{"name":"Edward Cintron Martinez","role":"Líder","ori":4,"ven":8,"ratio":0.50,"pagables":4,"capped":false},
+{"name":"Joel Enrique Muniz Aybar","role":"Gerente","ori":4,"ven":8,"ratio":0.50,"pagables":4,"capped":false},
+{"name":"Zoribeth Burgos","role":"Gerente","ori":4,"ven":8,"ratio":0.50,"pagables":4,"capped":false},
+{"name":"Legna Ivette Ortiz Cordero","role":"Consultor","ori":4,"ven":5,"ratio":0.80,"pagables":4,"capped":false},
+{"name":"Davidyeriel Gonzalez Fuentes","role":"Consultor","ori":4,"ven":5,"ratio":0.80,"pagables":4,"capped":false},
+{"name":"Yaritza Villoch Tirado","role":"Líder","ori":4,"ven":5,"ratio":0.80,"pagables":4,"capped":false},
+{"name":"Alexis Pagan Nunez","role":"Consultor","ori":4,"ven":4,"ratio":1.00,"pagables":4,"capped":false},
+{"name":"Bryan Marlon Guadalupe Flores","role":"Consultor","ori":4,"ven":3,"ratio":1.33,"pagables":4,"capped":false},
+{"name":"Karina N Bobe","role":"Gerente","ori":3,"ven":4,"ratio":0.75,"pagables":3,"capped":false},
+{"name":"Gloryvee Montalvo Rodriguez","role":"Líder","ori":3,"ven":3,"ratio":1.00,"pagables":3,"capped":false},
+{"name":"Jose Juan Torres de Armas","role":"Consultor","ori":3,"ven":1,"ratio":3.00,"pagables":3,"capped":false},
+{"name":"Luis Daniel Saliva Morales","role":"Consultor","ori":3,"ven":0,"ratio":null,"pagables":0,"capped":true},
+{"name":"Rosiris Cruz Ortiz","role":"Líder","ori":2,"ven":12,"ratio":0.17,"pagables":2,"capped":false},
+{"name":"Gustavo Jose Bernard Rivera","role":"Gerente","ori":2,"ven":12,"ratio":0.17,"pagables":2,"capped":false},
+{"name":"Jose David Berrios Borges","role":"Líder","ori":2,"ven":8,"ratio":0.25,"pagables":2,"capped":false},
+{"name":"Angel Francisco Gonzalez Ramos","role":"Líder","ori":2,"ven":6,"ratio":0.33,"pagables":2,"capped":false},
+{"name":"Joselyne Soto Gonzalez","role":"Gerente","ori":2,"ven":5,"ratio":0.40,"pagables":2,"capped":false},
+{"name":"Rosa Maria Santiago concepcion","role":"Consultor","ori":2,"ven":2,"ratio":1.00,"pagables":2,"capped":false},
+{"name":"Abimelec Martinez Munoz","role":"Líder","ori":2,"ven":2,"ratio":1.00,"pagables":2,"capped":false},
+{"name":"Luis Francisco Diaz Gonzalez","role":"Consultor","ori":2,"ven":1,"ratio":2.00,"pagables":2,"capped":false},
+{"name":"Ivonne Garcia Lopez","role":"Consultor","ori":2,"ven":1,"ratio":2.00,"pagables":2,"capped":false},
+{"name":"Luis Yandel Santiago Ortiz","role":"Consultor","ori":2,"ven":1,"ratio":2.00,"pagables":2,"capped":false},
+{"name":"Julian Javier Ortiz Luna","role":"Consultor","ori":2,"ven":1,"ratio":2.00,"pagables":2,"capped":false},
+{"name":"Roberto Andres Roman Cajigas","role":"Consultor","ori":2,"ven":0,"ratio":null,"pagables":0,"capped":true},
+{"name":"Alex Samuel Rios Ethna","role":"Líder","ori":1,"ven":9,"ratio":0.11,"pagables":1,"capped":false},
+{"name":"Jonathan Cantres Rivera","role":"Consultor","ori":1,"ven":6,"ratio":0.17,"pagables":1,"capped":false},
+{"name":"Juan Carlos Perez Perez","role":"Consultor","ori":1,"ven":6,"ratio":0.17,"pagables":1,"capped":false},
+{"name":"Natalia Mercado Vega","role":"Líder","ori":1,"ven":5,"ratio":0.20,"pagables":1,"capped":false},
+{"name":"Jorge Luis Cruz Fuentes","role":"Consultor","ori":1,"ven":4,"ratio":0.25,"pagables":1,"capped":false},
+{"name":"Cristopher Manuel Morales Morales","role":"Consultor","ori":1,"ven":3,"ratio":0.33,"pagables":1,"capped":false},
+{"name":"Jeonille Roman Ramos","role":"Consultor","ori":1,"ven":1,"ratio":1.00,"pagables":1,"capped":false},
+{"name":"Roberto Diaz Garcia","role":"Consultor","ori":1,"ven":1,"ratio":1.00,"pagables":1,"capped":false},
+{"name":"David Bonilla Rodriguez","role":"Líder","ori":1,"ven":0,"ratio":null,"pagables":0,"capped":true},
+{"name":"Joan Enid Davila Rodriguez","role":"Consultor","ori":0,"ven":10,"ratio":null,"pagables":0,"capped":false},
+{"name":"Isabel Echevarria Garcia","role":"Gerente","ori":0,"ven":7,"ratio":null,"pagables":0,"capped":false},
+{"name":"Daniel Enrique Caro Ortiz","role":"Consultor","ori":0,"ven":6,"ratio":null,"pagables":0,"capped":false},
+{"name":"Ivelisse Toledo Velez","role":"Consultor","ori":0,"ven":5,"ratio":null,"pagables":0,"capped":false},
+{"name":"Melvin Alexys Davila Ayala","role":"Consultor","ori":0,"ven":5,"ratio":null,"pagables":0,"capped":false},
+{"name":"Juan Manuel Reyes Vazquez","role":"Consultor","ori":0,"ven":4,"ratio":null,"pagables":0,"capped":false},
+{"name":"Jose Obed Encarnacion Diaz","role":"Líder","ori":0,"ven":2,"ratio":null,"pagables":0,"capped":false},
+{"name":"Randy Pieve Gonzalez","role":"Consultor","ori":0,"ven":1,"ratio":null,"pagables":0,"capped":false},
+{"name":"Carla Orengo Davila","role":"Consultor","ori":0,"ven":1,"ratio":null,"pagables":0,"capped":false},
+{"name":"Jesus Manuel Contreras Munoz","role":"Líder","ori":0,"ven":1,"ratio":null,"pagables":0,"capped":false},
+{"name":"Fanny Aileen Vazquez Lopez","role":"Consultor","ori":0,"ven":1,"ratio":null,"pagables":0,"capped":false},
+{"name":"Johnnathan Perez Ruiz","role":"Líder","ori":0,"ven":1,"ratio":null,"pagables":0,"capped":false},
+{"name":"Paula Parra","role":"Consultor","ori":0,"ven":0,"ratio":null,"pagables":0,"capped":false},
+{"name":"Rolando Antonio Soto De Jesus","role":"Consultor","ori":0,"ven":0,"ratio":null,"pagables":0,"capped":false},
+{"name":"Marleen Milagros Ramos Marrero","role":"Gerente","ori":0,"ven":0,"ratio":null,"pagables":0,"capped":false}
+];
+
+const tbody = document.getElementById('tbody');
+const search = document.getElementById('search');
+const roleFilter = document.getElementById('roleFilter');
+const emptyMsg = document.getElementById('empty');
+
+let sortKey = 'ori', sortDir = -1, sortType = 'num';
+
+const WEEKLY = {'Consultor':400, 'Líder':500, 'Gerente':600};
+const RATE70 = 70, RATE80 = 80;
+const salMonthly = role => Math.round(WEEKLY[role] * 52 / 12); // semanal → mensual (×4.33)
+
+// derivar montos y conversión por vendedor
+DATA.forEach(d => {
+  d.salary = salMonthly(d.role);
+  d.pay70 = d.pagables * RATE70;
+  d.pay80 = d.pagables * RATE80;
+  d.ratio = d.ori > 0 ? d.ven / d.ori : null; // conversión ventas/orientaciones
+});
+
+const badgeClass = r => r==='Consultor'?'consultor':r==='Líder'?'lider':'gerente';
+const fmtRatio = v => v==null ? '—' : Math.round(v*100) + '%';
+const money = v => '$' + v.toLocaleString('en-US');
+
+function currentRows(){
+  const q = search.value.trim().toLowerCase();
+  const rf = roleFilter.value;
+  let rows = DATA.filter(d =>
+    (!q || d.name.toLowerCase().includes(q)) &&
+    (!rf || d.role === rf)
+  );
+  rows.sort((a,b)=>{
+    let av=a[sortKey], bv=b[sortKey];
+    if(sortType==='num'){ av = av==null?-1:av; bv = bv==null?-1:bv; return (av-bv)*sortDir; }
+    return String(av).localeCompare(String(bv))*sortDir;
+  });
+  return rows;
+}
+
+function render(){
+  const rows = currentRows();
+  emptyMsg.style.display = rows.length ? 'none' : 'block';
+  tbody.innerHTML = rows.map((d,i)=>{
+    const zero = d.ori===0 && d.ven===0;
+    const pagCell = d.capped && d.ori>0
+      ? `<span class="capped">${d.pagables}</span><span class="cap-flag">de ${d.ori}</span>`
+      : `<span class="pag">${d.pagables}</span>`;
+    const cls70 = d.pay70 >= d.salary ? 'win' : 'lose';
+    const cls80 = d.pay80 >= d.salary ? 'win' : 'lose';
+    return `<tr class="${zero?'zero':''}">
+      <td class="rank">${i+1}</td>
+      <td class="name">${d.name}</td>
+      <td><span class="badge ${badgeClass(d.role)}">${d.role}</span></td>
+      <td class="num">${d.ori}</td>
+      <td class="num">${d.ven}</td>
+      <td class="num">${fmtRatio(d.ratio)}</td>
+      <td class="num">${pagCell}</td>
+      <td class="num money ${cls70}">${money(d.pay70)}</td>
+      <td class="num money ${cls80}">${money(d.pay80)}</td>
+      <td class="num salary">${money(d.salary)}</td>
+    </tr>`;
+  }).join('');
+
+  // footer totals reflect current filter
+  const tOri = rows.reduce((s,d)=>s+d.ori,0);
+  const tVen = rows.reduce((s,d)=>s+d.ven,0);
+  const tPag = rows.reduce((s,d)=>s+d.pagables,0);
+  const tPay70 = rows.reduce((s,d)=>s+d.pay70,0);
+  const tPay80 = rows.reduce((s,d)=>s+d.pay80,0);
+  const tSalary = rows.reduce((s,d)=>s+d.salary,0);
+  document.getElementById('f-count').textContent = rows.length + ' vend.';
+  document.getElementById('f-ori').textContent = tOri;
+  document.getElementById('f-ven').textContent = tVen;
+  document.getElementById('f-ratio').textContent = tOri>0 ? Math.round((tVen/tOri)*100) + '%' : '—';
+  document.getElementById('f-pag').textContent = tPag;
+  document.getElementById('f-pay70').textContent = money(tPay70);
+  document.getElementById('f-pay80').textContent = money(tPay80);
+  document.getElementById('f-salary').textContent = money(tSalary);
+
+  document.querySelectorAll('thead th').forEach(th=>{
+    th.classList.toggle('sorted', th.dataset.key===sortKey);
+  });
+}
+
+document.querySelectorAll('thead th[data-key]').forEach(th=>{
+  th.addEventListener('click',()=>{
+    const k = th.dataset.key;
+    if(sortKey===k){ sortDir*=-1; }
+    else { sortKey=k; sortType=th.dataset.type; sortDir = th.dataset.type==='num'? -1 : 1; }
+    render();
+  });
+});
+search.addEventListener('input', render);
+roleFilter.addEventListener('change', render);
+render();
+</script>
+</body>
+</html>

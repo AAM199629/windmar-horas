@@ -5,6 +5,8 @@ import type { EmployeeSummary, DayShiftSummary } from '@/lib/types'
 
 const DAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 const DAYS_FULL = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
+// Orden de despliegue: la semana arranca en lunes y el domingo cierra
+const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0]
 
 function fmt(n: number) { return n.toFixed(2) }
 
@@ -70,7 +72,7 @@ export default function EmployeeCard({ emp, badge, ciudad }: {
   }
 
   // Find which days have any shifts to show (0–6)
-  const activeDays = DAYS.map((_, i) => i).filter(i => (byDay[i]?.length ?? 0) > 0)
+  const activeDays = DAY_ORDER.filter(i => (byDay[i]?.length ?? 0) > 0)
 
   const cardId = `emp-${emp.email.replace(/[^a-zA-Z0-9]/g, '-')}`
 
@@ -104,13 +106,14 @@ export default function EmployeeCard({ emp, badge, ciudad }: {
 
         {/* Mini day dots */}
         <div className="hidden sm:flex gap-1">
-          {DAYS.map((d, i) => {
+          {DAY_ORDER.map(i => {
+            const d = DAYS[i]
             const dayShifts = byDay[i] ?? []
             const comp = dayShifts.filter(s => s.shiftStatus === 'Completed').length
             const hasACO = dayShifts.some(s => s.autoClockedOut === 'Yes')
             return (
               <div
-                key={d}
+                key={i}
                 title={DAYS_FULL[i]}
                 className={`w-6 h-6 rounded text-xs flex items-center justify-center font-bold ${
                   comp > 0 && !hasACO ? 'bg-green-100 text-green-700' :

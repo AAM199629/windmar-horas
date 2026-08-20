@@ -1,0 +1,121 @@
+{
+  "nota": "ACTUAL anclado en Redshift: fuerza activa por rol/región + inventario booths. Mapeo supervisor→vendedor NO disponible (Smartsheet cache frío); estructura por región.",
+  "totalActivos": 439,
+  "roleTotals": {
+    "vendedores": 297,
+    "asalariados": 82,
+    "coordinadores": 8,
+    "supervisores": 6,
+    "otros": 46
+  },
+  "regionOrder": [
+    "San Juan I y III",
+    "San Juan II",
+    "Ponce",
+    "Hatillo",
+    "Mayagüez"
+  ],
+  "regionView": [
+    {
+      "region": "San Juan I y III",
+      "vendedores": 137,
+      "asalariados": 44,
+      "coordinadores": 3,
+      "supervisores": 3,
+      "mallBooths": 7,
+      "indepBooths": 9
+    },
+    {
+      "region": "San Juan II",
+      "vendedores": 35,
+      "asalariados": 10,
+      "coordinadores": 0,
+      "supervisores": 1,
+      "mallBooths": 2,
+      "indepBooths": 2
+    },
+    {
+      "region": "Ponce",
+      "vendedores": 49,
+      "asalariados": 8,
+      "coordinadores": 2,
+      "supervisores": 1,
+      "mallBooths": 2,
+      "indepBooths": 3
+    },
+    {
+      "region": "Hatillo",
+      "vendedores": 18,
+      "asalariados": 7,
+      "coordinadores": 0,
+      "supervisores": 0,
+      "mallBooths": 1,
+      "indepBooths": 6
+    },
+    {
+      "region": "Mayagüez",
+      "vendedores": 41,
+      "asalariados": 11,
+      "coordinadores": 2,
+      "supervisores": 1,
+      "mallBooths": 2,
+      "indepBooths": 4
+    }
+  ],
+  "sinRegion": {
+    "vendedores": 17,
+    "asalariados": 2,
+    "coordinadores": 1,
+    "supervisores": 0,
+    "otros": 24
+  },
+  "independiente": {
+    "activosFisicos": 24,
+    "inversionMensual": 17700,
+    "porRegion": {
+      "Hatillo": 6,
+      "San Juan II": 2,
+      "Mayagüez": 4,
+      "Ponce": 3,
+      "San Juan I y III": 9
+    },
+    "porTipo": {
+      "Eventos Especiales": 11,
+      "Supermercados": 8,
+      "Ferreterias": 4,
+      "Estacion de Gasolina": 1
+    },
+    "contextoActivosPorTipo": {
+      "Vans": 12,
+      "Eventos Especiales": 11,
+      "Supermercados": 8,
+      "Sin tipo": 28,
+      "Ferreterias": 4,
+      "Home Depot": 10,
+      "Oficinas": 5,
+      "Prensa Escrita": 4,
+      "Programas Referidos": 3,
+      "Centro Comercial": 5,
+      "Social Networks": 6,
+      "Ventas Directas": 5,
+      "Web & Chatbots": 2,
+      "Publicidad Digital": 4,
+      "Estacion de Gasolina": 1,
+      "Direct Marketing": 3,
+      "Sitio Web": 3,
+      "Publicidad Exterior": 1
+    }
+  },
+  "mall": {
+    "totalBooths": 14,
+    "homeDepot": 10,
+    "malls": 5,
+    "porRegion": {
+      "San Juan II": 2,
+      "San Juan I y III": 7,
+      "Hatillo": 1,
+      "Mayagüez": 2,
+      "Ponce": 2
+    }
+  }
+}

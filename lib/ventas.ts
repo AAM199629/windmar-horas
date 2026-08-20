@@ -2,12 +2,16 @@
 export const EMPLEADO_ROLES = ['Empleado - Consultor', 'Empleado - Lider', 'Empleado - Gerente']
 
 // Active supervisor regional names — anyone with a different supervisor
-// is treated as non-salaried ("Sin Región")
+// is treated as non-salaried ("Sin Región").
+// OJO: el match es exacto (case-insensitive) contra la columna "Supervisor
+// Regional" del Smartsheet REAL VENDEDORES DIRECTOS. El nombre tiene que estar
+// escrito igual que allá, con segundo nombre incluido, o su gente cae en
+// "Sin Región" y el supervisor no aparece en el filtro de regiones.
 export const SUPERVISORES_ACTIVOS = [
   'Manuel Antonio Gonzalez Figueroa',
   'Pedro Iturregui',
   'Ariel Figueroa Velez',
-  'Ramon Rodriguez Sanchez',
+  'Ramon Hommy Rodriguez Sanchez',
   'Angel Manuel Maldonado Castello',
   'Eric Emanuel Rodriguez Roman',
 ]

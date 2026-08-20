@@ -1,4 +1,8 @@
+import { redirect } from 'next/navigation'
+import { auth } from '@/auth'
 import VentasDashboard from './VentasDashboard'
+
+export const dynamic = 'force-dynamic'
 
 function defaultDates() {
   const today = new Date()
@@ -17,7 +21,10 @@ function defaultDates() {
   return { fromA, toA, fromB, toB }
 }
 
-export default function VentasPage() {
+export default async function VentasPage() {
+  const session = await auth()
+  const role = (session?.user as any)?.role
+  if (!session || (role !== 'admin' && role !== 'supervisor' && role !== 'ventas')) redirect('/')
   const dates = defaultDates()
   return <VentasDashboard {...dates} />
 }

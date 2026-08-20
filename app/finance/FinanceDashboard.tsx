@@ -113,7 +113,7 @@ function Dot({ color, size = 11 }: { color: string; size?: number }) {
 function Th({ children, align = 'right', bg = NAVY, radius, onClick }: { children: React.ReactNode; align?: 'left' | 'right'; bg?: string; radius?: 'l' | 'r'; onClick?: () => void }) {
   return (
     <th onClick={onClick} style={{
-      padding: '14px 16px', fontSize: 12, fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase',
+      padding: '12px 14px', fontSize: 12, fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase',
       color: '#fff', textAlign: align, whiteSpace: 'nowrap', background: bg, cursor: onClick ? 'pointer' : undefined,
       borderTopLeftRadius: radius === 'l' ? 10 : 0, borderTopRightRadius: radius === 'r' ? 10 : 0,
     }}>{children}</th>
@@ -122,7 +122,7 @@ function Th({ children, align = 'right', bg = NAVY, radius, onClick }: { childre
 function Td({ children, align = 'right', bold, color, muted }: { children: React.ReactNode; align?: 'left' | 'right'; bold?: boolean; color?: string; muted?: boolean }) {
   return (
     <td style={{
-      padding: '13px 16px', fontSize: 14, textAlign: align, whiteSpace: 'nowrap',
+      padding: '11px 14px', fontSize: 13, textAlign: align, whiteSpace: 'nowrap',
       color: muted ? FLAT : (color ?? NAVY), fontWeight: bold ? 800 : (align === 'left' ? 500 : 400),
     }}>{children}</td>
   )
@@ -132,11 +132,11 @@ const totalRowStyle: React.CSSProperties = { background: TOTALROW, borderTop: `2
 
 function SectionCard({ id, title, right, children }: { id?: string; title: string; right?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div id={id} className="pdf-break" style={{ scrollMarginTop: 96, background: CARD_GRAD, border: `1px solid ${BORDER}`, borderRadius: 20, boxShadow: SHADOW_MD, padding: '30px 34px', marginTop: 26 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, gap: 16, flexWrap: 'wrap' }}>
+    <div id={id} className="pdf-break" style={{ scrollMarginTop: 96, background: CARD_GRAD, border: `1px solid ${BORDER}`, borderRadius: 20, boxShadow: SHADOW_MD, padding: '24px 30px', marginTop: 22 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, gap: 16, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <span style={{ width: 5, height: 26, background: BLUE, borderRadius: 999 }} />
-          <span style={{ fontSize: 19, fontWeight: 800, letterSpacing: '.04em', textTransform: 'uppercase', color: NAVY }}>{title}</span>
+          <span style={{ width: 5, height: 24, background: BLUE, borderRadius: 999 }} />
+          <span style={{ fontSize: 17, fontWeight: 800, letterSpacing: '.04em', textTransform: 'uppercase', color: NAVY }}>{title}</span>
         </div>
         {right}
       </div>
@@ -148,10 +148,10 @@ function SectionCard({ id, title, right, children }: { id?: string; title: strin
 // KPI card simple (acento superior)
 function Kpi({ label, value, sub, accent, valueColor }: { label: string; value: string; sub?: string; accent: string; valueColor?: string }) {
   return (
-    <div style={{ background: '#fff', borderRadius: 18, boxShadow: SHADOW_MD, padding: '22px 22px 20px', borderTop: `4px solid ${accent}`, display: 'flex', flexDirection: 'column' }}>
+    <div style={{ background: '#fff', borderRadius: 18, boxShadow: SHADOW_MD, padding: '18px 20px 16px', borderTop: `4px solid ${accent}`, display: 'flex', flexDirection: 'column' }}>
       <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '.07em', textTransform: 'uppercase', color: GREY }}>{label}</div>
-      <div style={{ fontSize: 38, fontWeight: 900, lineHeight: 1.05, letterSpacing: '-.02em', color: valueColor ?? NAVY, margin: '14px 0 8px' }}>{value}</div>
-      {sub && <div style={{ fontSize: 13, color: FLAT, fontWeight: 500 }}>{sub}</div>}
+      <div style={{ fontSize: 30, fontWeight: 900, lineHeight: 1.05, letterSpacing: '-.02em', color: valueColor ?? NAVY, margin: '12px 0 6px' }}>{value}</div>
+      {sub && <div style={{ fontSize: 12.5, color: FLAT, fontWeight: 500 }}>{sub}</div>}
     </div>
   )
 }
@@ -285,10 +285,10 @@ export default function FinanceDashboard({ initMonth }: { initMonth: string }) {
 
   return (
     <div className="-mx-4 -mt-6 px-4 pb-16 min-h-screen" style={{ background: PAGE_BG, backgroundAttachment: 'fixed', fontFamily: SANS }}>
-      <div ref={contentRef} style={{ maxWidth: 1320, margin: '0 auto' }}>
+      <div ref={contentRef} style={{ margin: '0 auto' }}>
 
         {/* HEADER */}
-        <div style={{ background: HERO_GRAD, borderRadius: '0 0 28px 28px', padding: '40px 44px 38px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: SHADOW_BLUE, position: 'relative', overflow: 'hidden' }}>
+        <div style={{ background: HERO_GRAD, borderRadius: '0 0 28px 28px', padding: '30px 40px 30px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: SHADOW_BLUE, position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', right: -60, top: -80, width: 320, height: 320, borderRadius: '50%', background: 'radial-gradient(circle, rgba(248,155,36,.18), transparent 70%)' }} />
           <div style={{ position: 'relative' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
@@ -297,31 +297,31 @@ export default function FinanceDashboard({ initMonth }: { initMonth: string }) {
                 Finanzas & ROI de Canales · {data?.rangeLabel ?? '—'}
               </span>
             </div>
-            <h1 style={{ margin: 0, fontFamily: DISPLAY, fontWeight: 400, fontSize: 'clamp(42px, 6vw, 64px)', lineHeight: 0.92, letterSpacing: '.01em', color: '#fff', textTransform: 'uppercase' }}>
+            <h1 style={{ margin: 0, fontFamily: DISPLAY, fontWeight: 400, fontSize: 'clamp(32px, 4.2vw, 50px)', lineHeight: 0.92, letterSpacing: '.01em', color: '#fff', textTransform: 'uppercase' }}>
               Dashboard <span style={{ color: ORANGE }}>de Finanzas</span>
             </h1>
           </div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/windmar-white-yellow.png" alt="WindMar HOME" style={{ position: 'relative', height: 78, width: 'auto', objectFit: 'contain' }} />
+          <img src="/windmar-white-yellow.png" alt="WindMar HOME" style={{ position: 'relative', height: 62, width: 'auto', objectFit: 'contain' }} />
         </div>
 
         {/* PERIOD BAR */}
-        <div data-pdf-ignore="true" style={{ background: '#fff', borderRadius: 20, boxShadow: SHADOW_MD, padding: '22px 28px', marginTop: 28, display: 'flex', alignItems: 'flex-end', gap: 18, flexWrap: 'wrap' }}>
+        <div data-pdf-ignore="true" style={{ background: '#fff', borderRadius: 20, boxShadow: SHADOW_MD, padding: '18px 24px', marginTop: 24, display: 'flex', alignItems: 'flex-end', gap: 18, flexWrap: 'wrap' }}>
           <div>
             <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: NAVY, marginBottom: 10 }}>Desde</div>
-            <input type="date" value={from} max={to} onChange={e => setFrom(e.target.value)} style={{ fontFamily: SANS, fontSize: 15, fontWeight: 600, color: NAVY, border: '1.5px solid #DDE3EE', borderRadius: 12, padding: '10px 14px' }} />
+            <input type="date" value={from} max={to} onChange={e => setFrom(e.target.value)} style={{ fontFamily: SANS, fontSize: 14, fontWeight: 600, color: NAVY, border: '1.5px solid #DDE3EE', borderRadius: 12, padding: '10px 14px' }} />
           </div>
           <div>
             <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: NAVY, marginBottom: 10 }}>Hasta</div>
-            <input type="date" value={to} min={from} onChange={e => setTo(e.target.value)} style={{ fontFamily: SANS, fontSize: 15, fontWeight: 600, color: NAVY, border: '1.5px solid #DDE3EE', borderRadius: 12, padding: '10px 14px' }} />
+            <input type="date" value={to} min={from} onChange={e => setTo(e.target.value)} style={{ fontFamily: SANS, fontSize: 14, fontWeight: 600, color: NAVY, border: '1.5px solid #DDE3EE', borderRadius: 12, padding: '10px 14px' }} />
           </div>
-          <button onClick={handleApply} style={{ fontFamily: SANS, fontSize: 15, fontWeight: 700, color: '#fff', background: NAVY, border: 'none', borderRadius: 12, padding: '12px 30px', cursor: 'pointer' }}>Aplicar</button>
+          <button onClick={handleApply} style={{ fontFamily: SANS, fontSize: 14, fontWeight: 700, color: '#fff', background: NAVY, border: 'none', borderRadius: 12, padding: '11px 28px', cursor: 'pointer' }}>Aplicar</button>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {PRESETS.map(p => (
               <button key={p.label} onClick={() => applyPreset(p)} style={{ fontFamily: SANS, fontSize: 13, fontWeight: 700, color: BLUE, background: '#EEF2FA', border: `1px solid ${BORDER}`, borderRadius: 999, padding: '9px 16px', cursor: 'pointer' }}>{p.label}</button>
             ))}
           </div>
-          <button onClick={generatePDF} disabled={pdfLoading} style={{ marginLeft: 'auto', fontFamily: SANS, fontSize: 15, fontWeight: 700, color: '#fff', background: ORANGE, border: 'none', borderRadius: 12, padding: '12px 26px', cursor: 'pointer', opacity: pdfLoading ? 0.6 : 1 }}>{pdfLoading ? 'Generando…' : '↓ Descargar PDF'}</button>
+          <button onClick={generatePDF} disabled={pdfLoading} style={{ marginLeft: 'auto', fontFamily: SANS, fontSize: 14, fontWeight: 700, color: '#fff', background: ORANGE, border: 'none', borderRadius: 12, padding: '11px 24px', cursor: 'pointer', opacity: pdfLoading ? 0.6 : 1 }}>{pdfLoading ? 'Generando…' : '↓ Descargar PDF'}</button>
         </div>
 
         {/* STICKY NAV */}
@@ -329,7 +329,7 @@ export default function FinanceDashboard({ initMonth }: { initMonth: string }) {
           <div style={{ display: 'flex', gap: 4, padding: 6, borderRadius: 999, background: 'rgba(255,255,255,0.38)', backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)', border: '1px solid rgba(255,255,255,0.65)', boxShadow: '0 8px 30px rgba(33,39,78,0.16)', flexWrap: 'wrap', justifyContent: 'center' }}>
             {SEGMENTS.map(s => {
               const on = active === s.id
-              return <button key={s.id} onClick={() => goTo(s.id)} style={{ fontFamily: SANS, fontSize: 13.5, fontWeight: 700, padding: '9px 18px', border: 'none', borderRadius: 999, cursor: 'pointer', transition: 'all .25s ease', whiteSpace: 'nowrap', color: on ? '#fff' : '#3A4156', background: on ? 'linear-gradient(180deg, #2A56C4 0%, #1D429B 100%)' : 'transparent' }}>{s.label}</button>
+              return <button key={s.id} onClick={() => goTo(s.id)} style={{ fontFamily: SANS, fontSize: 13, fontWeight: 700, padding: '8px 16px', border: 'none', borderRadius: 999, cursor: 'pointer', transition: 'all .25s ease', whiteSpace: 'nowrap', color: on ? '#fff' : '#3A4156', background: on ? 'linear-gradient(180deg, #2A56C4 0%, #1D429B 100%)' : 'transparent' }}>{s.label}</button>
             })}
           </div>
         </div>

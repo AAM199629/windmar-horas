@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     email:        email.toLowerCase(),
     name,
     passwordHash,
-    role:         role ?? 'viewer',
+    role:         role ?? 'ventas',
   }
 
   await redis.set(`horas:user:${user.email}`, JSON.stringify(user))

@@ -17,7 +17,7 @@ export default async function BingoPage({
 }) {
   const session = await auth()
   const role = (session?.user as any)?.role
-  if (!session || (role !== 'admin' && role !== 'supervisor')) redirect('/')
+  if (!session || role !== 'admin') redirect('/')
 
   const { month: qMonth } = await searchParams
   const month = qMonth ?? currentMonth()

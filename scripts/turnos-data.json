@@ -1,0 +1,650 @@
+{
+  "meta": {
+    "archivo": "report (48).csv",
+    "totalFilas": 13798,
+    "cancelados": 375,
+    "otrosCreados": 4355,
+    "periodoInicio": "2026-05-01",
+    "periodoFin": "2026-07-14",
+    "coberturaObjetivo": 0.9,
+    "semanasCompletas": [
+      "2026-05-04",
+      "2026-05-11",
+      "2026-05-18",
+      "2026-05-25",
+      "2026-06-01",
+      "2026-06-08",
+      "2026-06-15",
+      "2026-06-22",
+      "2026-06-29",
+      "2026-07-06"
+    ]
+  },
+  "global": {
+    "creados": 9068,
+    "asignados": 7439,
+    "ponchados": 6075,
+    "cobertura": 67.0,
+    "ponche": 81.7,
+    "vendUnicosAsignados": 353,
+    "vendUnicosPoncharon": 327
+  },
+  "promedioSemanal": {
+    "creados": 852.3,
+    "asignados": 700.4,
+    "ponchados": 571.1,
+    "vendAsignados": 197.7,
+    "vendPoncharon": 175.5,
+    "cobertura": 67.0,
+    "ponche": 81.5,
+    "turnosPorVendedor": 3.25,
+    "slotsPorVendedor": 4.86,
+    "recomendadoTotal": 635,
+    "excesoTotal": 217
+  },
+  "porActividad": [
+    {
+      "actividad": "Home Depot",
+      "creados": 3450,
+      "asignados": 2476,
+      "ponchados": 2297,
+      "cobertura": 66.6,
+      "ponche": 92.8
+    },
+    {
+      "actividad": "Cambaceo",
+      "creados": 1614,
+      "asignados": 1568,
+      "ponchados": 1354,
+      "cobertura": 83.9,
+      "ponche": 86.4
+    },
+    {
+      "actividad": "Booth",
+      "creados": 1247,
+      "asignados": 1050,
+      "ponchados": 925,
+      "cobertura": 74.2,
+      "ponche": 88.1
+    },
+    {
+      "actividad": "Independiente",
+      "creados": 2757,
+      "asignados": 2345,
+      "ponchados": 1499,
+      "cobertura": 54.4,
+      "ponche": 63.9
+    }
+  ],
+  "capacidad": [
+    {
+      "actividad": "Home Depot",
+      "creados": 322.7,
+      "asignados": 231.4,
+      "ponchados": 214.8,
+      "vendPoncharon": 87.3,
+      "turnosPorVendedor": 2.46,
+      "cobertura": 66.6,
+      "ponche": 92.8,
+      "recomendado": 239,
+      "exceso": 84
+    },
+    {
+      "actividad": "Cambaceo",
+      "creados": 152.1,
+      "asignados": 147.6,
+      "ponchados": 127.2,
+      "vendPoncharon": 56.2,
+      "turnosPorVendedor": 2.26,
+      "cobertura": 83.6,
+      "ponche": 86.2,
+      "recomendado": 141,
+      "exceso": 11
+    },
+    {
+      "actividad": "Booth",
+      "creados": 116.9,
+      "asignados": 98.6,
+      "ponchados": 86.4,
+      "vendPoncharon": 49.4,
+      "turnosPorVendedor": 1.75,
+      "cobertura": 73.9,
+      "ponche": 87.6,
+      "recomendado": 96,
+      "exceso": 21
+    },
+    {
+      "actividad": "Independiente",
+      "creados": 260.6,
+      "asignados": 222.8,
+      "ponchados": 142.7,
+      "vendPoncharon": 68.4,
+      "turnosPorVendedor": 2.09,
+      "cobertura": 54.8,
+      "ponche": 64.0,
+      "recomendado": 159,
+      "exceso": 102
+    }
+  ],
+  "noProspeccion": {
+    "breakdown": [
+      {
+        "tipo": "Meeting Rooms",
+        "creados": 3420,
+        "asignados": 11,
+        "ponchados": 4,
+        "vendUnicos": 9,
+        "creadosSem": 320.1,
+        "ponchadosSem": 0.4,
+        "cobertura": 0.1
+      },
+      {
+        "tipo": "Showroom",
+        "creados": 517,
+        "asignados": 402,
+        "ponchados": 262,
+        "vendUnicos": 81,
+        "creadosSem": 48.6,
+        "ponchadosSem": 24.7,
+        "cobertura": 50.7
+      },
+      {
+        "tipo": "Reuniones Asalariados",
+        "creados": 227,
+        "asignados": 224,
+        "ponchados": 221,
+        "vendUnicos": 84,
+        "creadosSem": 21.4,
+        "ponchadosSem": 20.8,
+        "cobertura": 97.4
+      },
+      {
+        "tipo": "TO Showroom",
+        "creados": 147,
+        "asignados": 32,
+        "ponchados": 27,
+        "vendUnicos": 9,
+        "creadosSem": 13.2,
+        "ponchadosSem": 2.5,
+        "cobertura": 18.4
+      },
+      {
+        "tipo": "Media Tours",
+        "creados": 44,
+        "asignados": 44,
+        "ponchados": 11,
+        "vendUnicos": 14,
+        "creadosSem": 4.2,
+        "ponchadosSem": 1.1,
+        "cobertura": 25.0
+      }
+    ],
+    "total": {
+      "creados": 4355,
+      "asignados": 713,
+      "ponchados": 525
+    },
+    "combinado": {
+      "creados": 13423,
+      "asignados": 8152,
+      "ponchados": 6600,
+      "cobertura": 49.2,
+      "ponche": 81.0
+    },
+    "redespliegue": {
+      "showroomPonSem": 27.2,
+      "showroomVendTotal": 74,
+      "showroomTambienProspectan": 74,
+      "soloShowroom": 0,
+      "capacidadActual": 571.1,
+      "capacidadConRedespliegue": 598.3,
+      "gananciaPct": 4.8
+    }
+  },
+  "semanal": [
+    {
+      "week": "2026-04-27",
+      "partial": true,
+      "creados": 307,
+      "asignados": 228,
+      "ponchados": 185,
+      "vendAsignados": 140,
+      "vendPoncharon": 121,
+      "cobertura": 60.3,
+      "ponche": 81.1,
+      "porCategoria": {
+        "Home Depot": {
+          "creados": 134,
+          "asignados": 89,
+          "ponchados": 77,
+          "vendPoncharon": 49
+        },
+        "Cambaceo": {
+          "creados": 52,
+          "asignados": 51,
+          "ponchados": 43,
+          "vendPoncharon": 35
+        },
+        "Booth": {
+          "creados": 42,
+          "asignados": 31,
+          "ponchados": 29,
+          "vendPoncharon": 24
+        },
+        "Independiente": {
+          "creados": 79,
+          "asignados": 57,
+          "ponchados": 36,
+          "vendPoncharon": 30
+        }
+      }
+    },
+    {
+      "week": "2026-05-04",
+      "partial": false,
+      "creados": 869,
+      "asignados": 714,
+      "ponchados": 563,
+      "vendAsignados": 195,
+      "vendPoncharon": 171,
+      "cobertura": 64.8,
+      "ponche": 78.9,
+      "porCategoria": {
+        "Home Depot": {
+          "creados": 346,
+          "asignados": 243,
+          "ponchados": 210,
+          "vendPoncharon": 91
+        },
+        "Cambaceo": {
+          "creados": 186,
+          "asignados": 183,
+          "ponchados": 164,
+          "vendPoncharon": 74
+        },
+        "Booth": {
+          "creados": 114,
+          "asignados": 92,
+          "ponchados": 81,
+          "vendPoncharon": 42
+        },
+        "Independiente": {
+          "creados": 223,
+          "asignados": 196,
+          "ponchados": 108,
+          "vendPoncharon": 49
+        }
+      }
+    },
+    {
+      "week": "2026-05-11",
+      "partial": false,
+      "creados": 892,
+      "asignados": 746,
+      "ponchados": 610,
+      "vendAsignados": 206,
+      "vendPoncharon": 189,
+      "cobertura": 68.4,
+      "ponche": 81.8,
+      "porCategoria": {
+        "Home Depot": {
+          "creados": 368,
+          "asignados": 272,
+          "ponchados": 235,
+          "vendPoncharon": 96
+        },
+        "Cambaceo": {
+          "creados": 170,
+          "asignados": 168,
+          "ponchados": 143,
+          "vendPoncharon": 61
+        },
+        "Booth": {
+          "creados": 114,
+          "asignados": 98,
+          "ponchados": 79,
+          "vendPoncharon": 45
+        },
+        "Independiente": {
+          "creados": 240,
+          "asignados": 208,
+          "ponchados": 153,
+          "vendPoncharon": 70
+        }
+      }
+    },
+    {
+      "week": "2026-05-18",
+      "partial": false,
+      "creados": 896,
+      "asignados": 770,
+      "ponchados": 648,
+      "vendAsignados": 213,
+      "vendPoncharon": 197,
+      "cobertura": 72.3,
+      "ponche": 84.2,
+      "porCategoria": {
+        "Home Depot": {
+          "creados": 332,
+          "asignados": 245,
+          "ponchados": 233,
+          "vendPoncharon": 88
+        },
+        "Cambaceo": {
+          "creados": 182,
+          "asignados": 178,
+          "ponchados": 146,
+          "vendPoncharon": 70
+        },
+        "Booth": {
+          "creados": 122,
+          "asignados": 106,
+          "ponchados": 93,
+          "vendPoncharon": 51
+        },
+        "Independiente": {
+          "creados": 260,
+          "asignados": 241,
+          "ponchados": 176,
+          "vendPoncharon": 90
+        }
+      }
+    },
+    {
+      "week": "2026-05-25",
+      "partial": false,
+      "creados": 801,
+      "asignados": 642,
+      "ponchados": 524,
+      "vendAsignados": 190,
+      "vendPoncharon": 174,
+      "cobertura": 65.4,
+      "ponche": 81.6,
+      "porCategoria": {
+        "Home Depot": {
+          "creados": 314,
+          "asignados": 210,
+          "ponchados": 198,
+          "vendPoncharon": 80
+        },
+        "Cambaceo": {
+          "creados": 143,
+          "asignados": 141,
+          "ponchados": 114,
+          "vendPoncharon": 65
+        },
+        "Booth": {
+          "creados": 121,
+          "asignados": 101,
+          "ponchados": 84,
+          "vendPoncharon": 49
+        },
+        "Independiente": {
+          "creados": 223,
+          "asignados": 190,
+          "ponchados": 128,
+          "vendPoncharon": 67
+        }
+      }
+    },
+    {
+      "week": "2026-06-01",
+      "partial": false,
+      "creados": 835,
+      "asignados": 704,
+      "ponchados": 600,
+      "vendAsignados": 199,
+      "vendPoncharon": 176,
+      "cobertura": 71.9,
+      "ponche": 85.2,
+      "porCategoria": {
+        "Home Depot": {
+          "creados": 328,
+          "asignados": 248,
+          "ponchados": 235,
+          "vendPoncharon": 94
+        },
+        "Cambaceo": {
+          "creados": 146,
+          "asignados": 140,
+          "ponchados": 115,
+          "vendPoncharon": 52
+        },
+        "Booth": {
+          "creados": 117,
+          "asignados": 99,
+          "ponchados": 84,
+          "vendPoncharon": 46
+        },
+        "Independiente": {
+          "creados": 244,
+          "asignados": 217,
+          "ponchados": 166,
+          "vendPoncharon": 69
+        }
+      }
+    },
+    {
+      "week": "2026-06-08",
+      "partial": false,
+      "creados": 855,
+      "asignados": 723,
+      "ponchados": 571,
+      "vendAsignados": 196,
+      "vendPoncharon": 165,
+      "cobertura": 66.8,
+      "ponche": 79.0,
+      "porCategoria": {
+        "Home Depot": {
+          "creados": 309,
+          "asignados": 223,
+          "ponchados": 209,
+          "vendPoncharon": 86
+        },
+        "Cambaceo": {
+          "creados": 161,
+          "asignados": 161,
+          "ponchados": 139,
+          "vendPoncharon": 50
+        },
+        "Booth": {
+          "creados": 121,
+          "asignados": 110,
+          "ponchados": 100,
+          "vendPoncharon": 55
+        },
+        "Independiente": {
+          "creados": 264,
+          "asignados": 229,
+          "ponchados": 123,
+          "vendPoncharon": 65
+        }
+      }
+    },
+    {
+      "week": "2026-06-15",
+      "partial": false,
+      "creados": 853,
+      "asignados": 677,
+      "ponchados": 548,
+      "vendAsignados": 191,
+      "vendPoncharon": 170,
+      "cobertura": 64.2,
+      "ponche": 80.9,
+      "porCategoria": {
+        "Home Depot": {
+          "creados": 319,
+          "asignados": 218,
+          "ponchados": 206,
+          "vendPoncharon": 79
+        },
+        "Cambaceo": {
+          "creados": 155,
+          "asignados": 146,
+          "ponchados": 135,
+          "vendPoncharon": 62
+        },
+        "Booth": {
+          "creados": 109,
+          "asignados": 91,
+          "ponchados": 79,
+          "vendPoncharon": 45
+        },
+        "Independiente": {
+          "creados": 270,
+          "asignados": 222,
+          "ponchados": 128,
+          "vendPoncharon": 58
+        }
+      }
+    },
+    {
+      "week": "2026-06-22",
+      "partial": false,
+      "creados": 940,
+      "asignados": 753,
+      "ponchados": 593,
+      "vendAsignados": 204,
+      "vendPoncharon": 176,
+      "cobertura": 63.1,
+      "ponche": 78.8,
+      "porCategoria": {
+        "Home Depot": {
+          "creados": 331,
+          "asignados": 222,
+          "ponchados": 208,
+          "vendPoncharon": 82
+        },
+        "Cambaceo": {
+          "creados": 126,
+          "asignados": 124,
+          "ponchados": 103,
+          "vendPoncharon": 46
+        },
+        "Booth": {
+          "creados": 119,
+          "asignados": 95,
+          "ponchados": 84,
+          "vendPoncharon": 50
+        },
+        "Independiente": {
+          "creados": 364,
+          "asignados": 312,
+          "ponchados": 198,
+          "vendPoncharon": 88
+        }
+      }
+    },
+    {
+      "week": "2026-06-29",
+      "partial": false,
+      "creados": 829,
+      "asignados": 645,
+      "ponchados": 530,
+      "vendAsignados": 190,
+      "vendPoncharon": 167,
+      "cobertura": 63.9,
+      "ponche": 82.2,
+      "porCategoria": {
+        "Home Depot": {
+          "creados": 287,
+          "asignados": 203,
+          "ponchados": 192,
+          "vendPoncharon": 82
+        },
+        "Cambaceo": {
+          "creados": 135,
+          "asignados": 126,
+          "ponchados": 108,
+          "vendPoncharon": 38
+        },
+        "Booth": {
+          "creados": 120,
+          "asignados": 94,
+          "ponchados": 86,
+          "vendPoncharon": 52
+        },
+        "Independiente": {
+          "creados": 287,
+          "asignados": 222,
+          "ponchados": 144,
+          "vendPoncharon": 74
+        }
+      }
+    },
+    {
+      "week": "2026-07-06",
+      "partial": false,
+      "creados": 753,
+      "asignados": 630,
+      "ponchados": 524,
+      "vendAsignados": 193,
+      "vendPoncharon": 170,
+      "cobertura": 69.6,
+      "ponche": 83.2,
+      "porCategoria": {
+        "Home Depot": {
+          "creados": 293,
+          "asignados": 230,
+          "ponchados": 222,
+          "vendPoncharon": 95
+        },
+        "Cambaceo": {
+          "creados": 117,
+          "asignados": 109,
+          "ponchados": 105,
+          "vendPoncharon": 44
+        },
+        "Booth": {
+          "creados": 112,
+          "asignados": 100,
+          "ponchados": 94,
+          "vendPoncharon": 59
+        },
+        "Independiente": {
+          "creados": 231,
+          "asignados": 191,
+          "ponchados": 103,
+          "vendPoncharon": 54
+        }
+      }
+    },
+    {
+      "week": "2026-07-13",
+      "partial": true,
+      "creados": 238,
+      "asignados": 207,
+      "ponchados": 179,
+      "vendAsignados": 131,
+      "vendPoncharon": 116,
+      "cobertura": 75.2,
+      "ponche": 86.5,
+      "porCategoria": {
+        "Home Depot": {
+          "creados": 89,
+          "asignados": 73,
+          "ponchados": 72,
+          "vendPoncharon": 49
+        },
+        "Cambaceo": {
+          "creados": 41,
+          "asignados": 41,
+          "ponchados": 39,
+          "vendPoncharon": 27
+        },
+        "Booth": {
+          "creados": 36,
+          "asignados": 33,
+          "ponchados": 32,
+          "vendPoncharon": 25
+        },
+        "Independiente": {
+          "creados": 72,
+          "asignados": 60,
+          "ponchados": 36,
+          "vendPoncharon": 29
+        }
+      }
+    }
+  ]
+}

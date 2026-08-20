@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cobertura de Turnos por Actividad · WindMar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blue:#1D429B; --navy:#21274E; --vibrant:#0079C0; --orange:#F89B24;
+    --orange600:#E28312; --green:#1E9E62; --red:#D64545; --flat:#9AA3B5;
+    --grey:#6B7388; --border:#E7ECF6; --zebra:#F8FAFD; --totalrow:#EFF3FA;
+    --sans:'Montserrat',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    --display:'Bebas Neue','Montserrat',sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:var(--sans); color:var(--navy);
+    background:
+      radial-gradient(1100px 520px at 12% -8%, #E2EAFB 0%, rgba(226,234,251,0) 60%),
+      radial-gradient(900px 500px at 100% 0%, #EAF3FB 0%, rgba(234,243,251,0) 55%),
+      #F4F7FC;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 22px 60px}
+  /* HERO */
+  .hero{
+    background:linear-gradient(180deg,#1D429B 0%,#21274E 100%);
+    border-radius:20px;padding:34px 34px 30px;color:#fff;
+    box-shadow:0 18px 40px rgba(29,66,155,0.25);position:relative;overflow:hidden;
+  }
+  .hero::after{content:"";position:absolute;right:-60px;top:-60px;width:280px;height:280px;
+    background:radial-gradient(circle,rgba(248,155,36,.25),transparent 70%);border-radius:50%}
+  .hero .eyebrow{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#AFC3F2;font-weight:700;margin:0 0 8px}
+  .hero h1{font-family:var(--display);font-size:52px;line-height:.95;letter-spacing:.01em;margin:0 0 10px}
+  .hero p{margin:0;max-width:720px;color:#DDE6FA;font-size:14.5px;line-height:1.55}
+  .hero .period{margin-top:16px;display:inline-flex;gap:10px;align-items:center;
+    background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);
+    padding:7px 14px;border-radius:999px;font-size:12.5px;font-weight:600;letter-spacing:.02em}
+  /* KPI */
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin:20px 0 6px}
+  .kpi{background:linear-gradient(180deg,#FFFFFF 0%,#F7F9FE 100%);border-radius:14px;
+    padding:16px 16px 14px;box-shadow:0 8px 24px rgba(33,39,78,.08);border-top:4px solid var(--blue);position:relative}
+  .kpi .lbl{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--grey);margin:0 0 8px}
+  .kpi .val{font-family:var(--display);font-size:42px;line-height:.9;letter-spacing:.01em}
+  .kpi .sub{font-size:11.5px;color:var(--flat);margin-top:6px;font-weight:500}
+  /* SECTIONS */
+  .section{background:linear-gradient(180deg,#FFFFFF 0%,#F7F9FE 100%);border-radius:16px;
+    padding:22px 24px 24px;margin-top:20px;box-shadow:0 8px 24px rgba(33,39,78,.08);
+    border-left:5px solid var(--blue)}
+  .section h2{font-family:var(--display);font-size:30px;letter-spacing:.02em;margin:0 0 4px;color:var(--navy)}
+  .section .desc{font-size:13px;color:var(--grey);margin:0 0 16px;max-width:820px;line-height:1.5}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin:2px 0 12px;font-size:12px;font-weight:600;color:var(--grey)}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .legend i{width:14px;height:14px;border-radius:4px;display:inline-block}
+  .chart{width:100%;overflow-x:auto}
+  svg{max-width:100%;display:block}
+  /* TABLES */
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+  th{background:var(--navy);color:#fff;font-size:11px;text-transform:uppercase;letter-spacing:.06em;
+    font-weight:700;padding:10px 12px;text-align:right}
+  th:first-child{text-align:left;border-top-left-radius:8px}
+  th:last-child{border-top-right-radius:8px}
+  td{padding:9px 12px;text-align:right;border-bottom:1px solid var(--border)}
+  td:first-child{text-align:left;font-weight:600}
+  tbody tr:nth-child(odd){background:var(--zebra)}
+  tfoot td{background:var(--totalrow);font-weight:800;border-top:2px solid var(--navy)}
+  .pill{display:inline-block;padding:3px 9px;border-radius:999px;font-weight:700;font-size:12px}
+  .g-good{background:#E3F5EC;color:#137a48}
+  .g-mid{background:#FDEFD9;color:#a2620a}
+  .g-bad{background:#FBE4E4;color:#b02a2a}
+  .callout{border-radius:14px;padding:18px 20px;margin-top:16px;font-size:14px;line-height:1.6}
+  .callout.warn{background:linear-gradient(180deg,#FFF6EA,#FDEFD9);border:1px solid #F6D9A9}
+  .callout.bad{background:linear-gradient(180deg,#FDEDED,#FBE4E4);border:1px solid #F3C4C4}
+  .callout b{color:var(--navy)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .actcard{border:1px solid var(--border);border-radius:14px;padding:16px 18px;background:#fff}
+  .actcard h3{margin:0 0 12px;font-family:var(--display);font-size:24px;letter-spacing:.02em}
+  .bar-row{margin:9px 0}
+  .bar-row .t{display:flex;justify-content:space-between;font-size:12px;font-weight:600;margin-bottom:4px;color:var(--grey)}
+  .bar-track{height:12px;background:#EEF2FA;border-radius:999px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:999px}
+  .footer{text-align:center;color:var(--flat);font-size:11.5px;margin-top:30px;line-height:1.6}
+  .note{font-size:11.5px;color:var(--flat);margin-top:10px;font-style:italic}
+  @media (max-width:820px){
+    .kpis{grid-template-columns:repeat(2,1fr)}
+    .grid2{grid-template-columns:1fr}
+    .hero h1{font-size:40px}
+  }
+  @media print{
+    body{background:#fff}
+    .section,.kpi,.hero{box-shadow:none}
+    .section{break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <p class="eyebrow">WindMar Home · Operaciones de Ventas</p>
+    <h1>Cobertura de Turnos por Actividad</h1>
+    <p>Análisis de prospección en calle: turnos <b>creados</b>, <b>asignados</b> y <b>ponchados</b> por actividad,
+       vendedores desplegados por semana, y un modelo de capacidad para responder
+       <b>cuántas actividades debemos abrir según la fuerza de ventas activa</b>.</p>
+    <div class="period" id="period"></div>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+  <p class="note" id="kpinote"></p>
+
+  <!-- 1. Individuos por semana -->
+  <div class="section">
+    <h2>Individuos prospectando por semana</h2>
+    <p class="desc">Vendedores <b>únicos</b> por semana: los que fueron <b>asignados</b> a un turno vs. los que efectivamente
+      <b>poncharon</b> (se presentaron). La brecha entre ambas líneas es la merma entre lo planificado y lo real.</p>
+    <div class="legend">
+      <span><i style="background:#1D429B"></i>Vendedores asignados</span>
+      <span><i style="background:#1E9E62"></i>Vendedores que poncharon</span>
+      <span><i style="background:#C9D4EC"></i>Semana parcial (excluida de promedios)</span>
+    </div>
+    <div class="chart"><svg id="chartVend" viewBox="0 0 1080 340" preserveAspectRatio="xMidYMid meet"></svg></div>
+  </div>
+
+  <!-- 2. Volumen semanal -->
+  <div class="section">
+    <h2>Volumen semanal de turnos</h2>
+    <p class="desc">Turnos <b>creados</b> (capacidad abierta), <b>asignados</b> (con vendedor) y <b>ponchados</b> (completados)
+      por semana. La distancia entre "creados" y "ponchados" es la sobreoferta que no se llena.</p>
+    <div class="legend">
+      <span><i style="background:#C9D4EC"></i>Creados</span>
+      <span><i style="background:#0079C0"></i>Asignados</span>
+      <span><i style="background:#1E9E62"></i>Ponchados</span>
+    </div>
+    <div class="chart"><svg id="chartVol" viewBox="0 0 1080 340" preserveAspectRatio="xMidYMid meet"></svg></div>
+  </div>
+
+  <!-- 3. Desglose por actividad -->
+  <div class="section">
+    <h2>Desglose por actividad</h2>
+    <p class="desc">Totales del período completo por cada una de las 4 actividades de prospección
+      (<b>Independiente</b> incluye los Eventos Especiales — es el mismo canal).
+      <b>Cobertura</b> = ponchados ÷ creados (¿llenamos lo que abrimos?).
+      <b>Tasa de ponche</b> = ponchados ÷ asignados (¿se presenta quien asignamos?).</p>
+    <table id="tblAct">
+      <thead><tr>
+        <th>Actividad</th><th>Creados</th><th>Asignados</th><th>Ponchados</th><th>Cobertura</th><th>Tasa Ponche</th>
+      </tr></thead>
+      <tbody></tbody>
+      <tfoot></tfoot>
+    </table>
+    <div class="grid2" id="actCards" style="margin-top:18px"></div>
+  </div>
+
+  <!-- 4. Análisis de capacidad -->
+  <div class="section">
+    <h2>Análisis de capacidad</h2>
+    <p class="desc">Promedios por semana (10 semanas completas). La <b>capacidad real</b> es cuántos turnos la fuerza activa
+      logra ponchar. Los <b>slots recomendados</b> son los que deberíamos abrir para sostener ~90% de cobertura;
+      el <b>exceso</b> es cuánto estamos sobre-abriendo hoy.</p>
+    <table id="tblCap">
+      <thead><tr>
+        <th>Actividad</th><th>Vend./sem que ponchan</th><th>Turnos x vendedor</th>
+        <th>Ponchados/sem</th><th>Creados/sem (hoy)</th><th>Recomendado (90%)</th><th>Exceso/sem</th>
+      </tr></thead>
+      <tbody></tbody>
+      <tfoot></tfoot>
+    </table>
+    <div class="legend" style="margin-top:16px">
+      <span><i style="background:#C9D4EC"></i>Creados hoy (por semana)</span>
+      <span><i style="background:#1E9E62"></i>Recomendado a 90% cobertura</span>
+      <span><i style="background:#F89B24"></i>Exceso (sobreoferta)</span>
+    </div>
+    <div class="chart"><svg id="chartCap" viewBox="0 0 1080 300" preserveAspectRatio="xMidYMid meet"></svg></div>
+  </div>
+
+  <!-- 4b. No-prospección -->
+  <div class="section" style="border-left-color:var(--vibrant)">
+    <h2>Actividades no-prospección — ¿capacidad atrapada?</h2>
+    <p class="desc">Todo lo que <b>no</b> es prospección de calle: showroom, reuniones, eventos y salas.
+      La pregunta clave: ¿hay vendedores "atrapados" aquí que podrían redesplegarse a los canales para mejorar la exposición?</p>
+    <table id="tblNP">
+      <thead><tr>
+        <th>Actividad</th><th>Creados</th><th>Asignados</th><th>Ponchados</th><th>Vend. únicos</th><th>Ponch./sem</th><th>Cobertura</th>
+      </tr></thead>
+      <tbody></tbody>
+      <tfoot></tfoot>
+    </table>
+
+    <div class="callout warn" id="mrNote"></div>
+
+    <h3 style="font-family:var(--display);font-size:22px;margin:20px 0 6px;color:var(--navy)">Foto completa: prospección + no-prospección</h3>
+    <p class="desc" style="margin-bottom:12px">Cómo cambian los totales al incluir todo (excl. cancelados):</p>
+    <div class="kpis" id="kpisComb" style="grid-template-columns:repeat(5,1fr)"></div>
+
+    <div class="callout bad" id="redeployNote" style="margin-top:20px"></div>
+  </div>
+
+  <!-- 5. Conclusión / recomendación -->
+  <div class="section" style="border-left-color:var(--orange)">
+    <h2>Conclusión y recomendación</h2>
+    <div id="conclusion"></div>
+  </div>
+
+  <div class="footer" id="footer"></div>
+
+</div>
+
+<script id="report-data" type="application/json">{
+  "meta": {
+    "archivo": "report (48).csv",
+    "totalFilas": 13798,
+    "cancelados": 375,
+    "otrosCreados": 4355,
+    "periodoInicio": "2026-05-01",
+    "periodoFin": "2026-07-14",
+    "coberturaObjetivo": 0.9,
+    "semanasCompletas": [
+      "2026-05-04",
+      "2026-05-11",
+      "2026-05-18",
+      "2026-05-25",
+      "2026-06-01",
+      "2026-06-08",
+      "2026-06-15",
+      "2026-06-22",
+      "2026-06-29",
+      "2026-07-06"
+    ]
+  },
+  "global": {
+    "creados": 9068,
+    "asignados": 7439,
+    "ponchados": 6075,
+    "cobertura": 67.0,
+    "ponche": 81.7,
+    "vendUnicosAsignados": 353,
+    "vendUnicosPoncharon": 327
+  },
+  "promedioSemanal": {
+    "creados": 852.3,
+    "asignados": 700.4,
+    "ponchados": 571.1,
+    "vendAsignados": 197.7,
+    "vendPoncharon": 175.5,
+    "cobertura": 67.0,
+    "ponche": 81.5,
+    "turnosPorVendedor": 3.25,
+    "slotsPorVendedor": 4.86,
+    "recomendadoTotal": 635,
+    "excesoTotal": 217
+  },
+  "porActividad": [
+    {
+      "actividad": "Home Depot",
+      "creados": 3450,
+      "asignados": 2476,
+      "ponchados": 2297,
+      "cobertura": 66.6,
+      "ponche": 92.8
+    },
+    {
+      "actividad": "Cambaceo",
+      "creados": 1614,
+      "asignados": 1568,
+      "ponchados": 1354,
+      "cobertura": 83.9,
+      "ponche": 86.4
+    },
+    {
+      "actividad": "Booth",
+      "creados": 1247,
+      "asignados": 1050,
+      "ponchados": 925,
+      "cobertura": 74.2,
+      "ponche": 88.1
+    },
+    {
+      "actividad": "Independiente",
+      "creados": 2757,
+      "asignados": 2345,
+      "ponchados": 1499,
+      "cobertura": 54.4,
+      "ponche": 63.9
+    }
+  ],
+  "capacidad": [
+    {
+      "actividad": "Home Depot",
+      "creados": 322.7,
+      "asignados": 231.4,
+      "ponchados": 214.8,
+      "vendPoncharon": 87.3,
+      "turnosPorVendedor": 2.46,
+      "cobertura": 66.6,
+      "ponche": 92.8,
+      "recomendado": 239,
+      "exceso": 84
+    },
+    {
+      "actividad": "Cambaceo",
+      "creados": 152.1,
+      "asignados": 147.6,
+      "ponchados": 127.2,
+      "vendPoncharon": 56.2,
+      "turnosPorVendedor": 2.26,
+      "cobertura": 83.6,
+      "ponche": 86.2,
+      "recomendado": 141,
+      "exceso": 11
+    },
+    {
+      "actividad": "Booth",
+      "creados": 116.9,
+      "asignados": 98.6,
+      "ponchados": 86.4,
+      "vendPoncharon": 49.4,
+      "turnosPorVendedor": 1.75,
+      "cobertura": 73.9,
+      "ponche": 87.6,
+      "recomendado": 96,
+      "exceso": 21
+    },
+    {
+      "actividad": "Independiente",
+      "creados": 260.6,
+      "asignados": 222.8,
+      "ponchados": 142.7,
+      "vendPoncharon": 68.4,
+      "turnosPorVendedor": 2.09,
+      "cobertura": 54.8,
+      "ponche": 64.0,
+      "recomendado": 159,
+      "exceso": 102
+    }
+  ],
+  "noProspeccion": {
+    "breakdown": [
+      {
+        "tipo": "Meeting Rooms",
+        "creados": 3420,
+        "asignados": 11,
+        "ponchados": 4,
+        "vendUnicos": 9,
+        "creadosSem": 320.1,
+        "ponchadosSem": 0.4,
+        "cobertura": 0.1
+      },
+      {
+        "tipo": "Showroom",
+        "creados": 517,
+        "asignados": 402,
+        "ponchados": 262,
+        "vendUnicos": 81,
+        "creadosSem": 48.6,
+        "ponchadosSem": 24.7,
+        "cobertura": 50.7
+      },
+      {
+        "tipo": "Reuniones Asalariados",
+        "creados": 227,
+        "asignados": 224,
+        "ponchados": 221,
+        "vendUnicos": 84,
+        "creadosSem": 21.4,
+        "ponchadosSem": 20.8,
+        "cobertura": 97.4
+      },
+      {
+        "tipo": "TO Showroom",
+        "creados": 147,
+        "asignados": 32,
+        "ponchados": 27,
+        "vendUnicos": 9,
+        "creadosSem": 13.2,
+        "ponchadosSem": 2.5,
+        "cobertura": 18.4
+      },
+      {
+        "tipo": "Media Tours",
+        "creados": 44,
+        "asignados": 44,
+        "ponchados": 11,
+        "vendUnicos": 14,
+        "creadosSem": 4.2,
+        "ponchadosSem": 1.1,
+        "cobertura": 25.0
+      }
+    ],
+    "total": {
+      "creados": 4355,
+      "asignados": 713,
+      "ponchados": 525
+    },
+    "combinado": {
+      "creados": 13423,
+      "asignados": 8152,
+      "ponchados": 6600,
+      "cobertura": 49.2,
+      "ponche": 81.0
+    },
+    "redespliegue": {
+      "showroomPonSem": 27.2,
+      "showroomVendTotal": 74,
+      "showroomTambienProspectan": 74,
+      "soloShowroom": 0,
+      "capacidadActual": 571.1,
+      "capacidadConRedespliegue": 598.3,
+      "gananciaPct": 4.8
+    }
+  },
+  "semanal": [
+    {
+      "week": "2026-04-27",
+      "partial": true,
+      "creados": 307,
+      "asignados": 228,
+      "ponchados": 185,
+      "vendAsignados": 140,
+      "vendPoncharon": 121,
+      "cobertura": 60.3,
+      "ponche": 81.1,
+      "porCategoria": {
+        "Home Depot": {
+          "creados": 134,
+          "asignados": 89,
+          "ponchados": 77,
+          "vendPoncharon": 49
+        },
+        "Cambaceo": {
+          "creados": 52,
+          "asignados": 51,
+          "ponchados": 43,
+          "vendPoncharon": 35
+        },
+        "Booth": {
+          "creados": 42,
+          "asignados": 31,
+          "ponchados": 29,
+          "vendPoncharon": 24
+        },
+        "Independiente": {
+          "creados": 79,
+          "asignados": 57,
+          "ponchados": 36,
+          "vendPoncharon": 30
+        }
+      }
+    },
+    {
+      "week": "2026-05-04",
+      "partial": false,
+      "creados": 869,
+      "asignados": 714,
+      "ponchados": 563,
+      "vendAsignados": 195,
+      "vendPoncharon": 171,
+      "cobertura": 64.8,
+      "ponche": 78.9,
+      "porCategoria": {
+        "Home Depot": {
+          "creados": 346,
+          "asignados": 243,
+          "ponchados": 210,
+          "vendPoncharon": 91
+        },
+        "Cambaceo": {
+          "creados": 186,
+          "asignados": 183,
+          "ponchados": 164,
+          "vendPoncharon": 74
+        },
+        "Booth": {
+          "creados": 114,
+          "asignados": 92,
+          "ponchados": 81,
+          "vendPoncharon": 42
+        },
+        "Independiente": {
+          "creados": 223,
+          "asignados": 196,
+          "ponchados": 108,
+          "vendPoncharon": 49
+        }
+      }
+    },
+    {
+      "week": "2026-05-11",
+      "partial": false,
+      "creados": 892,
+      "asignados": 746,
+      "ponchados": 610,
+      "vendAsignados": 206,
+      "vendPoncharon": 189,
+      "cobertura": 68.4,
+      "ponche": 81.8,
+      "porCategoria": {
+        "Home Depot": {
+          "creados": 368,
+          "asignados": 272,
+          "ponchados": 235,
+          "vendPoncharon": 96
+        },
+        "Cambaceo": {
+          "creados": 170,
+          "asignados": 168,
+          "ponchados": 143,
+          "vendPoncharon": 61
+        },
+        "Booth": {
+          "creados": 114,
+          "asignados": 98,
+          "ponchados": 79,
+          "vendPoncharon": 45
+        },
+        "Independiente": {
+          "creados": 240,
+          "asignados": 208,
+          "ponchados": 153,
+          "vendPoncharon": 70
+        }
+      }
+    },
+    {
+      "week": "2026-05-18",
+      "partial": false,
+      "creados": 896,
+      "asignados": 770,
+      "ponchados": 648,
+      "vendAsignados": 213,
+      "vendPoncharon": 197,
+      "cobertura": 72.3,
+      "ponche": 84.2,
+      "porCategoria": {
+        "Home Depot": {
+          "creados": 332,
+          "asignados": 245,
+          "ponchados": 233,
+          "vendPoncharon": 88
+        },
+        "Cambaceo": {
+          "creados": 182,
+          "asignados": 178,
+          "ponchados": 146,
+          "vendPoncharon": 70
+        },
+        "Booth": {
+          "creados": 122,
+          "asignados": 106,
+          "ponchados": 93,
+          "vendPoncharon": 51
+        },
+        "Independiente": {
+          "creados": 260,
+          "asignados": 241,
+          "ponchados": 176,
+          "vendPoncharon": 90
+        }
+      }
+    },
+    {
+      "week": "2026-05-25",
+      "partial": false,
+      "creados": 801,
+      "asignados": 642,
+      "ponchados": 524,
+      "vendAsignados": 190,
+      "vendPoncharon": 174,
+      "cobertura": 65.4,
+      "ponche": 81.6,
+      "porCategoria": {
+        "Home Depot": {
+          "creados": 314,
+          "asignados": 210,
+          "ponchados": 198,
+          "vendPoncharon": 80
+        },
+        "Cambaceo": {
+          "creados": 143,
+          "asignados": 141,
+          "ponchados": 114,
+          "vendPoncharon": 65
+        },
+        "Booth": {
+          "creados": 121,
+          "asignados": 101,
+          "ponchados": 84,
+          "vendPoncharon": 49
+        },
+        "Independiente": {
+          "creados": 223,
+          "asignados": 190,
+          "ponchados": 128,
+          "vendPoncharon": 67
+        }
+      }
+    },
+    {
+      "week": "2026-06-01",
+      "partial": false,
+      "creados": 835,
+      "asignados": 704,
+      "ponchados": 600,
+      "vendAsignados": 199,
+      "vendPoncharon": 176,
+      "cobertura": 71.9,
+      "ponche": 85.2,
+      "porCategoria": {
+        "Home Depot": {
+          "creados": 328,
+          "asignados": 248,
+          "ponchados": 235,
+          "vendPoncharon": 94
+        },
+        "Cambaceo": {
+          "creados": 146,
+          "asignados": 140,
+          "ponchados": 115,
+          "vendPoncharon": 52
+        },
+        "Booth": {
+          "creados": 117,
+          "asignados": 99,
+          "ponchados": 84,
+          "vendPoncharon": 46
+        },
+        "Independiente": {
+          "creados": 244,
+          "asignados": 217,
+          "ponchados": 166,
+          "vendPoncharon": 69
+        }
+      }
+    },
+    {
+      "week": "2026-06-08",
+      "partial": false,
+      "creados": 855,
+      "asignados": 723,
+      "ponchados": 571,
+      "vendAsignados": 196,
+      "vendPoncharon": 165,
+      "cobertura": 66.8,
+      "ponche": 79.0,
+      "porCategoria": {
+        "Home Depot": {
+          "creados": 309,
+          "asignados": 223,
+          "ponchados": 209,
+          "vendPoncharon": 86
+        },
+        "Cambaceo": {
+          "creados": 161,
+          "asignados": 161,
+          "ponchados": 139,
+          "vendPoncharon": 50
+        },
+        "Booth": {
+          "creados": 121,
+          "asignados": 110,
+          "ponchados": 100,
+          "vendPoncharon": 55
+        },
+        "Independiente": {
+          "creados": 264,
+          "asignados": 229,
+          "ponchados": 123,
+          "vendPoncharon": 65
+        }
+      }
+    },
+    {
+      "week": "2026-06-15",
+      "partial": false,
+      "creados": 853,
+      "asignados": 677,
+      "ponchados": 548,
+      "vendAsignados": 191,
+      "vendPoncharon": 170,
+      "cobertura": 64.2,
+      "ponche": 80.9,
+      "porCategoria": {
+        "Home Depot": {
+          "creados": 319,
+          "asignados": 218,
+          "ponchados": 206,
+          "vendPoncharon": 79
+        },
+        "Cambaceo": {
+          "creados": 155,
+          "asignados": 146,
+          "ponchados": 135,
+          "vendPoncharon": 62
+        },
+        "Booth": {
+          "creados": 109,
+          "asignados": 91,
+          "ponchados": 79,
+          "vendPoncharon": 45
+        },
+        "Independiente": {
+          "creados": 270,
+          "asignados": 222,
+          "ponchados": 128,
+          "vendPoncharon": 58
+        }
+      }
+    },
+    {
+      "week": "2026-06-22",
+      "partial": false,
+      "creados": 940,
+      "asignados": 753,
+      "ponchados": 593,
+      "vendAsignados": 204,
+      "vendPoncharon": 176,
+      "cobertura": 63.1,
+      "ponche": 78.8,
+      "porCategoria": {
+        "Home Depot": {
+          "creados": 331,
+          "asignados": 222,
+          "ponchados": 208,
+          "vendPoncharon": 82
+        },
+        "Cambaceo": {
+          "creados": 126,
+          "asignados": 124,
+          "ponchados": 103,
+          "vendPoncharon": 46
+        },
+        "Booth": {
+          "creados": 119,
+          "asignados": 95,
+          "ponchados": 84,
+          "vendPoncharon": 50
+        },
+        "Independiente": {
+          "creados": 364,
+          "asignados": 312,
+          "ponchados": 198,
+          "vendPoncharon": 88
+        }
+      }
+    },
+    {
+      "week": "2026-06-29",
+      "partial": false,
+      "creados": 829,
+      "asignados": 645,
+      "ponchados": 530,
+      "vendAsignados": 190,
+      "vendPoncharon": 167,
+      "cobertura": 63.9,
+      "ponche": 82.2,
+      "porCategoria": {
+        "Home Depot": {
+          "creados": 287,
+          "asignados": 203,
+          "ponchados": 192,
+          "vendPoncharon": 82
+        },
+        "Cambaceo": {
+          "creados": 135,
+          "asignados": 126,
+          "ponchados": 108,
+          "vendPoncharon": 38
+        },
+        "Booth": {
+          "creados": 120,
+          "asignados": 94,
+          "ponchados": 86,
+          "vendPoncharon": 52
+        },
+        "Independiente": {
+          "creados": 287,
+          "asignados": 222,
+          "ponchados": 144,
+          "vendPoncharon": 74
+        }
+      }
+    },
+    {
+      "week": "2026-07-06",
+      "partial": false,
+      "creados": 753,
+      "asignados": 630,
+      "ponchados": 524,
+      "vendAsignados": 193,
+      "vendPoncharon": 170,
+      "cobertura": 69.6,
+      "ponche": 83.2,
+      "porCategoria": {
+        "Home Depot": {
+          "creados": 293,
+          "asignados": 230,
+          "ponchados": 222,
+          "vendPoncharon": 95
+        },
+        "Cambaceo": {
+          "creados": 117,
+          "asignados": 109,
+          "ponchados": 105,
+          "vendPoncharon": 44
+        },
+        "Booth": {
+          "creados": 112,
+          "asignados": 100,
+          "ponchados": 94,
+          "vendPoncharon": 59
+        },
+        "Independiente": {
+          "creados": 231,
+          "asignados": 191,
+          "ponchados": 103,
+          "vendPoncharon": 54
+        }
+      }
+    },
+    {
+      "week": "2026-07-13",
+      "partial": true,
+      "creados": 238,
+      "asignados": 207,
+      "ponchados": 179,
+      "vendAsignados": 131,
+      "vendPoncharon": 116,
+      "cobertura": 75.2,
+      "ponche": 86.5,
+      "porCategoria": {
+        "Home Depot": {
+          "creados": 89,
+          "asignados": 73,
+          "ponchados": 72,
+          "vendPoncharon": 49
+        },
+        "Cambaceo": {
+          "creados": 41,
+          "asignados": 41,
+          "ponchados": 39,
+          "vendPoncharon": 27
+        },
+        "Booth": {
+          "creados": 36,
+          "asignados": 33,
+          "ponchados": 32,
+          "vendPoncharon": 25
+        },
+        "Independiente": {
+          "creados": 72,
+          "asignados": 60,
+          "ponchados": 36,
+          "vendPoncharon": 29
+        }
+      }
+    }
+  ]
+}</script>
+<script>
+(function(){
+  var D = JSON.parse(document.getElementById('report-data').textContent);
+  var C = {blue:'#1D429B',navy:'#21274E',vibrant:'#0079C0',orange:'#F89B24',
+           green:'#1E9E62',red:'#D64545',flat:'#9AA3B5',grey:'#6B7388',
+           light:'#C9D4EC',lighter:'#EEF2FA'};
+  var SVGNS='http://www.w3.org/2000/svg';
+  var MONTHS=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  function fmt(n){return (Math.round(n*10)/10).toLocaleString('en-US');}
+  function fmtInt(n){return Math.round(n).toLocaleString('en-US');}
+  function wkLabel(iso){var p=iso.split('-');return (+p[2])+' '+MONTHS[(+p[1])-1];}
+  function el(tag,attrs,txt){var e=document.createElementNS(SVGNS,tag);
+    for(var k in attrs)e.setAttribute(k,attrs[k]); if(txt!=null)e.textContent=txt; return e;}
+  function gradeClass(v,good,mid){return v>=good?'g-good':(v>=mid?'g-mid':'g-bad');}
+
+  // ---------- PERIOD + KPIs ----------
+  function dLabel(iso){var p=iso.split('-');return (+p[2])+' '+MONTHS[(+p[1])-1]+' '+p[0];}
+  document.getElementById('period').textContent='Período: '+dLabel(D.meta.periodoInicio)+' — '+dLabel(D.meta.periodoFin)+'  ·  '+D.meta.semanasCompletas.length+' semanas completas';
+
+  var g=D.global;
+  var kpis=[
+    {lbl:'Turnos creados',val:fmtInt(g.creados),sub:'capacidad abierta (excl. cancelados)',color:C.blue},
+    {lbl:'Turnos asignados',val:fmtInt(g.asignados),sub:Math.round(g.asignados/g.creados*100)+'% de los creados',color:C.vibrant},
+    {lbl:'Turnos ponchados',val:fmtInt(g.ponchados),sub:'completados en calle',color:C.green},
+    {lbl:'Cobertura',val:g.cobertura+'%',sub:'ponchados ÷ creados',color:C.orange},
+    {lbl:'Tasa de ponche',val:g.ponche+'%',sub:'ponchados ÷ asignados',color:C.green}
+  ];
+  var kh='';
+  kpis.forEach(function(k){
+    kh+='<div class="kpi" style="border-top-color:'+k.color+'">'+
+        '<p class="lbl">'+k.lbl+'</p>'+
+        '<div class="val" style="color:'+k.color+'">'+k.val+'</div>'+
+        '<div class="sub">'+k.sub+'</div></div>';
+  });
+  document.getElementById('kpis').innerHTML=kh;
+  document.getElementById('kpinote').textContent=
+    'Totales de prospección (Home Depot, Cambaceo, Booth, Independiente). Se excluyen '+fmtInt(D.meta.cancelados)+
+    ' turnos cancelados y '+fmtInt(D.meta.otrosCreados)+' de actividades no-prospección (reuniones, showroom, eventos). '+
+    'Vendedores únicos en el período: '+g.vendUnicosAsignados+' asignados, '+g.vendUnicosPoncharon+' poncharon.';
+
+  // ---------- LINE CHART: vendedores por semana ----------
+  function lineChart(svgId, series, opts){
+    var svg=document.getElementById(svgId);
+    var W=1080,H=340,mL=54,mR=20,mT=20,mB=64;
+    var pw=W-mL-mR, ph=H-mT-mB;
+    var weeks=D.semanal;
+    var maxV=0;
+    series.forEach(function(s){weeks.forEach(function(w){if(w[s.key]>maxV)maxV=w[s.key];});});
+    maxV=Math.ceil(maxV/20)*20+10;
+    var n=weeks.length;
+    function X(i){return mL + (n<=1?pw/2:(i*pw/(n-1)));}
+    function Y(v){return mT + ph - (v/maxV*ph);}
+    // gridlines
+    for(var t=0;t<=maxV;t+=Math.ceil(maxV/5/10)*10){
+      svg.appendChild(el('line',{x1:mL,y1:Y(t),x2:W-mR,y2:Y(t),stroke:'#EDF1F8','stroke-width':1}));
+      svg.appendChild(el('text',{x:mL-8,y:Y(t)+4,'text-anchor':'end','font-size':11,fill:C.flat,'font-family':'Montserrat'},t));
+    }
+    // partial-week shading
+    weeks.forEach(function(w,i){
+      if(w.partial){
+        var x0=i===0?mL:(X(i-1)+X(i))/2;
+        var x1=i===n-1?W-mR:(X(i)+X(i+1))/2;
+        svg.appendChild(el('rect',{x:x0,y:mT,width:(x1-x0),height:ph,fill:'#C9D4EC','fill-opacity':.18}));
+      }
+    });
+    // x labels
+    weeks.forEach(function(w,i){
+      svg.appendChild(el('text',{x:X(i),y:H-mB+22,'text-anchor':'middle','font-size':10.5,fill:C.grey,'font-family':'Montserrat','font-weight':600},wkLabel(w.week)));
+    });
+    // lines + points
+    series.forEach(function(s){
+      var pts=weeks.map(function(w,i){return X(i)+','+Y(w[s.key]);}).join(' ');
+      svg.appendChild(el('polyline',{points:pts,fill:'none',stroke:s.color,'stroke-width':3,'stroke-linejoin':'round','stroke-linecap':'round'}));
+      weeks.forEach(function(w,i){
+        svg.appendChild(el('circle',{cx:X(i),cy:Y(w[s.key]),r:4.5,fill:'#fff',stroke:s.color,'stroke-width':2.5}));
+        svg.appendChild(el('text',{x:X(i),y:Y(w[s.key])-11,'text-anchor':'middle','font-size':10.5,fill:s.color,'font-family':'Montserrat','font-weight':700},w[s.key]));
+      });
+    });
+  }
+  lineChart('chartVend',[
+    {key:'vendAsignados',color:C.blue},
+    {key:'vendPoncharon',color:C.green}
+  ]);
+
+  // ---------- GROUPED BARS: volumen semanal ----------
+  function groupedBars(svgId, keys){
+    var svg=document.getElementById(svgId);
+    var W=1080,H=340,mL=54,mR=20,mT=20,mB=64;
+    var pw=W-mL-mR, ph=H-mT-mB;
+    var weeks=D.semanal, n=weeks.length;
+    var maxV=0;
+    weeks.forEach(function(w){keys.forEach(function(k){if(w[k.key]>maxV)maxV=w[k.key];});});
+    maxV=Math.ceil(maxV/100)*100;
+    function Y(v){return mT+ph-(v/maxV*ph);}
+    for(var t=0;t<=maxV;t+=Math.ceil(maxV/5/50)*50){
+      svg.appendChild(el('line',{x1:mL,y1:Y(t),x2:W-mR,y2:Y(t),stroke:'#EDF1F8','stroke-width':1}));
+      svg.appendChild(el('text',{x:mL-8,y:Y(t)+4,'text-anchor':'end','font-size':11,fill:C.flat,'font-family':'Montserrat'},t));
+    }
+    var slot=pw/n, gw=slot*0.7, bw=gw/keys.length;
+    weeks.forEach(function(w,i){
+      var gx=mL+slot*i+(slot-gw)/2;
+      keys.forEach(function(k,j){
+        var x=gx+bw*j, h=(w[k.key]/maxV*ph);
+        svg.appendChild(el('rect',{x:x,y:Y(w[k.key]),width:bw-2,height:h,fill:k.color,rx:2,opacity:w.partial?.55:1}));
+      });
+      svg.appendChild(el('text',{x:mL+slot*i+slot/2,y:H-mB+22,'text-anchor':'middle','font-size':10.5,fill:C.grey,'font-family':'Montserrat','font-weight':600},wkLabel(w.week)));
+    });
+  }
+  groupedBars('chartVol',[
+    {key:'creados',color:C.light},
+    {key:'asignados',color:C.vibrant},
+    {key:'ponchados',color:C.green}
+  ]);
+
+  // ---------- TABLE: por actividad ----------
+  var tb=document.querySelector('#tblAct tbody'), rows='';
+  var tot={creados:0,asignados:0,ponchados:0};
+  D.porActividad.forEach(function(a){
+    tot.creados+=a.creados;tot.asignados+=a.asignados;tot.ponchados+=a.ponchados;
+    rows+='<tr><td>'+a.actividad+'</td><td>'+fmtInt(a.creados)+'</td><td>'+fmtInt(a.asignados)+'</td><td>'+fmtInt(a.ponchados)+'</td>'+
+      '<td><span class="pill '+gradeClass(a.cobertura,80,60)+'">'+a.cobertura+'%</span></td>'+
+      '<td><span class="pill '+gradeClass(a.ponche,85,70)+'">'+a.ponche+'%</span></td></tr>';
+  });
+  tb.innerHTML=rows;
+  var cobT=Math.round(tot.ponchados/tot.creados*1000)/10, ponT=Math.round(tot.ponchados/tot.asignados*1000)/10;
+  document.querySelector('#tblAct tfoot').innerHTML='<tr><td>Total prospección</td><td>'+fmtInt(tot.creados)+'</td><td>'+fmtInt(tot.asignados)+'</td><td>'+fmtInt(tot.ponchados)+'</td><td>'+cobT+'%</td><td>'+ponT+'%</td></tr>';
+
+  // ---------- ACTIVITY CARDS (bars) ----------
+  var ac='';
+  D.porActividad.forEach(function(a){
+    function bar(label,pct,color){
+      return '<div class="bar-row"><div class="t"><span>'+label+'</span><span>'+pct+'%</span></div>'+
+        '<div class="bar-track"><div class="bar-fill" style="width:'+Math.min(pct,100)+'%;background:'+color+'"></div></div></div>';
+    }
+    var fill=Math.round(a.asignados/a.creados*1000)/10;
+    ac+='<div class="actcard"><h3>'+a.actividad+'</h3>'+
+      bar('Cobertura (ponchados÷creados)',a.cobertura,a.cobertura>=80?C.green:(a.cobertura>=60?C.orange:C.red))+
+      bar('Tasa de ponche (ponchados÷asignados)',a.ponche,a.ponche>=85?C.green:(a.ponche>=70?C.orange:C.red))+
+      bar('Llenado (asignados÷creados)',fill,C.vibrant)+
+      '<div style="font-size:12px;color:var(--grey);margin-top:10px">'+
+        fmtInt(a.creados)+' creados · '+fmtInt(a.asignados)+' asignados · '+fmtInt(a.ponchados)+' ponchados</div></div>';
+  });
+  document.getElementById('actCards').innerHTML=ac;
+
+  // ---------- TABLE: capacidad ----------
+  var cb=document.querySelector('#tblCap tbody'), cr='';
+  var ct={pon:0,cre:0,rec:0,exc:0};
+  D.capacidad.forEach(function(c){
+    ct.pon+=c.ponchados;ct.cre+=c.creados;ct.rec+=c.recomendado;ct.exc+=c.exceso;
+    cr+='<tr><td>'+c.actividad+'</td><td>'+fmt(c.vendPoncharon)+'</td><td>'+c.turnosPorVendedor+'</td>'+
+      '<td>'+fmt(c.ponchados)+'</td><td>'+fmt(c.creados)+'</td>'+
+      '<td style="color:'+C.green+';font-weight:700">'+fmtInt(c.recomendado)+'</td>'+
+      '<td><span class="pill '+(c.exceso>=60?'g-bad':(c.exceso>=25?'g-mid':'g-good'))+'">+'+fmtInt(c.exceso)+'</span></td></tr>';
+  });
+  cb.innerHTML=cr;
+  document.querySelector('#tblCap tfoot').innerHTML='<tr><td>Total prospección</td><td>'+fmt(D.promedioSemanal.vendPoncharon)+'</td><td>'+D.promedioSemanal.turnosPorVendedor+'</td><td>'+fmt(ct.pon)+'</td><td>'+fmt(ct.cre)+'</td><td>'+fmtInt(ct.rec)+'</td><td>+'+fmtInt(ct.exc)+'</td></tr>';
+
+  // ---------- CHART: capacidad (creados vs recomendado + exceso) ----------
+  (function(){
+    var svg=document.getElementById('chartCap');
+    var W=1080,H=300,mL=54,mR=20,mT=16,mB=52;
+    var pw=W-mL-mR,ph=H-mT-mB;
+    var items=D.capacidad, n=items.length;
+    var maxV=0; items.forEach(function(c){if(c.creados>maxV)maxV=c.creados;});
+    maxV=Math.ceil(maxV/50)*50;
+    function Y(v){return mT+ph-(v/maxV*ph);}
+    for(var t=0;t<=maxV;t+=50){
+      svg.appendChild(el('line',{x1:mL,y1:Y(t),x2:W-mR,y2:Y(t),stroke:'#EDF1F8','stroke-width':1}));
+      svg.appendChild(el('text',{x:mL-8,y:Y(t)+4,'text-anchor':'end','font-size':11,fill:C.flat,'font-family':'Montserrat'},t));
+    }
+    var slot=pw/n, gw=slot*0.5;
+    items.forEach(function(c,i){
+      var cx=mL+slot*i+slot/2;
+      var bw=gw/2;
+      // creados (light) with exceso portion in orange on top of recomendado
+      var xC=cx-bw-3;
+      // recomendado bar (green)
+      var xR=cx+3;
+      svg.appendChild(el('rect',{x:xC,y:Y(c.creados),width:bw,height:(c.creados/maxV*ph),fill:C.light,rx:3}));
+      // exceso overlay: from recomendado up to creados
+      svg.appendChild(el('rect',{x:xC,y:Y(c.creados),width:bw,height:((c.creados-c.recomendado)/maxV*ph),fill:C.orange,rx:3,opacity:.9}));
+      svg.appendChild(el('rect',{x:xR,y:Y(c.recomendado),width:bw,height:(c.recomendado/maxV*ph),fill:C.green,rx:3}));
+      svg.appendChild(el('text',{x:xC+bw/2,y:Y(c.creados)-6,'text-anchor':'middle','font-size':11,fill:C.navy,'font-weight':700,'font-family':'Montserrat'},Math.round(c.creados)));
+      svg.appendChild(el('text',{x:xR+bw/2,y:Y(c.recomendado)-6,'text-anchor':'middle','font-size':11,fill:C.green,'font-weight':700,'font-family':'Montserrat'},Math.round(c.recomendado)));
+      svg.appendChild(el('text',{x:cx,y:H-mB+22,'text-anchor':'middle','font-size':12,fill:C.navy,'font-weight':700,'font-family':'Montserrat'},c.actividad));
+      svg.appendChild(el('text',{x:cx,y:H-mB+38,'text-anchor':'middle','font-size':10.5,fill:C.orange600||C.orange,'font-weight':700,'font-family':'Montserrat'},'exceso +'+Math.round(c.exceso)));
+    });
+  })();
+
+  // ---------- NO-PROSPECCIÓN ----------
+  var NP=D.noProspeccion;
+  (function(){
+    var tb=document.querySelector('#tblNP tbody'), r='';
+    NP.breakdown.forEach(function(b){
+      r+='<tr><td>'+b.tipo+'</td><td>'+fmtInt(b.creados)+'</td><td>'+fmtInt(b.asignados)+'</td><td>'+fmtInt(b.ponchados)+'</td>'+
+         '<td>'+fmtInt(b.vendUnicos)+'</td><td>'+fmt(b.ponchadosSem)+'</td>'+
+         '<td><span class="pill '+gradeClass(b.cobertura,80,40)+'">'+b.cobertura+'%</span></td></tr>';
+    });
+    tb.innerHTML=r;
+    var t=NP.total;
+    document.querySelector('#tblNP tfoot').innerHTML='<tr><td>Total no-prospección</td><td>'+fmtInt(t.creados)+'</td><td>'+fmtInt(t.asignados)+'</td><td>'+fmtInt(t.ponchados)+'</td><td>—</td><td>—</td><td>'+Math.round(t.ponchados/t.creados*1000)/10+'%</td></tr>';
+
+    var mr=NP.breakdown.filter(function(b){return b.tipo==='Meeting Rooms';})[0];
+    document.getElementById('mrNote').innerHTML=
+      '<b>Ojo con "Meeting Rooms".</b> Son '+fmtInt(mr.creados)+' turnos creados pero solo '+fmtInt(mr.ponchados)+
+      ' ponchados ('+mr.cobertura+'% cobertura): son <b>reservas de sala</b>, no capacidad de vendedor. Inflan el conteo de "creados" '+
+      'sin consumir fuerza de ventas — por eso conviene analizarlas aparte de la prospección.';
+
+    // combined KPIs
+    var cb=NP.combinado;
+    var ck=[
+      {lbl:'Creados (todo)',val:fmtInt(cb.creados),sub:'incl. no-prospección',color:C.blue},
+      {lbl:'Asignados (todo)',val:fmtInt(cb.asignados),sub:'',color:C.vibrant},
+      {lbl:'Ponchados (todo)',val:fmtInt(cb.ponchados),sub:'',color:C.green},
+      {lbl:'Cobertura (todo)',val:cb.cobertura+'%',sub:'baja por Meeting Rooms',color:C.red},
+      {lbl:'Tasa ponche (todo)',val:cb.ponche+'%',sub:'igual que prospección',color:C.green}
+    ];
+    var ch='';
+    ck.forEach(function(k){ch+='<div class="kpi" style="border-top-color:'+k.color+'">'+
+      '<p class="lbl">'+k.lbl+'</p><div class="val" style="color:'+k.color+'">'+k.val+'</div>'+
+      '<div class="sub">'+(k.sub||'&nbsp;')+'</div></div>';});
+    document.getElementById('kpisComb').innerHTML=ch;
+
+    // redeployment scenario
+    var rd=NP.redespliegue;
+    document.getElementById('redeployNote').innerHTML=
+      '<b>El escenario de "mover showroom a los canales" ayuda, pero poco.</b> Showroom + TO Showroom suman ~'+
+      fmt(rd.showroomPonSem)+' turnos ponchados/semana. El dato clave: de los '+rd.showroomVendTotal+
+      ' vendedores que hacen showroom, <b>'+rd.showroomTambienProspectan+' ya prospectan también</b> (solo '+rd.soloShowroom+
+      ' hacen exclusivamente showroom). No es un pool escondido de gente nueva — es tiempo de los mismos vendedores. '+
+      'Redesplegarlo subiría la capacidad de calle de ~'+fmt(rd.capacidadActual)+' a ~'+fmt(rd.capacidadConRedespliegue)+
+      ' turnos/sem (<b>+'+rd.gananciaPct+'%</b>). Mejora real de exposición, pero modesta: el verdadero cuello no es capacidad atrapada, es que <b>abrimos más de lo que se llena</b>.';
+  })();
+
+  // ---------- CONCLUSION ----------
+  var ps=D.promedioSemanal;
+  var worst=D.capacidad.slice().sort(function(a,b){return b.exceso-a.exceso;})[0];
+  var indep=D.capacidad.filter(function(c){return c.actividad==='Independiente';})[0];
+  var conc=
+    '<div class="callout bad"><b>El sistema está sobre-abriendo actividades.</b> En promedio abrimos '+
+      fmt(ps.creados)+' turnos por semana pero la fuerza activa solo poncha '+fmt(ps.ponchados)+
+      ' ('+ps.cobertura+'% de cobertura). Eso son <b>~'+fmtInt(ps.excesoTotal)+' turnos por semana</b> que quedan vacíos o sin ponchar. '+
+      'Cada vendedor activo poncha ~'+ps.turnosPorVendedor+' turnos/semana, pero abrimos ~'+ps.slotsPorVendedor+' slots por vendedor.</div>'+
+    '<div class="callout warn">'+
+      '<b>El cuello de botella es Independiente</b> (booths en supermercados): cobertura de solo '+indep.cobertura+
+      '% y tasa de ponche '+indep.ponche+'% — abrimos ~'+fmt(indep.creados)+' slots/sem y solo se ponchan ~'+fmt(indep.ponchados)+
+      '. Sobra ~'+fmtInt(indep.exceso)+'/sem. Home Depot poncha excelente ('+D.capacidad.filter(function(c){return c.actividad==="Home Depot";})[0].ponche+
+      '% de ponche) pero también abre demasiados slots vacíos (+'+fmtInt(D.capacidad.filter(function(c){return c.actividad==="Home Depot";})[0].exceso)+'/sem).</div>'+
+    '<h3 style="font-family:var(--display);font-size:24px;margin:18px 0 8px;color:var(--navy)">Número recomendado de turnos a abrir por semana</h3>'+
+    '<p class="desc" style="margin-bottom:12px">Para operar a ~90% de cobertura con la fuerza de ventas actual (~'+fmt(ps.vendPoncharon)+' vendedores que ponchan/sem):</p>'+
+    '<table><thead><tr><th>Actividad</th><th>Abrimos hoy</th><th>Recomendado</th><th>Recorte</th></tr></thead><tbody>'+
+      D.capacidad.map(function(c){return '<tr><td>'+c.actividad+'</td><td>'+fmt(c.creados)+'</td><td style="color:'+C.green+';font-weight:700">'+fmtInt(c.recomendado)+'</td><td>−'+fmtInt(c.exceso)+'</td></tr>';}).join('')+
+      '</tbody><tfoot><tr><td>Total/semana</td><td>'+fmt(ps.creados)+'</td><td>'+fmtInt(ps.recomendadoTotal)+'</td><td>−'+fmtInt(ps.excesoTotal)+'</td></tr></tfoot></table>'+
+    '<div class="callout warn" style="margin-top:16px"><b>Dos caminos, misma meta (~90% cobertura):</b><br>'+
+      '• <b>Recortar oferta:</b> bajar de ~'+fmt(ps.creados)+' a ~'+fmtInt(ps.recomendadoTotal)+' turnos/semana, priorizando cerrar los booths independientes de bajo rendimiento.<br>'+
+      '• <b>Crecer la fuerza:</b> para llenar los '+fmt(ps.creados)+' turnos actuales al 90% harían falta ~'+
+      fmtInt(Math.round(ps.creados*0.9/ps.turnosPorVendedor))+' vendedores que ponchen por semana (hoy ~'+fmt(ps.vendPoncharon)+'), es decir ~'+
+      fmtInt(Math.round(ps.creados*0.9/ps.turnosPorVendedor - ps.vendPoncharon))+' más.</div>';
+  document.getElementById('conclusion').innerHTML=conc;
+
+  // ---------- FOOTER ----------
+  document.getElementById('footer').innerHTML=
+    'Fuente: '+D.meta.archivo+' ('+fmtInt(D.meta.totalFilas)+' filas). Definiciones — Creados: slots excl. cancelados · '+
+    'Asignados: con vendedor · Ponchados: Shift Status = Completed. '+
+    'Independiente = Booth Independiente + Eventos Especiales (mismo canal). '+
+    'Promedios calculados sobre '+D.meta.semanasCompletas.length+' semanas completas (se excluyen las 2 semanas parciales de los extremos). '+
+    'Cobertura objetivo del modelo: '+(D.meta.coberturaObjetivo*100)+'%.';
+})();
+</script>
+</body>
+</html>

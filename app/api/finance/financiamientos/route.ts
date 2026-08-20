@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { requireRole } from '@/lib/api-auth'
 import { getRedshiftPool } from '@/lib/redshift'
 
 export const dynamic = 'force-dynamic'
@@ -45,6 +46,8 @@ function range() {
 }
 
 export async function GET() {
+  const denied = await requireRole(['admin'])
+  if (denied) return denied
   try {
     const pool = getRedshiftPool()
     const { from, to } = range()
