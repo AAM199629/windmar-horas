@@ -51,3 +51,6 @@ __pycache__/
 
 # documentos de trabajo (analisis, SOPs, decks) — viven en Drive, no en git
 *.pdf
+
+# fixture de desarrollo del tab de Reclutamiento (data real de candidatos)
+/data/

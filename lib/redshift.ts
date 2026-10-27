@@ -26,6 +26,14 @@ export interface AsalariadoRedshiftData {
 
 const SALARIED_ROLES = ['Empleado - Consultor', 'Empleado - Lider', 'Empleado - Gerente']
 
+// Vigencia de un miembro del equipo de ventas.
+// El ETL del 2026-08-25 recargó dim_sales_team_member y le cambió la semántica a
+// la columna `status`: ahora guarda el rango de Zoho (Nova/Supernova/Hypernova =
+// vigente; Competencia/Renuncio/Inactivo = baja), así que el filtro viejo por
+// status dejó de devolver filas. El flag de vigencia es `inactive`, que nunca
+// viene NULL (True 3823 / False 490 al momento de la recarga).
+export const ACTIVE_MEMBER_SQL = `inactive = 'False'`
+
 export async function getAsalariadoData(): Promise<Map<string, AsalariadoRedshiftData>> {
   const pool = getRedshiftPool()
   const { rows } = await pool.query(`
@@ -154,7 +162,7 @@ export async function getActiveAsalariados(): Promise<ActiveAsalariado[]> {
       TO_CHAR(fecha_terminacion_asalariado, 'YYYY-MM-DD') AS terminacion_date
     FROM dw_zoho.dim_sales_team_member
     WHERE sales_role = ANY($1)
-      AND status = 'Activo'
+      AND ${ACTIVE_MEMBER_SQL}
       AND empleado_consultor_start_date IS NOT NULL
       AND (
         consultor_asalariado_end_date IS NULL
@@ -202,7 +210,7 @@ export async function getSalariadosNominaRoster(): Promise<ActiveAsalariado[]> {
       TO_CHAR(fecha_terminacion_asalariado, 'YYYY-MM-DD') AS terminacion_date
     FROM dw_zoho.dim_sales_team_member
     WHERE sales_role = ANY($1)
-      AND status = 'Activo'
+      AND ${ACTIVE_MEMBER_SQL}
       AND email IS NOT NULL
       AND LOWER(email) != ALL($2)
     ORDER BY full_name
@@ -251,7 +259,7 @@ export async function getActivePromotores(): Promise<ActivePromotor[]> {
       TO_CHAR(empleado_consultor_start_date, 'YYYY-MM-DD') AS hire_date
     FROM dw_zoho.dim_sales_team_member
     WHERE sales_role ILIKE '%Promotor%'
-      AND status = 'Activo'
+      AND ${ACTIVE_MEMBER_SQL}
       AND email IS NOT NULL
     ORDER BY full_name
   `)
@@ -801,7 +809,7 @@ export async function getActiveSellersSummary(): Promise<SellersSummaryRow> {
         THEN 1
       END)::int AS asalariados
     FROM dw_zoho.dim_sales_team_member
-    WHERE status = 'Activo'
+    WHERE ${ACTIVE_MEMBER_SQL}
       AND email IS NOT NULL
   `)
   const r = rows[0]

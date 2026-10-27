@@ -61,8 +61,9 @@ export default function Navbar() {
     (isAdmin || isSupervisor) ? [
       ...(isAdmin ? [{ href: '/', label: 'Inicio' }] : []),
       ...links,
-      { href: '/ventas',      label: 'Dashboard Ventas' },
-      { href: '/asalariados', label: 'Asalariados' },
+      { href: '/ventas',        label: 'Dashboard Ventas' },
+      { href: '/asalariados',   label: 'Asalariados' },
+      { href: '/reclutamiento', label: 'Reclutamiento' },
       ...(isAdmin ? [
         { href: '/finance',     label: 'Finanzas & ROI' },
         { href: '/promotores',  label: 'Promotores'  },

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { getRedshiftPool } from '@/lib/redshift'
+import { getRedshiftPool, ACTIVE_MEMBER_SQL } from '@/lib/redshift'
 
 // GET /api/zoho/explore
 // Lists all columns in dw_zoho.dim_sales_team_member to find memo date fields
@@ -24,7 +24,7 @@ export async function GET() {
       pool.query(`
         SELECT *
         FROM dw_zoho.dim_sales_team_member
-        WHERE status = 'Activo'
+        WHERE ${ACTIVE_MEMBER_SQL}
           AND empleado_consultor_start_date IS NOT NULL
         LIMIT 2
       `),
