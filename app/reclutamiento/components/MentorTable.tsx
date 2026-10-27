@@ -2,14 +2,22 @@
 
 // Tabla de mentores.
 //
-// NO lleva un "% de asistencia". Medido sobre los citados de jul–oct 2026, el
-// mentor se asigna DESPUÉS del Solar en 282 de 321 casos; de los 24 que sí
-// tenían mentor asignado antes, no asistió ninguno. O sea que un "% asist."
-// por mentor sale ~100% por construcción —  la asignación es consecuencia de
-// haber asistido, no causa— y se leía como si midiera al mentor.
+// NO lleva un "% de asistencia". Medido sobre los citados de 2026, el mentor se
+// asigna DESPUÉS del Solar en 1,217 de 1,328 casos (92%); de los 84 que sí lo
+// tenían asignado antes, solo asistieron 3. O sea que la asignación es
+// consecuencia de haber asistido, no causa, y un "% asist." por mentor se leía
+// como si midiera al mentor cuando en realidad mide el orden de los eventos.
 //
-// Lo que sí es del mentor son los pasos posteriores a la asignación: la
-// reunión, el paso a Sales Team, la graduación y la primera venta.
+// Lo que sí es del mentor son los pasos posteriores a la asignación.
+//
+// Las columnas van en el orden real del proceso:
+//
+//   Asistieron → Asignados → Reunión → 1ra venta → Sales Team → Graduados
+//
+// Verificado en la data: el mentor se asigna después del Solar (1,217 de 1,328
+// en 2026); la primera venta ocurre antes de la creación en Sales Team (120
+// casos, 35 días antes en promedio, contra 55 después); y la graduación a
+// Consultor es lo último (723 después de Sales Team contra 4 antes).
 
 export interface MentorRowView {
   mentor: string
@@ -76,44 +84,45 @@ export default function MentorTable({ rows, outcomesDisponibles }: MentorTablePr
         <thead>
           <tr>
             <Th>Mentor</Th>
-            <Th align="right" title="Reclutas de este Solar que tienen a este mentor asignado">Asignados</Th>
-            <Th align="right" title="De sus asignados, cuántos asistieron al Solar. Casi siempre son todos: el mentor se asigna después de que la persona aparece.">Asistieron</Th>
+            <Th align="right" title="Asistieron al Solar. Es el primer paso: el mentor se asigna después.">Asistieron</Th>
+            <Th align="right" title="Reclutas de este Solar que ya tienen a este mentor asignado">Asignados</Th>
             <Th align="right" title="Reunión con mentor — el primer paso que sí depende del mentor">Reunión</Th>
-            <Th align="right">Sales Team</Th>
-            <Th align="right">Graduados</Th>
-            <Th align="right">Con 1ra venta</Th>
+            <Th align="right" title="Hicieron su primera venta. Normalmente ocurre antes de que se les cree en Sales Team.">Con 1ra venta</Th>
+            <Th align="right" title="Creados en Sales Team, típicamente a raíz de la primera venta">Sales Team</Th>
+            <Th align="right" title="Promovidos de Trainee a Consultor. Es el último paso.">Graduados</Th>
           </tr>
         </thead>
         <tbody>
           {rows.map((r, i) => (
             <tr key={r.mentor} style={{ background: i % 2 ? ZEBRA : '#fff' }}>
               <Td bold>{r.mentor}</Td>
-              <Td align="right">{r.asignados.toLocaleString('en-US')}</Td>
               <Td align="right">{r.asistieron.toLocaleString('en-US')}</Td>
+              <Td align="right">{r.asignados.toLocaleString('en-US')}</Td>
               <Td align="right" muted={!r.reunionMentor}>{r.reunionMentor ? r.reunionMentor.toLocaleString('en-US') : '—'}</Td>
-              <Td align="right">{r.salesTeam.toLocaleString('en-US')}</Td>
-              <Td align="right">{dash(r.graduados)}</Td>
               <Td align="right">{dash(r.conVenta)}</Td>
+              <Td align="right" muted={!r.salesTeam}>{r.salesTeam ? r.salesTeam.toLocaleString('en-US') : '—'}</Td>
+              <Td align="right">{dash(r.graduados)}</Td>
             </tr>
           ))}
           <tr style={{ background: TOTALROW }}>
             <Td bold>Total</Td>
-            <Td align="right" bold>{tot.asignados.toLocaleString('en-US')}</Td>
             <Td align="right" bold>{tot.asistieron.toLocaleString('en-US')}</Td>
+            <Td align="right" bold>{tot.asignados.toLocaleString('en-US')}</Td>
             <Td align="right" bold>{tot.reunionMentor ? tot.reunionMentor.toLocaleString('en-US') : '—'}</Td>
-            <Td align="right" bold>{tot.salesTeam.toLocaleString('en-US')}</Td>
-            <Td align="right" bold>{dash(tot.graduados)}</Td>
             <Td align="right" bold>{dash(tot.conVenta)}</Td>
+            <Td align="right" bold>{tot.salesTeam ? tot.salesTeam.toLocaleString('en-US') : '—'}</Td>
+            <Td align="right" bold>{dash(tot.graduados)}</Td>
           </tr>
         </tbody>
       </table>
     </div>
 
     <p style={{ fontSize: 10.5, color: '#8A8A8F', marginTop: 12, lineHeight: 1.5, fontFamily: "'Montserrat', sans-serif" }}>
-      El mentor se asigna <strong>después</strong> del Solar en 282 de 321 casos (jul–oct 2026),
-      así que &quot;Asignados&quot; es la carga que le queda a cada mentor una vez la persona
-      apareció, no una predicción de asistencia. La fila <strong>Sin mentor</strong> son los
-      citados que nunca llegaron a asignación.
+      Las columnas siguen el orden real del proceso: primero asisten al Solar, después se les
+      asigna mentor (1,217 de 1,328 casos en 2026), luego la reunión, la primera venta, la
+      creación en Sales Team —que suele venir a raíz de esa venta, 35 días después en promedio— y
+      por último la graduación a Consultor. La fila <strong>Sin mentor</strong> son los citados
+      que nunca llegaron a asignación.
     </p>
     </>
   )
